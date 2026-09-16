@@ -1,0 +1,65 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Dependências (Node / JS)
+node_modules/
+*/node_modules/
+dist/
+*/dist/
+build/
+*/build/
+
+# Next.js Build & Cache
+.next/
+*/.next/
+out/
+*/out/
+
+# Arquivos de Uploads / Mídia Local
+backend/uploads/
+uploads/
+*/uploads/
+
+# Variáveis de Ambiente e Segredos (CRÍTICO: Não subir para o GitHub!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+backend/.env
+frontend/.env
+mobile/.env
+*.env
+!*.env.example
+
+# Chaves e Certificados
+*.pem
+*.key
+*.crt
+
+# IDEs e Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+.project
+.settings/
+
+# Arquivos de Sistema Operacional
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Cobertura de Testes
+coverage/
+*/coverage/
+.nyc_output/
+
+# TypeScript Cache
+*.tsbuildinfo
