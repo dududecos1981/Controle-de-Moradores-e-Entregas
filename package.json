@@ -1,0 +1,19 @@
+{
+  "name": "controle-de-moradores-e-entregas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema de Gestão de Portaria, Pessoas e Entregas (Full-Stack 100% Gratuito)",
+  "scripts": {
+    "dev": "npm run dev --prefix frontend",
+    "build": "npm run build --prefix frontend",
+    "start": "npm run start --prefix frontend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "build:frontend": "npm run build --prefix frontend",
+    "start:frontend": "npm run start --prefix frontend",
+    "dev:mobile": "npm run dev --prefix mobile",
+    "build:mobile": "npm run build --prefix mobile",
+    "start:mobile": "npm run start --prefix mobile",
+    "dev:backend": "npm run start:dev --prefix backend",
+    "build:backend": "npm run build --prefix backend"
+  }
+}

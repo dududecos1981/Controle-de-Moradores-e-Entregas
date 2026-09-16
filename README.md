@@ -76,3 +76,27 @@ npm install
 npm run dev
 ```
 - Acesso do Morador: `http://localhost:3001`
+
+---
+
+## 🌐 100% Gratuito - Como Publicar na Vercel
+
+Este projeto está pré-configurado com **Zero Custo** para deploy na Vercel e serviços gratuitos:
+
+### Publicando o Frontend na Vercel
+1. Acesse [vercel.com](https://vercel.com) e conecte sua conta do GitHub.
+2. Clique em **Add New... -> Project** e selecione o repositório `Controle-de-Moradores-e-Entregas`.
+3. O Vercel detectará automaticamente a configuração do Next.js através do `vercel.json` e `package.json` raiz.
+4. Clique em **Deploy**!
+
+### Publicando o App Mobile do Morador como Projeto Separado na Vercel (Opcional)
+1. No painel da Vercel, clique em **Add New... -> Project** e importe o mesmo repositório.
+2. Na seção **Root Directory**, clique em *Edit* e selecione a pasta `mobile`.
+3. Clique em **Deploy**!
+
+### 💡 Stack 100% Gratuita (Free Tier)
+- **Hospedagem Web & Mobile:** Vercel Hobby (Gratuito)
+- **Banco de Dados Relacional:** Neon Serverless PostgreSQL ou Supabase (Gratuito até 500MB)
+- **Processamento de Imagens e Uploads:** Sharp WebP Local / Base64 / Supabase Storage (Sem custos)
+- **Notificações:** Web Push API e simulador em memória (Sem necessidade de plano pago Firebase Blaze)
+
