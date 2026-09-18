@@ -117,3 +117,56 @@ export interface ComunicadoIA {
   enviado: boolean;
 }
 
+export type TipoPessoaAcesso = 'MORADOR' | 'VISITANTE' | 'PRESTADOR_SERVICO';
+export type TipoMovimentacao = 'ENTRADA' | 'SAIDA';
+export type MetodoValidacao =
+  | 'BIOMETRIA_FACIAL'
+  | 'TAG_VEICULAR'
+  | 'QR_CODE'
+  | 'PORTARIA_MANUAL'
+  | 'LEITOR_PLACA'
+  | 'SENHA_INTERFONE';
+
+export interface RegistroAcesso {
+  id: string;
+  tipo_pessoa: TipoPessoaAcesso;
+  nome: string;
+  documento?: string;
+  unidade_bloco: string;
+  unidade_numero: string;
+  foto_url?: string;
+  tipo_movimentacao: TipoMovimentacao;
+  data_hora: string;
+  metodo_validacao: MetodoValidacao;
+  veiculo_placa?: string;
+  veiculo_modelo?: string;
+  empresa?: string;
+  servico_descricao?: string;
+  autorizado_por?: string;
+  porteiro_responsavel?: string;
+  observacoes?: string;
+}
+
+export interface PrestadorServico {
+  id: string;
+  nome_completo: string;
+  cpf?: string;
+  rg?: string;
+  telefone?: string;
+  empresa: string;
+  especialidade: string;
+  foto_url?: string;
+  placa_veiculo?: string;
+  modelo_veiculo?: string;
+  unidade_destino_bloco: string;
+  unidade_destino_numero: string;
+  morador_responsavel?: string;
+  status_acesso: 'DENTRO' | 'LIBERADO' | 'CONCLUIDO';
+  hora_entrada?: string;
+  hora_saida?: string;
+  data_cadastro: string;
+  cracha_numero?: string;
+  observacoes?: string;
+}
+
+

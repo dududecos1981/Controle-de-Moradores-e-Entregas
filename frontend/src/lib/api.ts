@@ -134,6 +134,12 @@ class ApiService {
     });
   }
 
+  async deleteMorador(id: string) {
+    return this.request<any>(`/usuarios/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
   // Inteligência Artificial & Comunicados
   async gerarComunicadoIA(promptData: {
     tipo: string;

@@ -14,6 +14,8 @@ import {
   Activity,
   Boxes,
   Lock,
+  HardHat,
+  Wrench,
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -34,6 +36,12 @@ const NAV_ITEMS = [
     href: '/visitantes',
     icon: UserPlus,
     badge: 'Webcam',
+  },
+  {
+    name: 'Prestadores de Serviço',
+    href: '/prestadores',
+    icon: HardHat,
+    badge: 'Controle',
   },
   {
     name: 'Moradores & Unidades',
