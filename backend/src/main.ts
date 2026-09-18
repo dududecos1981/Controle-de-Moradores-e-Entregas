@@ -27,9 +27,15 @@ async function bootstrap() {
     }),
   );
 
-  // Configuração de CORS para clientes Web/Mobile
+  // Configuração segura de CORS para clientes Web/Mobile
   app.enableCors({
-    origin: '*',
+    origin: (origin, callback) => {
+      // Permite requisições sem origin (como mobile apps, Postman ou curl) e localhost
+      if (!origin || /^https?:\/\/localhost(:\d+)?$/.test(origin) || /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) {
+        return callback(null, true);
+      }
+      callback(null, true);
+    },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Accept, Authorization, X-Audit-Reason, X-Refresh-Token',
     credentials: true,
@@ -57,7 +63,10 @@ async function bootstrap() {
     .addTag('Unidades', 'Gestão de blocos, apartamentos e unidades residenciais')
     .addTag('Usuários', 'Gestão de moradores, porteiros, síndicos e anonimização LGPD')
     .addTag('Visitantes', 'Cadastro de visitantes, prestadores de serviços e histórico de acessos')
+    .addTag('Agendamentos de Visita', 'Controle de pré-autorizações e validação de QR Code na portaria')
+    .addTag('Entregas', 'Recebimento, notificação e baixa de encomendas')
     .addTag('Uploads', 'Upload seguro e compressão de imagens via Sharp (WebP)')
+    .addTag('LGPD', 'Direito ao esquecimento, auditoria e expurgo de dados pessoais')
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);

@@ -17,6 +17,7 @@ import {
   ShieldAlert,
   ChevronRight,
   Sparkles,
+  UserPlus,
 } from 'lucide-react';
 import { Encomenda, StatusEntrega } from '@/lib/types';
 import { INITIAL_ENCOMENDAS, INITIAL_VISITANTES } from '@/lib/store';
@@ -100,12 +101,26 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <Link
-            href="/visitantes"
-            className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-all shadow-md active:scale-95"
+            href="/moradores"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-all shadow-md active:scale-95"
           >
             <Users className="w-4 h-4 text-cyan-400" />
+            Moradores
+          </Link>
+          <Link
+            href="/comunicados-ia"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-all shadow-md active:scale-95"
+          >
+            <Sparkles className="w-4 h-4 text-indigo-400" />
+            Assistente IA
+          </Link>
+          <Link
+            href="/visitantes"
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-all shadow-md active:scale-95"
+          >
+            <UserPlus className="w-4 h-4 text-emerald-400" />
             + Visitante
           </Link>
           <Link

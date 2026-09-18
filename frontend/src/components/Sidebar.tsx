@@ -8,6 +8,8 @@ import {
   UserPlus,
   PackagePlus,
   Building2,
+  Users,
+  Sparkles,
   Shield,
   Activity,
   Boxes,
@@ -16,10 +18,16 @@ import {
 
 const NAV_ITEMS = [
   {
-    name: 'Dashboard Encomendas',
+    name: 'Dashboard Geral',
     href: '/',
     icon: LayoutDashboard,
-    badge: 'Tempo Real',
+    badge: 'Ao Vivo',
+  },
+  {
+    name: 'Registro de Encomendas',
+    href: '/encomendas',
+    icon: PackagePlus,
+    badge: 'Scanner',
   },
   {
     name: 'Cadastro de Visitantes',
@@ -28,10 +36,16 @@ const NAV_ITEMS = [
     badge: 'Webcam',
   },
   {
-    name: 'Registro de Encomendas',
-    href: '/encomendas',
-    icon: PackagePlus,
-    badge: 'Scanner',
+    name: 'Moradores & Unidades',
+    href: '/moradores',
+    icon: Users,
+    badge: 'LGPD',
+  },
+  {
+    name: 'Assistente IA & Avisos',
+    href: '/comunicados-ia',
+    icon: Sparkles,
+    badge: 'Gemini',
   },
 ];
 

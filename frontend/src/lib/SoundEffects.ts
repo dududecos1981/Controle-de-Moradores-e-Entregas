@@ -140,6 +140,22 @@ class SoundEffects {
       console.debug('Audio error:', e);
     }
   }
+  /**
+   * Métodos de conveniência
+   */
+  playSuccess() {
+    this.playSuccessChime();
+  }
+
+  playBeep() {
+    this.playBarcodeBeep();
+  }
+
+  playAlert() {
+    this.playErrorTone();
+  }
 }
 
 export const sounds = new SoundEffects();
+export default sounds;
+

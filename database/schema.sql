@@ -557,3 +557,119 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 COMMENT ON FUNCTION fn_anonimizar_usuario_lgpd IS 'Anonimiza dados pessoais de um usuário preservando a integridade referencial histórica de entregas e visitas.';
+
+-- ------------------------------------------------------------------------------
+-- 9. ROW LEVEL SECURITY (RLS) & POLÍTICAS DE SEGURANÇA NO NEON POSTGRESQL
+-- ------------------------------------------------------------------------------
+
+-- Funções auxiliares para leitura segura do contexto de autenticação/sessão
+CREATE OR REPLACE FUNCTION fn_current_user_id()
+RETURNS UUID AS $$
+BEGIN
+    RETURN NULLIF(
+        COALESCE(
+            current_setting('request.jwt.claim.sub', true),
+            current_setting('app.current_user_id', true)
+        ),
+        ''
+    )::UUID;
+EXCEPTION WHEN OTHERS THEN
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+CREATE OR REPLACE FUNCTION fn_current_user_perfil()
+RETURNS TEXT AS $$
+BEGIN
+    RETURN NULLIF(
+        COALESCE(
+            current_setting('request.jwt.claim.perfil', true),
+            current_setting('app.current_user_role', true)
+        ),
+        ''
+    );
+EXCEPTION WHEN OTHERS THEN
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+-- 9.1 Habilitar RLS em todas as tabelas
+ALTER TABLE unidades ENABLE ROW LEVEL SECURITY;
+ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE visitantes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE entregas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE agendamentos_visita ENABLE ROW LEVEL SECURITY;
+ALTER TABLE logs_auditoria_lgpd ENABLE ROW LEVEL SECURITY;
+
+-- 9.2 Políticas de Segurança: unidades
+DROP POLICY IF EXISTS p_unidades_select ON unidades;
+CREATE POLICY p_unidades_select ON unidades
+    FOR SELECT
+    USING (true); -- Leitura permitida para identificação de blocos/unidades
+
+DROP POLICY IF EXISTS p_unidades_admin ON unidades;
+CREATE POLICY p_unidades_admin ON unidades
+    FOR ALL
+    USING (fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO', 'PORTEIRO'));
+
+-- 9.3 Políticas de Segurança: usuarios
+DROP POLICY IF EXISTS p_usuarios_select ON usuarios;
+CREATE POLICY p_usuarios_select ON usuarios
+    FOR SELECT
+    USING (
+        fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO', 'PORTEIRO')
+        OR id = fn_current_user_id()
+        OR unidade_id IN (SELECT unidade_id FROM usuarios WHERE id = fn_current_user_id())
+    );
+
+DROP POLICY IF EXISTS p_usuarios_mod ON usuarios;
+CREATE POLICY p_usuarios_mod ON usuarios
+    FOR ALL
+    USING (fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO', 'PORTEIRO'));
+
+-- 9.4 Políticas de Segurança: visitantes
+DROP POLICY IF EXISTS p_visitantes_select ON visitantes;
+CREATE POLICY p_visitantes_select ON visitantes
+    FOR SELECT
+    USING (
+        fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO', 'PORTEIRO')
+        OR id IN (
+            SELECT visitante_id FROM agendamentos_visita 
+            WHERE usuario_solicitante_id = fn_current_user_id()
+        )
+    );
+
+DROP POLICY IF EXISTS p_visitantes_staff ON visitantes;
+CREATE POLICY p_visitantes_staff ON visitantes
+    FOR ALL
+    USING (fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO', 'PORTEIRO'));
+
+-- 9.5 Políticas de Segurança: entregas
+DROP POLICY IF EXISTS p_entregas_morador_select ON entregas;
+CREATE POLICY p_entregas_morador_select ON entregas
+    FOR SELECT
+    USING (
+        fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO', 'PORTEIRO')
+        OR unidade_id IN (SELECT unidade_id FROM usuarios WHERE id = fn_current_user_id())
+    );
+
+DROP POLICY IF EXISTS p_entregas_staff_all ON entregas;
+CREATE POLICY p_entregas_staff_all ON entregas
+    FOR ALL
+    USING (fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO', 'PORTEIRO'));
+
+-- 9.6 Políticas de Segurança: agendamentos_visita
+DROP POLICY IF EXISTS p_agendamentos_morador ON agendamentos_visita;
+CREATE POLICY p_agendamentos_morador ON agendamentos_visita
+    FOR ALL
+    USING (
+        fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO', 'PORTEIRO')
+        OR usuario_solicitante_id = fn_current_user_id()
+    );
+
+-- 9.7 Políticas de Segurança: logs_auditoria_lgpd (Apenas administradores / DPO)
+DROP POLICY IF EXISTS p_audit_admin_select ON logs_auditoria_lgpd;
+CREATE POLICY p_audit_admin_select ON logs_auditoria_lgpd
+    FOR SELECT
+    USING (fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO'));
+

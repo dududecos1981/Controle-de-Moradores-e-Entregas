@@ -127,7 +127,63 @@ export class EventsGateway
       timestamp: new Date().toISOString(),
     };
 
-    this.server.to(room).emit('encomenda_retirada', payload);
-    this.server.to('portaria_geral').emit('encomenda_retirada', payload);
+    if (this.server) {
+      this.server.to(room).emit('encomenda_retirada', payload);
+      this.server.to('portaria_geral').emit('encomenda_retirada', payload);
+    }
+  }
+
+  /**
+   * Emite evento de novo pacote cadastrado
+   */
+  emitNewPackage(entrega: any) {
+    if (entrega?.unidade_bloco && entrega?.unidade_numero) {
+      this.notificarNovaEncomenda(entrega.unidade_bloco, entrega.unidade_numero, entrega);
+    } else if (this.server) {
+      this.server.to('portaria_geral').emit('encomenda_chegou', {
+        tipo: 'NOVA_ENCOMENDA',
+        encomenda: entrega,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * Emite mudança de status do pacote (ex: RETIRADO)
+   */
+  emitPackageStatusChange(id: string, status: string) {
+    if (this.server) {
+      this.server.to('portaria_geral').emit('encomenda_status_mudou', {
+        id,
+        status,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * Emite novo agendamento de visita cadastrado
+   */
+  emitNewSchedule(agendamento: any) {
+    if (this.server) {
+      this.server.to('portaria_geral').emit('agendamento_criado', {
+        tipo: 'NOVO_AGENDAMENTO',
+        agendamento,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * Emite alteração de status do agendamento (ex: EM_ANDAMENTO, CONCLUIDO)
+   */
+  emitScheduleStatusChange(id: string, status: string) {
+    if (this.server) {
+      this.server.to('portaria_geral').emit('agendamento_status_mudou', {
+        id,
+        status,
+        timestamp: new Date().toISOString(),
+      });
+    }
   }
 }

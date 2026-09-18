@@ -128,3 +128,139 @@ export const INITIAL_VISITANTES: Visitante[] = [
     observacoes: 'Entrega rápida de refeição',
   }
 ];
+
+import { Morador, ComunicadoIA } from './types';
+
+// Moradores e Residentes Iniciais
+export const INITIAL_MORADORES: Morador[] = [
+  {
+    id: 'mor-1',
+    unidade_id: 'u-1',
+    unidade_bloco: 'A',
+    unidade_numero: '101',
+    nome_completo: 'Mariana Fernandes',
+    cpf: '123.456.789-00',
+    email: 'mariana.fernandes@condominio.com',
+    telefone: '(11) 96543-2109',
+    perfil: 'MORADOR',
+    status: 'ATIVO',
+    is_responsavel_unidade: true,
+    avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80',
+    data_cadastro: '2025-01-10T10:00:00Z',
+    veiculos: [
+      { id: 'v-1', placa: 'ABC1E23', modelo: 'Jeep Compass', cor: 'Cinza Grafite', tipo: 'CARRO', vaga: 'V-101A' },
+      { id: 'v-2', placa: 'XYZ9K88', modelo: 'Honda PCX 150', cor: 'Branca', tipo: 'MOTO', vaga: 'M-12' }
+    ],
+    dependentes: [
+      { id: 'dep-1', nome: 'Gabriel Fernandes', parentesco: 'Cônjuge', cpf: '234.567.890-11' },
+      { id: 'dep-2', nome: 'Sofia Fernandes', parentesco: 'Filha', data_nascimento: '2018-05-14' }
+    ],
+    contatos_emergencia: [
+      { nome: 'Carlos Fernandes (Pai)', telefone: '(11) 98888-1122', parentesco: 'Pai' }
+    ],
+    observacoes: 'Permissão permanente de entrada para entregas e delivery com aviso no app.',
+    lgpd_termo_aceito: true,
+    lgpd_data_aceite: '2025-01-10T10:05:00Z',
+    lgpd_anonimizado: false
+  },
+  {
+    id: 'mor-2',
+    unidade_id: 'u-5',
+    unidade_bloco: 'B',
+    unidade_numero: 'PH01',
+    nome_completo: 'Roberto Albuquerque',
+    cpf: '345.678.901-22',
+    email: 'sindico.roberto@condominio.com',
+    telefone: '(11) 95432-1098',
+    perfil: 'SINDICO',
+    status: 'ATIVO',
+    is_responsavel_unidade: true,
+    avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
+    data_cadastro: '2024-06-15T09:30:00Z',
+    veiculos: [
+      { id: 'v-3', placa: 'ROB8B88', modelo: 'BMW 320i', cor: 'Azul Marinho', tipo: 'CARRO', vaga: 'PH-01' }
+    ],
+    dependentes: [
+      { id: 'dep-3', nome: 'Helena Albuquerque', parentesco: 'Cônjuge' }
+    ],
+    contatos_emergencia: [
+      { nome: 'Escritório Advocacia Albuquerque', telefone: '(11) 3333-4444', parentesco: 'Comercial' }
+    ],
+    observacoes: 'Síndico Geral do Condomínio. Acesso a relatórios administrativos.',
+    lgpd_termo_aceito: true,
+    lgpd_data_aceite: '2024-06-15T09:35:00Z',
+    lgpd_anonimizado: false
+  },
+  {
+    id: 'mor-3',
+    unidade_id: 'u-3',
+    unidade_bloco: 'A',
+    unidade_numero: '201',
+    nome_completo: 'Rodrigo Vasconcelos',
+    cpf: '456.789.012-33',
+    email: 'rodrigo.vasc@empresa.com.br',
+    telefone: '(11) 94321-0987',
+    perfil: 'MORADOR',
+    status: 'ATIVO',
+    is_responsavel_unidade: true,
+    avatar_url: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=400&auto=format&fit=crop&q=80',
+    data_cadastro: '2025-02-01T14:20:00Z',
+    veiculos: [
+      { id: 'v-4', placa: 'VAS2C34', modelo: 'Toyota Corolla Cross', cor: 'Prata', tipo: 'CARRO', vaga: 'V-201A' }
+    ],
+    dependentes: [
+      { id: 'dep-4', nome: 'Beatriz Lima', parentesco: 'Noiva' }
+    ],
+    observacoes: 'Possui cão de pequeno porte (Poodle).',
+    lgpd_termo_aceito: true,
+    lgpd_data_aceite: '2025-02-01T14:25:00Z',
+    lgpd_anonimizado: false
+  },
+  {
+    id: 'mor-4',
+    unidade_id: 'u-2',
+    unidade_bloco: 'A',
+    unidade_numero: '102',
+    nome_completo: 'Juliana Moreira',
+    cpf: '567.890.123-44',
+    email: 'juliana.moreira@design.art',
+    telefone: '(11) 93210-9876',
+    perfil: 'MORADOR',
+    status: 'ATIVO',
+    is_responsavel_unidade: true,
+    avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&auto=format&fit=crop&q=80',
+    data_cadastro: '2025-03-05T16:00:00Z',
+    veiculos: [],
+    dependentes: [],
+    observacoes: 'Home office frequente. Recebe muitas entregas de materiais de design.',
+    lgpd_termo_aceito: true,
+    lgpd_data_aceite: '2025-03-05T16:05:00Z',
+    lgpd_anonimizado: false
+  }
+];
+
+// Comunicados IA Iniciais
+export const INITIAL_COMUNICADOS: ComunicadoIA[] = [
+  {
+    id: 'com-1',
+    titulo: 'Manutenção Preventiva de Elevadores - Bloco A',
+    tipo: 'MANUTENCAO',
+    destinatarios: 'BLOCO',
+    bloco_alvo: 'A',
+    mensagem: 'Informamos a todos os moradores do Bloco A que na próxima terça-feira (22/09), das 09h às 12h, os elevadores passarão por manutenção técnica preventiva de rotina. Contamos com a compreensão de todos.',
+    mensagem_whatsapp: '🏢 *CONDOMÍNIO RESIDENCIAL PRO*\n\n⚠️ *Aviso de Manutenção de Elevadores (Bloco A)*\n\n📅 Data: Terça-feira (22/09)\n⏰ Horário: 09:00 às 12:00\n📍 Local: Elevadores Sociais Bloco A\n\nPedimos a colaboração de todos durante o período de inspeção técnica.',
+    criado_em: new Date(Date.now() - 3600000 * 24).toISOString(),
+    enviado: true
+  },
+  {
+    id: 'com-2',
+    titulo: 'Lembrete de Retirada de Encomendas na Portaria',
+    tipo: 'ENCOMENDA',
+    destinatarios: 'TODOS',
+    mensagem: 'Atenção moradores: temos diversos pacotes e encomendas aguardando retirada na portaria principal. Por favor, apresentem o código de retirada no app ou documento com foto para liberar espaço nos armários.',
+    mensagem_whatsapp: '📦 *AVISO DA PORTARIA - ENCOMENDAS PENDENTES*\n\nPrezados moradores,\nIdentificamos pacotes aguardando retirada na portaria.\nSolicitamos a gentileza de comparecer com seu QR Code no App Morador para retirada.\n\nObrigado!',
+    criado_em: new Date(Date.now() - 3600000 * 5).toISOString(),
+    enviado: false
+  }
+];
+

@@ -51,3 +51,69 @@ export interface Visitante {
   hora_entrada?: string;
   status_acesso?: 'DENTRO' | 'LIBERADO' | 'CONCLUIDO';
 }
+
+export interface Veiculo {
+  id: string;
+  placa: string;
+  modelo: string;
+  cor: string;
+  tipo: 'CARRO' | 'MOTO' | 'BICICLETA' | 'OUTRO';
+  vaga?: string;
+}
+
+export interface Dependente {
+  id: string;
+  nome: string;
+  parentesco: string;
+  data_nascimento?: string;
+  cpf?: string;
+}
+
+export interface ContatoEmergencia {
+  nome: string;
+  telefone: string;
+  parentesco: string;
+}
+
+export type PerfilUsuario = 'ADMINISTRADOR' | 'SINDICO' | 'PORTEIRO' | 'MORADOR' | 'PRESTADOR_SERVICO';
+
+export interface Morador {
+  id: string;
+  unidade_id: string;
+  unidade_bloco: string;
+  unidade_numero: string;
+  nome_completo: string;
+  cpf: string;
+  email: string;
+  telefone: string;
+  perfil: PerfilUsuario;
+  status: 'ATIVO' | 'INATIVO' | 'BLOQUEADO' | 'PENDENTE_APROVACAO';
+  is_responsavel_unidade: boolean;
+  avatar_url?: string;
+  data_cadastro: string;
+  
+  // Dados complementares
+  veiculos: Veiculo[];
+  dependentes: Dependente[];
+  contatos_emergencia?: ContatoEmergencia[];
+  observacoes?: string;
+
+  // LGPD
+  lgpd_termo_aceito: boolean;
+  lgpd_data_aceite?: string;
+  lgpd_anonimizado?: boolean;
+}
+
+export interface ComunicadoIA {
+  id: string;
+  titulo: string;
+  tipo: 'ENCOMENDA' | 'MANUTENCAO' | 'ASSEMBLEIA' | 'SEGURANCA' | 'AVISO_GERAL';
+  destinatarios: 'TODOS' | 'BLOCO' | 'UNIDADE_ESPECIFICA';
+  bloco_alvo?: string;
+  unidade_alvo?: string;
+  mensagem: string;
+  mensagem_whatsapp: string;
+  criado_em: string;
+  enviado: boolean;
+}
+

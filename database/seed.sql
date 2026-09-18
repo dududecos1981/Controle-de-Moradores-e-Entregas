@@ -18,7 +18,7 @@ ON CONFLICT (bloco, numero) DO NOTHING;
 -- ------------------------------------------------------------------------------
 -- 2. USUÁRIOS (ADMIN, PORTEIRO, SÍNDICO, MORADORES)
 -- ------------------------------------------------------------------------------
--- Senha de teste padrão: "SenhaSegura123!" (hash bcrypt/argon2 simulado)
+-- Senha de teste padrão: "SenhaSegura123!" (hash bcrypt válido)
 INSERT INTO usuarios (
     id,
     unidade_id,
@@ -41,7 +41,7 @@ INSERT INTO usuarios (
     'Carlos Silva (Administrador Geral)',
     '111.222.333-44',
     'admin@condominio.com.br',
-    '$2a$12$e8Yk1.7zLzP9BwZzM9VdOu1wS4g2K5aQp8R7e6u3v9A0b1C2d3E4F',
+    '$2a$10$6C5kaiBO/rd5GE8HQGW/EOJZFAJpfQ8VVR.GOG1he29jOWII2yAk2',
     '11987654321',
     'ADMINISTRADOR',
     'ATIVO',
@@ -57,7 +57,7 @@ INSERT INTO usuarios (
     'João Portaria (Plantão Diurno)',
     '222.333.444-55',
     'porteiro.joao@condominio.com.br',
-    '$2a$12$e8Yk1.7zLzP9BwZzM9VdOu1wS4g2K5aQp8R7e6u3v9A0b1C2d3E4F',
+    '$2a$10$6C5kaiBO/rd5GE8HQGW/EOJZFAJpfQ8VVR.GOG1he29jOWII2yAk2',
     '11976543210',
     'PORTEIRO',
     'ATIVO',
@@ -73,7 +73,7 @@ INSERT INTO usuarios (
     'Mariana Fernandes (Moradora Titular)',
     '333.444.555-66',
     'mariana.fernandes@email.com',
-    '$2a$12$e8Yk1.7zLzP9BwZzM9VdOu1wS4g2K5aQp8R7e6u3v9A0b1C2d3E4F',
+    '$2a$10$6C5kaiBO/rd5GE8HQGW/EOJZFAJpfQ8VVR.GOG1he29jOWII2yAk2',
     '11965432109',
     'MORADOR',
     'ATIVO',
@@ -89,7 +89,7 @@ INSERT INTO usuarios (
     'Roberto Albuquerque (Síndico & Morador)',
     '444.555.666-77',
     'sindico.roberto@condominio.com.br',
-    '$2a$12$e8Yk1.7zLzP9BwZzM9VdOu1wS4g2K5aQp8R7e6u3v9A0b1C2d3E4F',
+    '$2a$10$6C5kaiBO/rd5GE8HQGW/EOJZFAJpfQ8VVR.GOG1he29jOWII2yAk2',
     '11954321098',
     'SINDICO',
     'ATIVO',

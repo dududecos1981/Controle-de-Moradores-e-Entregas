@@ -15,6 +15,8 @@ import { UploadModule } from './modules/upload/upload.module';
 import { EventsModule } from './modules/events/events.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { LgpdModule } from './modules/lgpd/lgpd.module';
+import { EntregasModule } from './modules/entregas/entregas.module';
+import { AgendamentosModule } from './modules/agendamentos/agendamentos.module';
 
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { LgpdSessionInterceptor } from './common/interceptors/lgpd-session.interceptor';
@@ -38,6 +40,8 @@ import { LgpdSessionInterceptor } from './common/interceptors/lgpd-session.inter
     UnidadesModule,
     UsuariosModule,
     VisitantesModule,
+    EntregasModule,
+    AgendamentosModule,
     UploadModule,
     EventsModule,
     NotificationsModule,
