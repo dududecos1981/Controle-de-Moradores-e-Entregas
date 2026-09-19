@@ -199,9 +199,9 @@ export default function LoginPage() {
           {/* Links de Cadastro */}
           <div className="pt-2 border-t border-slate-800/80 text-center">
             <p className="text-xs text-slate-400">
-              É novo morador no condomínio?{' '}
+              Ainda não possui acesso?{' '}
               <Link href="/cadastro" className="text-cyan-400 font-bold hover:underline">
-                Cadastrar minha unidade
+                Primeiro cadastro
               </Link>
             </p>
           </div>
