@@ -24,17 +24,24 @@ export default function MobileAppPage() {
   const [currentTime, setCurrentTime] = useState<string>('');
 
   useEffect(() => {
+    // Limpeza automática de dados fictícios legados
+    const isCleaned = localStorage.getItem('morador_data_cleaned_v2');
+    if (!isCleaned) {
+      localStorage.removeItem('morador_encomendas');
+      localStorage.removeItem('morador_convites');
+      localStorage.setItem('morador_data_cleaned_v2', 'true');
+    }
+
     // Carrega dados locais
     const savedEnc = localStorage.getItem('morador_encomendas');
     if (savedEnc) {
       try {
         setEncomendas(JSON.parse(savedEnc));
       } catch (e) {
-        setEncomendas(INITIAL_MORADOR_ENCOMENDAS);
+        setEncomendas([]);
       }
     } else {
-      setEncomendas(INITIAL_MORADOR_ENCOMENDAS);
-      localStorage.setItem('morador_encomendas', JSON.stringify(INITIAL_MORADOR_ENCOMENDAS));
+      setEncomendas([]);
     }
 
     const savedCnv = localStorage.getItem('morador_convites');
@@ -42,11 +49,10 @@ export default function MobileAppPage() {
       try {
         setConvites(JSON.parse(savedCnv));
       } catch (e) {
-        setConvites(INITIAL_CONVITES);
+        setConvites([]);
       }
     } else {
-      setConvites(INITIAL_CONVITES);
-      localStorage.setItem('morador_convites', JSON.stringify(INITIAL_CONVITES));
+      setConvites([]);
     }
 
     // Relógio do status bar

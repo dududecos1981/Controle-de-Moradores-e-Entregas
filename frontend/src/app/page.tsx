@@ -59,17 +59,28 @@ export default function DashboardPage() {
 
   // Inicializa dados com persistência local
   useEffect(() => {
+    // Limpeza automática de dados fictícios legados
+    const isCleaned = localStorage.getItem('portaria_data_cleaned_v2');
+    if (!isCleaned) {
+      localStorage.removeItem('portaria_encomendas');
+      localStorage.removeItem('portaria_acessos');
+      localStorage.removeItem('portaria_visitantes');
+      localStorage.removeItem('portaria_prestadores');
+      localStorage.removeItem('portaria_moradores');
+      localStorage.removeItem('portaria_comunicados');
+      localStorage.setItem('portaria_data_cleaned_v2', 'true');
+    }
+
     // Encomendas
     const savedEnc = localStorage.getItem('portaria_encomendas');
     if (savedEnc) {
       try {
         setEncomendas(JSON.parse(savedEnc));
       } catch (e) {
-        setEncomendas(INITIAL_ENCOMENDAS);
+        setEncomendas([]);
       }
     } else {
-      setEncomendas(INITIAL_ENCOMENDAS);
-      localStorage.setItem('portaria_encomendas', JSON.stringify(INITIAL_ENCOMENDAS));
+      setEncomendas([]);
     }
 
     // Acessos
@@ -78,11 +89,10 @@ export default function DashboardPage() {
       try {
         setAcessos(JSON.parse(savedAcessos));
       } catch (e) {
-        setAcessos(INITIAL_ACESSOS);
+        setAcessos([]);
       }
     } else {
-      setAcessos(INITIAL_ACESSOS);
-      localStorage.setItem('portaria_acessos', JSON.stringify(INITIAL_ACESSOS));
+      setAcessos([]);
     }
   }, []);
 
@@ -103,11 +113,11 @@ export default function DashboardPage() {
   
   // Visitantes & Prestadores Presentes no Condomínio
   const savedVisitantes = typeof window !== 'undefined' ? localStorage.getItem('portaria_visitantes') : null;
-  const listVisitantes = savedVisitantes ? JSON.parse(savedVisitantes) : INITIAL_VISITANTES;
+  const listVisitantes = savedVisitantes ? JSON.parse(savedVisitantes) : [];
   const visitantesDentro = listVisitantes.filter((v: any) => v.status_acesso === 'DENTRO').length;
 
   const savedPrestadores = typeof window !== 'undefined' ? localStorage.getItem('portaria_prestadores') : null;
-  const listPrestadores = savedPrestadores ? JSON.parse(savedPrestadores) : INITIAL_PRESTADORES;
+  const listPrestadores = savedPrestadores ? JSON.parse(savedPrestadores) : [];
   const prestadoresDentro = listPrestadores.filter((p: any) => p.status_acesso === 'DENTRO').length;
 
   const totalPessoasPresentes = visitantesDentro + prestadoresDentro;

@@ -83,6 +83,9 @@ export default function MoradoresPage() {
   const [contatosEmergenciaList, setContatosEmergenciaList] = useState<ContatoEmergencia[]>([]);
   const [novoContato, setNovoContato] = useState({ nome: '', telefone: '', parentesco: 'Familiar' });
 
+  const [encomendasList, setEncomendasList] = useState<any[]>([]);
+  const [visitantesList, setVisitantesList] = useState<any[]>([]);
+
   // Inicialização com LocalStorage
   useEffect(() => {
     const saved = localStorage.getItem('portaria_moradores');
@@ -90,11 +93,19 @@ export default function MoradoresPage() {
       try {
         setMoradores(JSON.parse(saved));
       } catch (e) {
-        setMoradores(INITIAL_MORADORES);
+        setMoradores([]);
       }
     } else {
-      setMoradores(INITIAL_MORADORES);
-      localStorage.setItem('portaria_moradores', JSON.stringify(INITIAL_MORADORES));
+      setMoradores([]);
+    }
+
+    const savedEnc = localStorage.getItem('portaria_encomendas');
+    if (savedEnc) {
+      try { setEncomendasList(JSON.parse(savedEnc)); } catch (e) { setEncomendasList([]); }
+    }
+    const savedVis = localStorage.getItem('portaria_visitantes');
+    if (savedVis) {
+      try { setVisitantesList(JSON.parse(savedVis)); } catch (e) { setVisitantesList([]); }
     }
   }, []);
 
@@ -1367,7 +1378,7 @@ export default function MoradoresPage() {
                 <div className="space-y-3">
                   <h4 className="text-xs font-bold text-white uppercase tracking-wider">Encomendas da Unidade</h4>
                   <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {INITIAL_ENCOMENDAS.filter((e) => e.unidade_bloco === selectedMorador.unidade_bloco && e.unidade_numero === selectedMorador.unidade_numero).map((enc) => (
+                    {encomendasList.filter((e) => e.unidade_bloco === selectedMorador.unidade_bloco && e.unidade_numero === selectedMorador.unidade_numero).map((enc) => (
                       <div key={enc.id} className="p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <Package className="w-4 h-4 text-indigo-400" />
@@ -1385,6 +1396,11 @@ export default function MoradoresPage() {
                         </span>
                       </div>
                     ))}
+                    {encomendasList.filter((e) => e.unidade_bloco === selectedMorador.unidade_bloco && e.unidade_numero === selectedMorador.unidade_numero).length === 0 && (
+                      <div className="p-4 text-center text-xs text-slate-500 italic bg-slate-900/50 rounded-xl border border-slate-800">
+                        Nenhuma encomenda registrada para esta unidade.
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1393,7 +1409,7 @@ export default function MoradoresPage() {
                 <div className="space-y-3">
                   <h4 className="text-xs font-bold text-white uppercase tracking-wider">Visitas e Prestadores</h4>
                   <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {INITIAL_VISITANTES.filter((v) => v.unidade_destino_bloco === selectedMorador.unidade_bloco && v.unidade_destino_numero === selectedMorador.unidade_numero).map((vis) => (
+                    {visitantesList.filter((v) => v.unidade_destino_bloco === selectedMorador.unidade_bloco && v.unidade_destino_numero === selectedMorador.unidade_numero).map((vis) => (
                       <div key={vis.id} className="p-3 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <Users className="w-4 h-4 text-cyan-400" />
@@ -1407,6 +1423,11 @@ export default function MoradoresPage() {
                         </span>
                       </div>
                     ))}
+                    {visitantesList.filter((v) => v.unidade_destino_bloco === selectedMorador.unidade_bloco && v.unidade_destino_numero === selectedMorador.unidade_numero).length === 0 && (
+                      <div className="p-4 text-center text-xs text-slate-500 italic bg-slate-900/50 rounded-xl border border-slate-800">
+                        Nenhum visitante ou prestador recente registrado para esta unidade.
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
