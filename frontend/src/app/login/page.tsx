@@ -9,24 +9,19 @@ import {
   Eye,
   EyeOff,
   LogIn,
-  ArrowRight,
-  Sparkles,
-  CheckCircle2,
-  AlertCircle,
   Building,
-  KeyRound,
-  UserCheck,
   Smartphone,
   ShieldCheck,
+  AlertCircle,
 } from 'lucide-react';
-import { useAuth, PerfilUsuario } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import SoundEffects from '@/lib/SoundEffects';
 
 export default function LoginPage() {
-  const { login, switchDemoUser } = useAuth();
+  const { login } = useAuth();
   const [tipoAcesso, setTipoAcesso] = useState<'PORTARIA' | 'MORADOR'>('PORTARIA');
-  const [identificador, setIdentificador] = useState('porteiro.joao@condominio.com.br');
-  const [senha, setSenha] = useState('SenhaSegura123!');
+  const [identificador, setIdentificador] = useState('');
+  const [senha, setSenha] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,18 +30,20 @@ export default function LoginPage() {
   const handleSelectTipo = (tipo: 'PORTARIA' | 'MORADOR') => {
     setTipoAcesso(tipo);
     setErrorMessage(null);
-    if (tipo === 'PORTARIA') {
-      setIdentificador('porteiro.joao@condominio.com.br');
-      setSenha('SenhaSegura123!');
-    } else {
-      setIdentificador('mariana.fernandes@email.com');
-      setSenha('SenhaSegura123!');
-    }
+    setIdentificador('');
+    setSenha('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
+
+    if (!identificador.trim() || !senha.trim()) {
+      setErrorMessage('Por favor, informe seu identificador (E-mail/CPF) e senha de acesso.');
+      SoundEffects.playError();
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -54,7 +51,7 @@ export default function LoginPage() {
       if (res.success) {
         SoundEffects.playSuccess();
       } else {
-        setErrorMessage(res.message || 'Erro ao autenticar.');
+        setErrorMessage(res.message || 'Credenciais inválidas. Verifique os dados informados.');
         SoundEffects.playError();
       }
     } catch (err) {
@@ -63,11 +60,6 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickLogin = (perfil: PerfilUsuario) => {
-    SoundEffects.playBeep();
-    switchDemoUser(perfil);
   };
 
   return (
@@ -141,7 +133,7 @@ export default function LoginPage() {
                   required
                   value={identificador}
                   onChange={(e) => setIdentificador(e.target.value)}
-                  placeholder={tipoAcesso === 'PORTARIA' ? 'porteiro@condominio.com.br' : 'seu-email@dominio.com'}
+                  placeholder={tipoAcesso === 'PORTARIA' ? 'porteiro@condominio.com.br' : 'seu-email@dominio.com ou CPF'}
                   className="w-full bg-slate-950 text-white text-xs pl-10 pr-4 py-3 rounded-xl border border-slate-700/80 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-600"
                 />
               </div>
@@ -212,44 +204,6 @@ export default function LoginPage() {
                 Cadastrar minha unidade
               </Link>
             </p>
-          </div>
-
-          {/* Atalhos Rápidos para Demonstração / Teste */}
-          <div className="space-y-2 pt-2">
-            <div className="flex items-center gap-2 text-[10px] uppercase font-bold text-slate-500 tracking-wider">
-              <KeyRound className="w-3 h-3 text-amber-400" />
-              Acesso Rápido para Demonstração:
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('PORTEIRO')}
-                className="p-2 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-[10px] font-bold text-slate-300 hover:text-white transition-all text-center"
-              >
-                👮 Porteiro
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('SINDICO')}
-                className="p-2 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-[10px] font-bold text-slate-300 hover:text-white transition-all text-center"
-              >
-                👔 Síndico
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('ADMINISTRADOR')}
-                className="p-2 rounded-lg bg-slate-950 hover:bg-slate-800 border border-slate-800 text-[10px] font-bold text-slate-300 hover:text-white transition-all text-center"
-              >
-                ⚙️ Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('MORADOR')}
-                className="p-2 rounded-lg bg-slate-950 hover:bg-cyan-950/40 border border-slate-800 hover:border-cyan-800/50 text-[10px] font-bold text-cyan-400 transition-all text-center"
-              >
-                🏠 Morador
-              </button>
-            </div>
           </div>
         </div>
 

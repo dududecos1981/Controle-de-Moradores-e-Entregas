@@ -36,60 +36,42 @@ interface AuthContextType {
   login: (identificador: string, senha: string) => Promise<{ success: boolean; message?: string }>;
   registerMorador: (data: RegisterMoradorData) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
-  switchDemoUser: (perfil: PerfilUsuario) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Usuários padrão do sistema (Homologação & Demonstração)
+// Contas de sistema institucionais (Administração, Portaria e Síndico)
 const DEFAULT_SYSTEM_USERS: (UsuarioAuth & { senha_hash: string })[] = [
   {
     id: 'usr-admin-01',
-    nome_completo: 'Carlos Silva (Administrador Geral)',
+    nome_completo: 'Administrador Geral',
     email: 'admin@condominio.com.br',
     cpf: '111.222.333-44',
     telefone: '(11) 98765-4321',
     perfil: 'ADMINISTRADOR',
     senha_hash: 'SenhaSegura123!',
-    avatar_url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80',
     lgpd_termo_aceito: true,
   },
   {
     id: 'usr-porteiro-01',
-    nome_completo: 'João Portaria (Plantão Diurno)',
-    email: 'porteiro.joao@condominio.com.br',
+    nome_completo: 'Portaria Principal',
+    email: 'porteiro@condominio.com.br',
     cpf: '222.333.444-55',
     telefone: '(11) 97654-3210',
     perfil: 'PORTEIRO',
     senha_hash: 'SenhaSegura123!',
-    avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80',
     lgpd_termo_aceito: true,
   },
   {
     id: 'usr-sindico-01',
-    nome_completo: 'Roberto Albuquerque (Síndico)',
-    email: 'sindico.roberto@condominio.com.br',
+    nome_completo: 'Síndico Geral',
+    email: 'sindico@condominio.com.br',
     cpf: '444.555.666-77',
     telefone: '(11) 95432-1098',
     perfil: 'SINDICO',
     unidade_bloco: 'B',
     unidade_numero: 'PH01',
     senha_hash: 'SenhaSegura123!',
-    avatar_url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
-    lgpd_termo_aceito: true,
-  },
-  {
-    id: 'usr-morador-01',
-    nome_completo: 'Mariana Fernandes',
-    email: 'mariana.fernandes@email.com',
-    cpf: '333.444.555-66',
-    telefone: '(11) 96543-2109',
-    perfil: 'MORADOR',
-    unidade_bloco: 'A',
-    unidade_numero: '101',
-    is_responsavel_unidade: true,
-    senha_hash: 'SenhaSegura123!',
-    avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80',
     lgpd_termo_aceito: true,
   },
 ];
@@ -275,33 +257,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/login');
   };
 
-  // Alternador de Usuário Demo para testes em 1 clique
-  const switchDemoUser = (perfil: PerfilUsuario) => {
-    const demoUser = DEFAULT_SYSTEM_USERS.find((u) => u.perfil === perfil) || DEFAULT_SYSTEM_USERS[0];
-    const authUser: UsuarioAuth = {
-      id: demoUser.id,
-      nome_completo: demoUser.nome_completo,
-      email: demoUser.email,
-      cpf: demoUser.cpf,
-      telefone: demoUser.telefone,
-      perfil: demoUser.perfil,
-      unidade_bloco: demoUser.unidade_bloco,
-      unidade_numero: demoUser.unidade_numero,
-      is_responsavel_unidade: demoUser.is_responsavel_unidade,
-      avatar_url: demoUser.avatar_url,
-      lgpd_termo_aceito: demoUser.lgpd_termo_aceito,
-    };
-
-    setCurrentUser(authUser);
-    localStorage.setItem('portaria_auth_user', JSON.stringify(authUser));
-
-    if (authUser.perfil === 'MORADOR') {
-      router.push('/morador');
-    } else {
-      router.push('/');
-    }
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -310,7 +265,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         login,
         registerMorador,
         logout,
-        switchDemoUser,
       }}
     >
       {children}

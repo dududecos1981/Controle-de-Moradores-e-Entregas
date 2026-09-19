@@ -15,7 +15,7 @@ import FeedEncomendasScreen from '@/screens/FeedEncomendasScreen';
 import CriarConviteScreen from '@/screens/CriarConviteScreen';
 import PerfilMoradorScreen from '@/screens/PerfilMoradorScreen';
 import { EncomendaMorador, ConviteVisitante } from '@/lib/types';
-import { INITIAL_MORADOR_ENCOMENDAS, INITIAL_CONVITES } from '@/lib/mobileStore';
+import { INITIAL_MORADOR_ENCOMENDAS, INITIAL_CONVITES, CURRENT_MORADOR } from '@/lib/mobileStore';
 
 export default function MobileAppPage() {
   const [activeTab, setActiveTab] = useState<TabType>('encomendas');
@@ -74,7 +74,7 @@ export default function MobileAppPage() {
           ...enc,
           status: 'RETIRADO' as const,
           data_retirada: new Date().toISOString(),
-          retirado_por_nome: 'Mariana Fernandes (App Morador)',
+          retirado_por_nome: `${CURRENT_MORADOR.nome} (App Morador)`,
           assinatura_digital_url: signatureUrl || undefined,
         };
       }
@@ -112,14 +112,14 @@ export default function MobileAppPage() {
       <header className="px-5 py-3.5 bg-[#101726]/80 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between z-20 shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white font-bold text-xs shadow-md shadow-indigo-500/20">
-            MF
+            MR
           </div>
           <div>
             <h2 className="text-xs font-bold text-white flex items-center gap-1.5">
-              Mariana Fernandes
+              {CURRENT_MORADOR.nome}
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             </h2>
-            <p className="text-[10px] text-slate-400 font-medium">Bloco A • Apto 101</p>
+            <p className="text-[10px] text-slate-400 font-medium">Bloco {CURRENT_MORADOR.bloco} • Apto {CURRENT_MORADOR.apartamento}</p>
           </div>
         </div>
 

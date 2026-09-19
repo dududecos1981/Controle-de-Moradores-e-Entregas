@@ -14,6 +14,7 @@ import {
   Plus,
 } from 'lucide-react';
 import { ConviteVisitante } from '@/lib/types';
+import { CURRENT_MORADOR } from '@/lib/mobileStore';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
 
 interface CriarConviteScreenProps {
@@ -40,7 +41,7 @@ export default function CriarConviteScreen({
     if (!nomeConvidado.trim()) return;
 
     const tokenRandom = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const token = `QR-${tipoVisita}-${tokenRandom}-APT101`;
+    const token = `QR-${tipoVisita}-${tokenRandom}-APT${CURRENT_MORADOR.apartamento}`;
 
     const novoConvite: ConviteVisitante = {
       id: `cnv-${Date.now()}`,
@@ -68,9 +69,9 @@ export default function CriarConviteScreen({
   // Gerador de mensagem formatada para o WhatsApp
   const generateWhatsAppUrl = (invite: ConviteVisitante) => {
     const formattedDate = new Date(invite.data_valida + 'T00:00:00').toLocaleDateString('pt-BR');
-    const msg = `🎟️ *CONVITE DE ACESSO - CONDOMÍNIO RESIDENCIAL JARDINS*\n\n` +
+    const msg = `🎟️ *CONVITE DE ACESSO - CONDOMÍNIO RESIDENCIAL*\n\n` +
       `Olá *${invite.nome_convidado}*!\n` +
-      `Você recebeu uma autorização de entrada para a unidade *Bloco A - Apto 101* (Moradora: Mariana Fernandes).\n\n` +
+      `Você recebeu uma autorização de entrada para a unidade *Bloco ${CURRENT_MORADOR.bloco} - Apto ${CURRENT_MORADOR.apartamento}* (Morador: ${CURRENT_MORADOR.nome}).\n\n` +
       `📅 *Data de Validade:* ${formattedDate}\n` +
       `⏰ *Horário Permitido:* ${invite.hora_inicio} às ${invite.hora_fim}\n` +
       `🔐 *Token de Acesso Portaria:* \`${invite.qr_code_token}\`\n\n` +

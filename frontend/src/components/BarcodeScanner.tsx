@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { ScanBarcode, QrCode, Camera, Zap, CheckCircle2, AlertCircle, Sparkles, Volume2 } from 'lucide-react';
+import { ScanBarcode, QrCode, Camera, CheckCircle2 } from 'lucide-react';
 import { sounds } from '@/lib/SoundEffects';
 
 interface BarcodeScannerProps {
@@ -99,11 +99,6 @@ export default function BarcodeScanner({ onScan, currentCode = '' }: BarcodeScan
     setIsCameraActive(false);
   };
 
-  // Simulação de leitura de teste
-  const simulateBarcodePreset = (preset: string) => {
-    handleSuccessfulScan(preset);
-  };
-
   return (
     <div className="w-full bg-[#111827] border border-slate-800 rounded-2xl p-5 shadow-xl">
       {/* Cabeçalho do Scanner */}
@@ -188,31 +183,6 @@ export default function BarcodeScanner({ onScan, currentCode = '' }: BarcodeScan
               <QrCode className="w-4 h-4 text-slate-500" />
             )}
           </div>
-        </div>
-      </div>
-
-      {/* Presets Rápidos para Demonstração e Testes */}
-      <div className="mt-4 pt-3 border-t border-slate-800/60">
-        <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1 mb-2">
-          <Sparkles className="w-3 h-3 text-amber-400" />
-          Códigos de Teste Rápido:
-        </span>
-        <div className="flex flex-wrap gap-1.5">
-          {[
-            { label: '📦 Amazon (AMZ-889)', val: 'PKG-AMZ-2026-88941' },
-            { label: '⚡ Mercado Livre (MLB)', val: 'PKG-ML-2026-99214' },
-            { label: '🛍️ Shopee Express', val: 'PKG-SHP-2026-33100' },
-            { label: '📬 Sedex Correios', val: 'BR9876543210BR' },
-          ].map((item) => (
-            <button
-              key={item.val}
-              type="button"
-              onClick={() => simulateBarcodePreset(item.val)}
-              className="text-[11px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-2.5 py-1 rounded-lg border border-slate-700/80 transition-all active:scale-95"
-            >
-              {item.label}
-            </button>
-          ))}
         </div>
       </div>
     </div>

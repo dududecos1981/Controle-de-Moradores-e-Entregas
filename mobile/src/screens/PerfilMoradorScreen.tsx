@@ -10,11 +10,11 @@ export default function PerfilMoradorScreen() {
       {/* Cartão de Identificação do Morador */}
       <div className="p-6 rounded-3xl bg-gradient-to-tr from-indigo-900/60 to-slate-900 border border-indigo-500/30 shadow-xl text-center space-y-3">
         <div className="w-16 h-16 rounded-full bg-indigo-500/20 border-2 border-indigo-400 text-indigo-300 font-black text-xl flex items-center justify-center mx-auto shadow-lg shadow-indigo-500/20">
-          MF
+          {CURRENT_MORADOR.nome.split(' ').map((n) => n[0]).join('').slice(0, 2)}
         </div>
         <div>
           <h3 className="text-base font-bold text-white">{CURRENT_MORADOR.nome}</h3>
-          <p className="text-xs text-indigo-300 font-medium">Moradora Titular</p>
+          <p className="text-xs text-indigo-300 font-medium">Morador Titular</p>
         </div>
 
         <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-950/70 border border-indigo-800/50 rounded-full text-xs font-bold text-indigo-200">
