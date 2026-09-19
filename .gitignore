@@ -26,17 +26,19 @@ backend/uploads/
 uploads/
 */uploads/
 
-# Variáveis de Ambiente e Segredos (CRÍTICO: Não subir para o GitHub!)
+# Variáveis de Ambiente e Segredos (CRÍTICO: Nunca subir para o GitHub!)
 .env
+.env*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-backend/.env
-frontend/.env
-mobile/.env
-*.env
-!*.env.example
+**/.env
+**/.env.*
+**/.env.local
+**/.env*.local
+!**/.env.example
+
 
 # Chaves e Certificados
 *.pem
