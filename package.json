@@ -3,16 +3,20 @@
   "version": "1.0.0",
   "private": true,
   "description": "Sistema de Gestão de Portaria, Pessoas e Entregas (Full-Stack 100% Gratuito)",
+  "workspaces": [
+    "frontend",
+    "mobile"
+  ],
   "scripts": {
-    "dev": "npm run dev --prefix frontend",
-    "build": "npm run build --prefix frontend",
-    "start": "npm run start --prefix frontend",
-    "dev:frontend": "npm run dev --prefix frontend",
-    "build:frontend": "npm run build --prefix frontend",
-    "start:frontend": "npm run start --prefix frontend",
-    "dev:mobile": "npm run dev --prefix mobile",
-    "build:mobile": "npm run build --prefix mobile",
-    "start:mobile": "npm run start --prefix mobile",
+    "dev": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspace=frontend",
+    "start": "npm run start --workspace=frontend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "build:frontend": "npm run build --workspace=frontend",
+    "start:frontend": "npm run start --workspace=frontend",
+    "dev:mobile": "npm run dev --workspace=mobile",
+    "build:mobile": "npm run build --workspace=mobile",
+    "start:mobile": "npm run start --workspace=mobile",
     "dev:backend": "npm run start:dev --prefix backend",
     "build:backend": "npm run build --prefix backend"
   }
