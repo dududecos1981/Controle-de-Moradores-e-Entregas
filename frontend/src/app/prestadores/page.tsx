@@ -31,6 +31,7 @@ import {
   Check,
   AlertTriangle,
   Printer,
+  Upload,
 } from 'lucide-react';
 import { PrestadorServico, RegistroAcesso } from '@/lib/types';
 import { INITIAL_PRESTADORES, INITIAL_UNIDADES, INITIAL_MORADORES } from '@/lib/store';
@@ -719,14 +720,90 @@ export default function PrestadoresPage() {
 
             {/* Form */}
             <form onSubmit={handleSavePrestador} className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
-              {/* Seção 1: Dados do Profissional & Empresa */}
+              {/* Seção 1: Foto Biométrica & Identificação do Técnico */}
               <div className="space-y-4">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
                   <Briefcase className="w-4 h-4" />
-                  1. Dados do Técnico & Empresa
+                  1. Foto Biométrica & Dados do Técnico
                 </h4>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Box de Captura de Foto com Webcam / Upload */}
+                <div className="p-4 bg-gradient-to-r from-amber-950/40 via-slate-900 to-slate-900 border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-center gap-4">
+                  <div className="relative group shrink-0">
+                    <div className="w-24 h-24 rounded-2xl bg-slate-950 border-2 border-dashed border-amber-500/50 overflow-hidden flex items-center justify-center shadow-lg">
+                      {formData.foto_url ? (
+                        <img src={formData.foto_url} alt="Foto Prestador" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-slate-500 text-center p-2">
+                          <Camera className="w-7 h-7 text-amber-400 mb-1 animate-pulse" />
+                          <span className="text-[9px] font-bold text-slate-400">Sem Foto</span>
+                        </div>
+                      )}
+                    </div>
+                    {formData.foto_url && (
+                      <span className="absolute -top-1.5 -right-1.5 bg-emerald-500 text-white rounded-full p-1 shadow-md">
+                        <Check className="w-3 h-3" />
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex-1 space-y-2 text-center sm:text-left w-full">
+                    <div>
+                      <h5 className="text-xs font-bold text-white flex items-center justify-center sm:justify-start gap-1.5">
+                        <Camera className="w-4 h-4 text-amber-400" />
+                        Foto Biométrica / Identificação Facial
+                      </h5>
+                      <p className="text-[11px] text-slate-400">
+                        Capture a foto do técnico pela webcam da portaria ou selecione uma imagem do computador.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setIsWebcamOpen(true)}
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white text-xs font-bold rounded-xl shadow-md shadow-amber-600/20 transition-all active:scale-95"
+                      >
+                        <Camera className="w-3.5 h-3.5" />
+                        {formData.foto_url ? 'Recapturar via Webcam' : 'Capturar Foto via Webcam'}
+                      </button>
+
+                      <label className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 cursor-pointer transition-colors">
+                        <Upload className="w-3.5 h-3.5 text-cyan-400" />
+                        Carregar Imagem
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (ev) => {
+                                if (ev.target?.result) {
+                                  setFormData({ ...formData, foto_url: ev.target.result as string });
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+
+                      {formData.foto_url && (
+                        <button
+                          type="button"
+                          onClick={() => setFormData({ ...formData, foto_url: '' })}
+                          className="px-2.5 py-2 text-[11px] text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 rounded-xl transition-colors"
+                        >
+                          Remover
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                   <div className="space-y-1.5 sm:col-span-2">
                     <label className="text-xs font-semibold text-slate-300">Nome Completo do Prestador *</label>
                     <input
@@ -878,43 +955,7 @@ export default function PrestadoresPage() {
                 </div>
               </div>
 
-              {/* Seção 4: Foto Biométrica */}
-              <div className="space-y-3 pt-4 border-t border-slate-800">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
-                  <Camera className="w-4 h-4" />
-                  4. Foto Biométrica / Identificação
-                </h4>
-
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 rounded-2xl bg-slate-900 border border-slate-700 overflow-hidden flex items-center justify-center shrink-0">
-                    {formData.foto_url ? (
-                      <img src={formData.foto_url} alt="Foto Prestador" className="w-full h-full object-cover" />
-                    ) : (
-                      <HardHat className="w-8 h-8 text-slate-600" />
-                    )}
-                  </div>
-
-                  <div className="flex flex-col gap-2 flex-1">
-                    <button
-                      type="button"
-                      onClick={() => setIsWebcamOpen(true)}
-                      className="flex items-center justify-center gap-2 px-3.5 py-2 bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold rounded-xl transition-colors w-full sm:w-auto"
-                    >
-                      <Camera className="w-3.5 h-3.5" />
-                      Capturar Foto via Webcam
-                    </button>
-                    <input
-                      type="text"
-                      placeholder="Ou cole a URL da imagem..."
-                      value={formData.foto_url}
-                      onChange={(e) => setFormData({ ...formData, foto_url: e.target.value })}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-300 focus:outline-none focus:border-amber-500"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Seção 5: Observações */}
+              {/* Seção 4: Observações */}
               <div className="space-y-2 pt-4 border-t border-slate-800">
                 <label className="text-xs font-semibold text-slate-300">Observações & Escopo do Serviço</label>
                 <textarea
