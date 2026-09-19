@@ -263,6 +263,8 @@ export default function ColaboradoresPage() {
         return { label: 'Zelador / Manutenção', bg: 'bg-emerald-950/80 text-emerald-300 border-emerald-800/50' };
       case 'PORTEIRO':
         return { label: 'Porteiro / Operador', bg: 'bg-blue-950/80 text-blue-300 border-blue-800/50' };
+      case 'OUTRO':
+        return { label: 'Outro Cargo / Função', bg: 'bg-cyan-950/80 text-cyan-300 border-cyan-800/50' };
       default:
         return { label: cargo, bg: 'bg-slate-800 text-slate-300 border-slate-700' };
     }
@@ -280,6 +282,8 @@ export default function ColaboradoresPage() {
         return 'Noite (22h-06h)';
       case '12X36':
         return 'Escala 12x36';
+      case 'OUTRO':
+        return 'Outro Turno / Personalizado';
       default:
         return turno;
     }
@@ -386,6 +390,7 @@ export default function ColaboradoresPage() {
             <option value="GERENTE">Gerentes Prediais</option>
             <option value="SINDICO">Síndicos</option>
             <option value="ADMINISTRADOR">Administradores</option>
+            <option value="OUTRO">Outros Cargos</option>
           </select>
 
           <select
@@ -679,6 +684,7 @@ export default function ColaboradoresPage() {
                     <option value="GERENTE">🏢 Gerente Predial / Gestor</option>
                     <option value="SINDICO">👔 Síndico Geral</option>
                     <option value="ADMINISTRADOR">⚙️ Administrador do Sistema</option>
+                    <option value="OUTRO">✨ Outros Cargos / Funções</option>
                   </select>
                 </div>
 
@@ -694,6 +700,7 @@ export default function ColaboradoresPage() {
                     <option value="TARDE">Plantão Tarde (14h às 22h)</option>
                     <option value="NOITE">Plantão Noturno (22h às 06h)</option>
                     <option value="12X36">Escala 12x36 (Dia Sim / Dia Não)</option>
+                    <option value="OUTRO">⏳ Outro Turno / Personalizado</option>
                   </select>
                 </div>
               </div>

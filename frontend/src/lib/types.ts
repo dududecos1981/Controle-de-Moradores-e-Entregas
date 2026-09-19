@@ -81,12 +81,25 @@ export type PerfilUsuario =
   | 'SINDICO'
   | 'ZELADOR'
   | 'PORTEIRO'
+  | 'OUTRO'
   | 'MORADOR'
   | 'PRESTADOR_SERVICO';
 
-export type CargoColaborador = 'ADMINISTRADOR' | 'GERENTE' | 'SINDICO' | 'ZELADOR' | 'PORTEIRO';
+export type CargoColaborador =
+  | 'ADMINISTRADOR'
+  | 'GERENTE'
+  | 'SINDICO'
+  | 'ZELADOR'
+  | 'PORTEIRO'
+  | 'OUTRO';
 
-export type TurnoTrabalho = 'MANHA' | 'TARDE' | 'NOITE' | '12X36' | 'COMERCIAL';
+export type TurnoTrabalho =
+  | 'COMERCIAL'
+  | 'MANHA'
+  | 'TARDE'
+  | 'NOITE'
+  | '12X36'
+  | 'OUTRO';
 
 export interface Colaborador {
   id: string;

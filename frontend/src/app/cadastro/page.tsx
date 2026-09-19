@@ -387,6 +387,7 @@ export default function CadastroPage() {
                       <option value="GERENTE">🏢 Gerente Predial / Gestor</option>
                       <option value="SINDICO">👔 Síndico Geral</option>
                       <option value="ADMINISTRADOR">⚙️ Administrador do Sistema</option>
+                      <option value="OUTRO">✨ Outros Cargos / Funções</option>
                     </select>
                   </div>
 
@@ -405,6 +406,7 @@ export default function CadastroPage() {
                       <option value="TARDE">Plantão Tarde (14h às 22h)</option>
                       <option value="NOITE">Plantão Noturno (22h às 06h)</option>
                       <option value="12X36">Escala 12x36 (Dia Sim / Dia Não)</option>
+                      <option value="OUTRO">⏳ Outro Turno / Personalizado</option>
                     </select>
                   </div>
                 </div>
