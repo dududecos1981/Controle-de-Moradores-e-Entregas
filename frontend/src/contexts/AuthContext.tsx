@@ -2,9 +2,10 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { PerfilUsuario, CargoColaborador, TurnoTrabalho, Colaborador } from '@/lib/types';
 import { INITIAL_UNIDADES } from '@/lib/store';
 
-export type PerfilUsuario = 'ADMINISTRADOR' | 'SINDICO' | 'PORTEIRO' | 'MORADOR';
+export type { PerfilUsuario };
 
 export interface UsuarioAuth {
   id: string;
@@ -30,11 +31,24 @@ export interface RegisterMoradorData {
   senha: string;
 }
 
+export interface RegisterColaboradorData {
+  nome_completo: string;
+  cpf: string;
+  email: string;
+  telefone: string;
+  cargo: CargoColaborador;
+  turno?: TurnoTrabalho;
+  senha: string;
+  foto_url?: string;
+  matricula?: string;
+}
+
 interface AuthContextType {
   currentUser: UsuarioAuth | null;
   isLoading: boolean;
   login: (identificador: string, senha: string) => Promise<{ success: boolean; message?: string }>;
   registerMorador: (data: RegisterMoradorData) => Promise<{ success: boolean; message?: string }>;
+  registerColaborador: (data: RegisterColaboradorData) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
 }
 
@@ -100,15 +114,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const cleanId = identificador.trim().toLowerCase();
     const cleanDigits = identificador.replace(/\D/g, '');
 
-    // Busca nas contas padrão
-    let found = DEFAULT_SYSTEM_USERS.find(
+    // 1. Busca nas contas padrão institucionais
+    let found: any = DEFAULT_SYSTEM_USERS.find(
       (u) =>
         (u.email.toLowerCase() === cleanId ||
           (u.cpf && u.cpf.replace(/\D/g, '') === cleanDigits)) &&
         u.senha_hash === senha,
     );
 
-    // Busca nas contas de moradores cadastradas dinamicamente
+    // 2. Busca nas contas de colaboradores cadastradas
+    if (!found) {
+      const savedColabs = localStorage.getItem('portaria_colaboradores');
+      if (savedColabs) {
+        try {
+          const list = JSON.parse(savedColabs);
+          const colabCadastrado = list.find(
+            (c: any) =>
+              (c.email?.toLowerCase() === cleanId ||
+                (c.cpf && c.cpf.replace(/\D/g, '') === cleanDigits)) &&
+              c.senha_hash === senha,
+          );
+          if (colabCadastrado) {
+            found = {
+              id: colabCadastrado.id,
+              nome_completo: colabCadastrado.nome_completo,
+              email: colabCadastrado.email,
+              cpf: colabCadastrado.cpf,
+              telefone: colabCadastrado.telefone,
+              perfil: colabCadastrado.cargo as PerfilUsuario,
+              avatar_url: colabCadastrado.foto_url,
+              lgpd_termo_aceito: colabCadastrado.lgpd_termo_aceito,
+            };
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+
+    // 3. Busca nas contas de moradores cadastradas dinamicamente
     if (!found) {
       const savedMoradores = localStorage.getItem('portaria_moradores_contas');
       if (savedMoradores) {
@@ -142,11 +186,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       email: found.email,
       cpf: found.cpf,
       telefone: found.telefone,
-      perfil: found.perfil,
+      perfil: found.perfil || found.cargo,
       unidade_bloco: found.unidade_bloco,
       unidade_numero: found.unidade_numero,
       is_responsavel_unidade: found.is_responsavel_unidade,
-      avatar_url: found.avatar_url,
+      avatar_url: found.avatar_url || found.foto_url,
       lgpd_termo_aceito: found.lgpd_termo_aceito,
     };
 
@@ -160,6 +204,66 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.push('/');
     }
 
+    return { success: true };
+  };
+
+  // Cadastro de Colaborador (Administrador, Gerente, Síndico, Zelador, Porteiro)
+  const registerColaborador = async (data: RegisterColaboradorData): Promise<{ success: boolean; message?: string }> => {
+    if (!data.nome_completo || !data.email || !data.cpf || !data.senha || !data.cargo) {
+      return { success: false, message: 'Preencha todos os campos obrigatórios.' };
+    }
+
+    const cleanCpf = data.cpf.replace(/\D/g, '');
+    const cleanEmail = data.email.trim().toLowerCase();
+
+    // Verifica duplicidade
+    const savedColabs = localStorage.getItem('portaria_colaboradores');
+    const listColabs: (Colaborador & { senha_hash: string })[] = savedColabs ? JSON.parse(savedColabs) : [];
+
+    const exists = listColabs.some(
+      (c) => c.email.toLowerCase() === cleanEmail || c.cpf.replace(/\D/g, '') === cleanCpf,
+    );
+
+    if (exists) {
+      return { success: false, message: 'Já existe um colaborador cadastrado com este E-mail ou CPF.' };
+    }
+
+    const newId = `usr-colab-${Date.now()}`;
+    const novoColaborador: Colaborador & { senha_hash: string } = {
+      id: newId,
+      nome_completo: data.nome_completo.trim(),
+      cpf: data.cpf,
+      email: cleanEmail,
+      telefone: data.telefone,
+      cargo: data.cargo,
+      turno: data.turno || 'COMERCIAL',
+      status: 'ATIVO',
+      foto_url: data.foto_url,
+      matricula: data.matricula || `MAT-${Date.now().toString().slice(-4)}`,
+      data_admissao: new Date().toISOString(),
+      lgpd_termo_aceito: true,
+      senha_hash: data.senha,
+    };
+
+    listColabs.push(novoColaborador);
+    localStorage.setItem('portaria_colaboradores', JSON.stringify(listColabs));
+
+    // Efetua login automático como colaborador
+    const authUser: UsuarioAuth = {
+      id: novoColaborador.id,
+      nome_completo: novoColaborador.nome_completo,
+      email: novoColaborador.email,
+      cpf: novoColaborador.cpf,
+      telefone: novoColaborador.telefone,
+      perfil: novoColaborador.cargo,
+      avatar_url: novoColaborador.foto_url,
+      lgpd_termo_aceito: true,
+    };
+
+    setCurrentUser(authUser);
+    localStorage.setItem('portaria_auth_user', JSON.stringify(authUser));
+
+    router.push('/');
     return { success: true };
   };
 
@@ -264,6 +368,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         login,
         registerMorador,
+        registerColaborador,
         logout,
       }}
     >

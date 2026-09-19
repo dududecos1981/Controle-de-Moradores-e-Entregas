@@ -77,11 +77,15 @@ export default function Navbar() {
                 {currentUser.nome_completo.split(' ')[0]}
               </p>
               <span
-                className={`text-[9px] font-extrabold px-1.5 py-0.2 rounded border ${
+                className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded border ${
                   currentUser.perfil === 'ADMINISTRADOR'
                     ? 'bg-purple-950 text-purple-300 border-purple-800/40'
+                    : currentUser.perfil === 'GERENTE'
+                    ? 'bg-amber-950 text-amber-300 border-amber-800/40'
                     : currentUser.perfil === 'SINDICO'
                     ? 'bg-indigo-950 text-indigo-300 border-indigo-800/40'
+                    : currentUser.perfil === 'ZELADOR'
+                    ? 'bg-emerald-950 text-emerald-300 border-emerald-800/40'
                     : currentUser.perfil === 'PORTEIRO'
                     ? 'bg-blue-950 text-blue-300 border-blue-800/40'
                     : 'bg-cyan-950 text-cyan-300 border-cyan-800/40'

@@ -21,20 +21,26 @@ import {
   Camera,
   Upload,
   Check,
+  UserCog,
+  Briefcase,
+  Clock,
+  KeyRound,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { INITIAL_UNIDADES } from '@/lib/store';
+import { CargoColaborador, TurnoTrabalho } from '@/lib/types';
 import WebcamCapture from '@/components/WebcamCapture';
 import SoundEffects from '@/lib/SoundEffects';
 
 export default function CadastroPage() {
-  const { registerMorador } = useAuth();
+  const { registerMorador, registerColaborador } = useAuth();
+  const [tipoCadastro, setTipoCadastro] = useState<'MORADOR' | 'COLABORADOR'>('MORADOR');
+
+  // Campos compartilhados
   const [nome, setNome] = useState('');
   const [cpf, setCpf] = useState('');
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
-  const [bloco, setBloco] = useState('A');
-  const [apartamento, setApartamento] = useState('101');
   const [senha, setSenha] = useState('');
   const [confirmSenha, setConfirmSenha] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -44,6 +50,15 @@ export default function CadastroPage() {
   const [isLgpdModalOpen, setIsLgpdModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Campos específicos de Morador
+  const [bloco, setBloco] = useState('A');
+  const [apartamento, setApartamento] = useState('101');
+
+  // Campos específicos de Colaborador
+  const [cargo, setCargo] = useState<CargoColaborador>('PORTEIRO');
+  const [turno, setTurno] = useState<TurnoTrabalho>('COMERCIAL');
+  const [matricula, setMatricula] = useState('');
 
   // Formatação de CPF
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,21 +117,42 @@ export default function CadastroPage() {
     setIsLoading(true);
 
     try {
-      const res = await registerMorador({
-        nome_completo: nome,
-        cpf,
-        email,
-        telefone,
-        unidade_bloco: bloco,
-        unidade_numero: apartamento,
-        senha,
-      });
+      if (tipoCadastro === 'MORADOR') {
+        const res = await registerMorador({
+          nome_completo: nome,
+          cpf,
+          email,
+          telefone,
+          unidade_bloco: bloco,
+          unidade_numero: apartamento,
+          senha,
+        });
 
-      if (res.success) {
-        SoundEffects.playSuccess();
+        if (res.success) {
+          SoundEffects.playSuccess();
+        } else {
+          setErrorMessage(res.message || 'Erro ao realizar cadastro de morador.');
+          SoundEffects.playError();
+        }
       } else {
-        setErrorMessage(res.message || 'Erro ao realizar cadastro.');
-        SoundEffects.playError();
+        const res = await registerColaborador({
+          nome_completo: nome,
+          cpf,
+          email,
+          telefone,
+          cargo,
+          turno,
+          matricula: matricula.trim() || undefined,
+          foto_url: fotoUrl || undefined,
+          senha,
+        });
+
+        if (res.success) {
+          SoundEffects.playSuccess();
+        } else {
+          setErrorMessage(res.message || 'Erro ao cadastrar colaborador.');
+          SoundEffects.playError();
+        }
       }
     } catch (err) {
       setErrorMessage('Ocorreu um erro inesperado ao salvar os dados.');
@@ -128,7 +164,7 @@ export default function CadastroPage() {
 
   return (
     <div className="min-h-screen bg-[#070A11] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(6,182,212,0.15),rgba(255,255,255,0))] flex flex-col items-center justify-center p-4 sm:p-6 select-none">
-      <div className="w-full max-w-lg space-y-4">
+      <div className="w-full max-w-xl space-y-4">
         {/* Barra Superior de Retorno */}
         <div className="flex items-center justify-between">
           <Link
@@ -139,7 +175,7 @@ export default function CadastroPage() {
             Voltar para o Login
           </Link>
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-            Portal do Morador
+            {tipoCadastro === 'MORADOR' ? 'Portal do Morador' : 'Gestão & Equipe'}
           </span>
         </div>
 
@@ -158,15 +194,55 @@ export default function CadastroPage() {
           <div className="text-center space-y-1.5 pt-1">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 p-0.5 shadow-lg shadow-cyan-500/20">
               <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-                <UserPlus className="w-6 h-6 text-cyan-400" />
+                {tipoCadastro === 'MORADOR' ? (
+                  <UserPlus className="w-6 h-6 text-cyan-400" />
+                ) : (
+                  <UserCog className="w-6 h-6 text-indigo-400" />
+                )}
               </div>
             </div>
             <h1 className="text-xl font-black tracking-tight text-white">
-              Cadastro de Morador
+              {tipoCadastro === 'MORADOR' ? 'Cadastro de Morador' : 'Cadastro de Colaborador / Equipe'}
             </h1>
-            <p className="text-xs text-slate-400 max-w-xs mx-auto">
-              Vincule sua unidade residencial para acompanhar entregas e emitir convites com QR Code.
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              {tipoCadastro === 'MORADOR'
+                ? 'Vincule sua unidade residencial para acompanhar entregas e emitir convites.'
+                : 'Cadastre administradores, gerentes, zeladores ou porteiros no condomínio.'}
             </p>
+          </div>
+
+          {/* Seletor de Tipo de Cadastro */}
+          <div className="grid grid-cols-2 p-1 bg-slate-950 rounded-2xl border border-slate-800 gap-1">
+            <button
+              type="button"
+              onClick={() => {
+                setTipoCadastro('MORADOR');
+                setErrorMessage(null);
+              }}
+              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                tipoCadastro === 'MORADOR'
+                  ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/30'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Building className="w-3.5 h-3.5" />
+              Sou Morador
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setTipoCadastro('COLABORADOR');
+                setErrorMessage(null);
+              }}
+              className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                tipoCadastro === 'COLABORADOR'
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <UserCog className="w-3.5 h-3.5" />
+              Colaborador / Equipe
+            </button>
           </div>
 
           {errorMessage && (
@@ -177,12 +253,66 @@ export default function CadastroPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Foto Biométrica do Morador (Opcional) */}
+            {/* Se for Colaborador: Seleção de Cargo e Turno */}
+            {tipoCadastro === 'COLABORADOR' && (
+              <div className="p-3.5 bg-slate-950/80 rounded-2xl border border-slate-800 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                      <Briefcase className="w-3.5 h-3.5 text-indigo-400" />
+                      Cargo / Função
+                    </label>
+                    <select
+                      value={cargo}
+                      onChange={(e) => setCargo(e.target.value as CargoColaborador)}
+                      className="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-indigo-500 cursor-pointer"
+                    >
+                      <option value="PORTEIRO">👮 Porteiro / Operador de Portaria</option>
+                      <option value="ZELADOR">🔧 Zelador / Manutenção</option>
+                      <option value="GERENTE">🏢 Gerente Predial / Gestor</option>
+                      <option value="SINDICO">👔 Síndico Geral</option>
+                      <option value="ADMINISTRADOR">⚙️ Administrador do Sistema</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-indigo-400" />
+                      Turno / Escala
+                    </label>
+                    <select
+                      value={turno}
+                      onChange={(e) => setTurno(e.target.value as TurnoTrabalho)}
+                      className="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-indigo-500 cursor-pointer"
+                    >
+                      <option value="COMERCIAL">Horário Comercial (08h às 17h)</option>
+                      <option value="MANHA">Plantão Manhã (06h às 14h)</option>
+                      <option value="TARDE">Plantão Tarde (14h às 22h)</option>
+                      <option value="NOITE">Plantão Noturno (22h às 06h)</option>
+                      <option value="12X36">Escala 12x36 (Dia Sim / Dia Não)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-300">Matrícula ou Registro Profissional (Opcional)</label>
+                  <input
+                    type="text"
+                    value={matricula}
+                    onChange={(e) => setMatricula(e.target.value)}
+                    placeholder="Ex: MAT-2026-088"
+                    className="w-full bg-slate-900 text-white text-xs px-3 py-2 rounded-xl border border-slate-700 outline-none focus:border-indigo-500 placeholder:text-slate-600 font-mono"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Foto Biométrica (Webcam & Upload) */}
             <div className="p-3.5 bg-slate-950/80 border border-slate-800 rounded-2xl flex items-center gap-3.5">
               <div className="relative shrink-0">
                 <div className="w-14 h-14 rounded-xl bg-slate-900 border border-slate-700 overflow-hidden flex items-center justify-center">
                   {fotoUrl ? (
-                    <img src={fotoUrl} alt="Foto Morador" className="w-full h-full object-cover" />
+                    <img src={fotoUrl} alt="Foto" className="w-full h-full object-cover" />
                   ) : (
                     <User className="w-6 h-6 text-slate-600" />
                   )}
@@ -197,7 +327,7 @@ export default function CadastroPage() {
               <div className="flex-1 space-y-1">
                 <p className="text-xs font-bold text-white flex items-center gap-1.5">
                   <Camera className="w-3.5 h-3.5 text-cyan-400" />
-                  Foto do Morador (Opcional)
+                  Foto de Identificação Biométrica
                 </p>
                 <div className="flex flex-wrap items-center gap-2">
                   <button
@@ -252,7 +382,7 @@ export default function CadastroPage() {
                   required
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
-                  placeholder="Ex: Mariana Fernandes"
+                  placeholder="Nome e Sobrenome"
                   className="w-full bg-slate-950 text-white text-xs pl-10 pr-4 py-2.5 rounded-xl border border-slate-700/80 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all placeholder:text-slate-600"
                 />
               </div>
@@ -290,7 +420,9 @@ export default function CadastroPage() {
 
             {/* E-mail */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300">E-mail Principal</label>
+              <label className="text-xs font-bold text-slate-300">
+                {tipoCadastro === 'MORADOR' ? 'E-mail Principal' : 'E-mail Institucional / Corporativo'}
+              </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
@@ -298,45 +430,47 @@ export default function CadastroPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="seu-email@dominio.com"
+                  placeholder={tipoCadastro === 'MORADOR' ? 'seu-email@dominio.com' : 'colaborador@condominio.com.br'}
                   className="w-full bg-slate-950 text-white text-xs pl-10 pr-4 py-2.5 rounded-xl border border-slate-700/80 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all placeholder:text-slate-600"
                 />
               </div>
             </div>
 
-            {/* Seleção de Unidade Residencial */}
-            <div className="grid grid-cols-2 gap-3 p-3 bg-slate-950/60 rounded-2xl border border-slate-800/80">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-400">Bloco / Torre</label>
-                <select
-                  value={bloco}
-                  onChange={(e) => setBloco(e.target.value)}
-                  className="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-500 cursor-pointer"
-                >
-                  <option value="A">Bloco A</option>
-                  <option value="B">Bloco B</option>
-                </select>
-              </div>
+            {/* Seletor de Unidade Residencial (Apenas Morador) */}
+            {tipoCadastro === 'MORADOR' && (
+              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-950/60 rounded-2xl border border-slate-800/80">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-400">Bloco / Torre</label>
+                  <select
+                    value={bloco}
+                    onChange={(e) => setBloco(e.target.value)}
+                    className="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-500 cursor-pointer"
+                  >
+                    <option value="A">Bloco A</option>
+                    <option value="B">Bloco B</option>
+                  </select>
+                </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-400">Apartamento</label>
-                <select
-                  value={apartamento}
-                  onChange={(e) => setApartamento(e.target.value)}
-                  className="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-500 cursor-pointer"
-                >
-                  <option value="101">Apto 101</option>
-                  <option value="102">Apto 102</option>
-                  <option value="201">Apto 201</option>
-                  <option value="PH01">Cobertura PH01</option>
-                </select>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-400">Apartamento</label>
+                  <select
+                    value={apartamento}
+                    onChange={(e) => setApartamento(e.target.value)}
+                    className="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-500 cursor-pointer"
+                  >
+                    <option value="101">Apto 101</option>
+                    <option value="102">Apto 102</option>
+                    <option value="201">Apto 201</option>
+                    <option value="PH01">Cobertura PH01</option>
+                  </select>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Senha e Confirmação */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-300">Senha</label>
+                <label className="text-xs font-bold text-slate-300">Senha de Acesso</label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
@@ -394,7 +528,7 @@ export default function CadastroPage() {
                 className="w-4 h-4 mt-0.5 rounded border-slate-700 bg-slate-900 text-cyan-600 focus:ring-cyan-500 cursor-pointer"
               />
               <label htmlFor="lgpd" className="text-xs text-slate-400 leading-relaxed cursor-pointer select-none">
-                Concordo com o armazenamento seguro dos meus dados para controle de acesso predial, notificações de encomendas e convites conforme a{' '}
+                Concordo com o armazenamento seguro dos meus dados para controle de acesso predial, auditoria de segurança e notificações conforme a{' '}
                 <button
                   type="button"
                   onClick={() => setIsLgpdModalOpen(true)}
@@ -420,7 +554,11 @@ export default function CadastroPage() {
                 disabled={isLoading}
                 className="flex-[2] py-3 px-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
               >
-                {isLoading ? 'Cadastrando Unidade...' : 'Concluir Cadastro & Entrar'}
+                {isLoading
+                  ? 'Salvando Cadastro...'
+                  : tipoCadastro === 'MORADOR'
+                  ? 'Concluir Cadastro de Morador'
+                  : 'Cadastrar Colaborador & Entrar'}
               </button>
             </div>
           </form>

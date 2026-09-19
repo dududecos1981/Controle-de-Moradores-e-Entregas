@@ -75,7 +75,34 @@ export interface ContatoEmergencia {
   parentesco: string;
 }
 
-export type PerfilUsuario = 'ADMINISTRADOR' | 'SINDICO' | 'PORTEIRO' | 'MORADOR' | 'PRESTADOR_SERVICO';
+export type PerfilUsuario =
+  | 'ADMINISTRADOR'
+  | 'GERENTE'
+  | 'SINDICO'
+  | 'ZELADOR'
+  | 'PORTEIRO'
+  | 'MORADOR'
+  | 'PRESTADOR_SERVICO';
+
+export type CargoColaborador = 'ADMINISTRADOR' | 'GERENTE' | 'SINDICO' | 'ZELADOR' | 'PORTEIRO';
+
+export type TurnoTrabalho = 'MANHA' | 'TARDE' | 'NOITE' | '12X36' | 'COMERCIAL';
+
+export interface Colaborador {
+  id: string;
+  nome_completo: string;
+  cpf: string;
+  email: string;
+  telefone: string;
+  cargo: CargoColaborador;
+  turno: TurnoTrabalho;
+  status: 'ATIVO' | 'INATIVO' | 'FERIAS' | 'BLOQUEADO';
+  matricula?: string;
+  foto_url?: string;
+  data_admissao: string;
+  observacoes?: string;
+  lgpd_termo_aceito?: boolean;
+}
 
 export interface Morador {
   id: string;

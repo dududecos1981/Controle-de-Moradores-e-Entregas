@@ -16,7 +16,9 @@ import {
   Lock,
   HardHat,
   Wrench,
+  UserCog,
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const NAV_ITEMS = [
   {
@@ -50,6 +52,12 @@ const NAV_ITEMS = [
     badge: 'LGPD',
   },
   {
+    name: 'Colaboradores & Equipe',
+    href: '/colaboradores',
+    icon: UserCog,
+    badge: 'Gestão',
+  },
+  {
     name: 'Assistente IA & Avisos',
     href: '/comunicados-ia',
     icon: Sparkles,
@@ -59,6 +67,14 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { currentUser } = useAuth();
+
+  const getInitials = (name?: string) => {
+    if (!name) return 'OP';
+    const parts = name.trim().split(' ');
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  };
 
   return (
     <aside className="w-64 bg-[#111827] border-r border-slate-800 flex flex-col justify-between shrink-0 min-h-screen">
@@ -113,7 +129,7 @@ export default function Sidebar() {
         </nav>
       </div>
 
-      {/* Rodapé / Status da Infraestrutura Neon */}
+      {/* Rodapé / Status do Operador Logado */}
       <div className="p-4 border-t border-slate-800/80 bg-slate-950/40 space-y-3">
         <div className="flex items-center justify-between text-xs">
           <span className="flex items-center gap-1.5 text-slate-400 font-medium">
@@ -126,12 +142,20 @@ export default function Sidebar() {
         </div>
 
         <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-900 border border-slate-800">
-          <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs">
-            JP
+          <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-xs overflow-hidden shrink-0">
+            {currentUser?.avatar_url ? (
+              <img src={currentUser.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+            ) : (
+              getInitials(currentUser?.nome_completo)
+            )}
           </div>
-          <div className="overflow-hidden">
-            <p className="text-xs font-semibold text-white truncate">João Portaria</p>
-            <p className="text-[10px] text-slate-400 truncate">Plantão Diurno • Portaria 1</p>
+          <div className="overflow-hidden flex-1">
+            <p className="text-xs font-semibold text-white truncate">
+              {currentUser?.nome_completo || 'Operador Central'}
+            </p>
+            <p className="text-[10px] text-indigo-400 font-bold truncate">
+              {currentUser?.perfil || 'PORTARIA'} • Sistema Conectado
+            </p>
           </div>
         </div>
       </div>
