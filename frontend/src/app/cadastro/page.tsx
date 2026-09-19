@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Shield,
   User,
@@ -26,6 +27,12 @@ import {
   Clock,
   KeyRound,
   Sparkles,
+  Share2,
+  Copy,
+  ExternalLink,
+  MessageSquare,
+  Send,
+  Smartphone,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { CargoColaborador, TurnoTrabalho } from '@/lib/types';
@@ -33,7 +40,8 @@ import WebcamCapture from '@/components/WebcamCapture';
 import SoundEffects from '@/lib/SoundEffects';
 
 export default function CadastroPage() {
-  const { registerMorador, registerColaborador } = useAuth();
+  const router = useRouter();
+  const { registerMorador, registerColaborador, login } = useAuth();
   const [tipoCadastro, setTipoCadastro] = useState<'MORADOR' | 'COLABORADOR'>('MORADOR');
 
   // Campos compartilhados
@@ -59,6 +67,19 @@ export default function CadastroPage() {
   const [cargo, setCargo] = useState<CargoColaborador>('PORTEIRO');
   const [turno, setTurno] = useState<TurnoTrabalho>('COMERCIAL');
   const [matricula, setMatricula] = useState('');
+
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [registeredData, setRegisteredData] = useState<{
+    nome: string;
+    cpf: string;
+    email: string;
+    telefone: string;
+    tipo: 'MORADOR' | 'COLABORADOR';
+    bloco?: string;
+    apartamento?: string;
+    cargo?: CargoColaborador;
+  } | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   // Formatação de CPF
   const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -118,36 +139,61 @@ export default function CadastroPage() {
 
     try {
       if (tipoCadastro === 'MORADOR') {
-        const res = await registerMorador({
-          nome_completo: nome,
-          cpf,
-          email,
-          telefone,
-          unidade_bloco: bloco,
-          unidade_numero: apartamento,
-          senha,
-        });
+        const res = await registerMorador(
+          {
+            nome_completo: nome,
+            cpf,
+            email,
+            telefone,
+            unidade_bloco: bloco,
+            unidade_numero: apartamento,
+            senha,
+          },
+          true,
+        );
 
         if (res.success) {
+          setRegisteredData({
+            nome,
+            cpf,
+            email,
+            telefone,
+            tipo: 'MORADOR',
+            bloco,
+            apartamento,
+          });
+          setIsSuccessModalOpen(true);
           SoundEffects.playSuccess();
         } else {
           setErrorMessage(res.message || 'Erro ao realizar cadastro de morador.');
           SoundEffects.playError();
         }
       } else {
-        const res = await registerColaborador({
-          nome_completo: nome,
-          cpf,
-          email,
-          telefone,
-          cargo,
-          turno,
-          matricula: matricula.trim() || undefined,
-          foto_url: fotoUrl || undefined,
-          senha,
-        });
+        const res = await registerColaborador(
+          {
+            nome_completo: nome,
+            cpf,
+            email,
+            telefone,
+            cargo,
+            turno,
+            matricula: matricula.trim() || undefined,
+            foto_url: fotoUrl || undefined,
+            senha,
+          },
+          true,
+        );
 
         if (res.success) {
+          setRegisteredData({
+            nome,
+            cpf,
+            email,
+            telefone,
+            tipo: 'COLABORADOR',
+            cargo,
+          });
+          setIsSuccessModalOpen(true);
           SoundEffects.playSuccess();
         } else {
           setErrorMessage(res.message || 'Erro ao cadastrar colaborador.');
@@ -160,6 +206,75 @@ export default function CadastroPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getAppLoginUrl = () => {
+    if (typeof window !== 'undefined') {
+      return `${window.location.origin}/login`;
+    }
+    return 'http://localhost:3000/login';
+  };
+
+  // Gerador de link do WhatsApp
+  const handleSendWhatsapp = () => {
+    if (!registeredData) return;
+    const cleanPhone = registeredData.telefone.replace(/\D/g, '');
+    const appUrl = getAppLoginUrl();
+
+    const perfilTexto =
+      registeredData.tipo === 'MORADOR'
+        ? `Morador(a) - Bloco ${registeredData.bloco} / Apto ${registeredData.apartamento}`
+        : `Colaborador(a) - ${registeredData.cargo}`;
+
+    const text =
+      `🏢 *CONDOMÍNIO RESIDENCIAL JARDINS - ACESSO LIBERADO!*\n\n` +
+      `Olá *${registeredData.nome}*! 👋\n` +
+      `Seu cadastro foi realizado com sucesso como *${perfilTexto}*.\n\n` +
+      `📲 *Link de Acesso ao Aplicativo:*\n` +
+      `${appUrl}\n\n` +
+      `🔑 *Seus Dados de Acesso:*\n` +
+      `• *Identificador:* ${registeredData.email}\n` +
+      `• *CPF:* ${registeredData.cpf}\n` +
+      `• *Senha:* (A senha cadastrada por você)\n\n` +
+      `✨ Através deste link você pode acompanhar encomendas, emitir convites com QR Code para visitantes e gerenciar seus acessos.\n\n` +
+      `Guarde este link nos favoritos para acesso rápido!`;
+
+    const url = cleanPhone
+      ? `https://api.whatsapp.com/send?phone=55${cleanPhone}&text=${encodeURIComponent(text)}`
+      : `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+
+    window.open(url, '_blank');
+    SoundEffects.playBeep();
+  };
+
+  // Gerador de e-mail formatado
+  const handleSendEmail = () => {
+    if (!registeredData) return;
+    const appUrl = getAppLoginUrl();
+    const subject = `🔐 Link de Acesso ao Sistema de Portaria - Condomínio Residencial Jardins`;
+    const body =
+      `Olá ${registeredData.nome},\n\n` +
+      `Seu cadastro foi concluído com sucesso no Sistema Unificado de Portaria e Moradores (SUPE PRO)!\n\n` +
+      `Para acessar sua conta e utilizar o aplicativo, utilize o link direto:\n` +
+      `${appUrl}\n\n` +
+      `Identificador de Login:\n` +
+      `E-mail: ${registeredData.email}\n` +
+      `CPF: ${registeredData.cpf}\n\n` +
+      `Caso tenha dúvidas, procure a administração da portaria.\n\n` +
+      `Atenciosamente,\n` +
+      `Administração do Condomínio Residencial Jardins`;
+
+    window.open(`mailto:${registeredData.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+    SoundEffects.playBeep();
+  };
+
+  // Copiar link para área de transferência
+  const handleCopyLink = () => {
+    const appUrl = getAppLoginUrl();
+    navigator.clipboard.writeText(appUrl);
+    setCopiedLink(true);
+    SoundEffects.playBeep();
+    setTimeout(() => setCopiedLink(false), 2500);
   };
 
   return (
@@ -634,7 +749,7 @@ export default function CadastroPage() {
             </button>
             <h3 className="text-sm font-bold text-white mb-4 flex items-center gap-2">
               <Camera className="w-4 h-4 text-cyan-400" />
-              Captura de Foto do Morador
+              Captura de Foto Biométrica
             </h3>
             <WebcamCapture
               onPhotoCaptured={(dataUrl) => {
@@ -643,6 +758,125 @@ export default function CadastroPage() {
               }}
               currentPhotoUrl={fotoUrl}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Cadastro & Disparo de Links (WhatsApp e E-mail) */}
+      {isSuccessModalOpen && registeredData && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-[#0F172A] border border-slate-700/80 rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5 relative animate-scale-up">
+            {/* Header de Celebração */}
+            <div className="text-center space-y-2">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-cyan-500 p-0.5 shadow-xl shadow-emerald-500/20">
+                <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
+                  <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                </div>
+              </div>
+              <h2 className="text-xl font-black text-white">
+                Cadastro Realizado com Sucesso!
+              </h2>
+              <p className="text-xs text-slate-300 max-w-sm mx-auto leading-relaxed">
+                Os dados de <strong className="text-white">{registeredData.nome}</strong> foram salvos no sistema do condomínio.
+              </p>
+            </div>
+
+            {/* Cartão de Disparo WhatsApp */}
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-950/50 to-slate-900 border border-emerald-800/60 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-emerald-400">
+                  <Smartphone className="w-4 h-4" />
+                  <span className="text-xs font-bold">Enviar Link via WhatsApp</span>
+                </div>
+                <span className="text-[10px] font-mono text-emerald-300 bg-emerald-950 px-2 py-0.5 rounded-full border border-emerald-700/50 font-bold">
+                  {registeredData.telefone}
+                </span>
+              </div>
+              <p className="text-[11px] text-slate-300">
+                Dispare a mensagem pronta com o link de acesso e credenciais de login diretamente para o WhatsApp cadastrado:
+              </p>
+              <button
+                type="button"
+                onClick={handleSendWhatsapp}
+                className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 active:scale-98"
+              >
+                <Send className="w-3.5 h-3.5" />
+                Enviar Link no WhatsApp ({registeredData.telefone})
+              </button>
+            </div>
+
+            {/* Cartão de Disparo E-mail */}
+            <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-indigo-400">
+                  <Mail className="w-4 h-4" />
+                  <span className="text-xs font-bold">Notificação por E-mail</span>
+                </div>
+                <span className="text-[10px] font-mono text-slate-300 truncate max-w-[180px]" title={registeredData.email}>
+                  {registeredData.email}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-slate-300">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0 animate-ping" />
+                <span>Link e instruções de acesso preparados para envio.</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleSendEmail}
+                className="w-full py-2 px-3 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl border border-slate-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <Mail className="w-3.5 h-3.5 text-indigo-400" />
+                Abrir / Reenviar no seu E-mail
+              </button>
+            </div>
+
+            {/* Copiar Link Rápido */}
+            <div className="space-y-1.5 pt-1">
+              <label className="text-[11px] font-bold text-slate-400">Link Direto de Acesso ao Aplicativo:</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={getAppLoginUrl()}
+                  className="w-full bg-slate-950 text-slate-300 text-xs px-3 py-2 rounded-xl border border-slate-800 font-mono outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-all flex items-center gap-1.5 shrink-0"
+                >
+                  {copiedLink ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-emerald-400">Copiado!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-cyan-400" />
+                      <span>Copiar</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Botão de Conclusão e Entrada no Sistema */}
+            <div className="pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={async () => {
+                  if (senha) {
+                    await login(registeredData.email, senha);
+                  } else {
+                    router.push(registeredData.tipo === 'MORADOR' ? '/morador' : '/');
+                  }
+                }}
+                className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white text-xs font-black rounded-xl shadow-xl shadow-blue-600/30 transition-all flex items-center justify-center gap-2"
+              >
+                <span>Acessar o Painel Agora</span>
+                <ArrowLeft className="w-4 h-4 rotate-180" />
+              </button>
+            </div>
           </div>
         </div>
       )}

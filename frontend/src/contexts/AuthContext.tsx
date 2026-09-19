@@ -47,8 +47,8 @@ interface AuthContextType {
   currentUser: UsuarioAuth | null;
   isLoading: boolean;
   login: (identificador: string, senha: string) => Promise<{ success: boolean; message?: string }>;
-  registerMorador: (data: RegisterMoradorData) => Promise<{ success: boolean; message?: string }>;
-  registerColaborador: (data: RegisterColaboradorData) => Promise<{ success: boolean; message?: string }>;
+  registerMorador: (data: RegisterMoradorData, skipAutoRedirect?: boolean) => Promise<{ success: boolean; message?: string }>;
+  registerColaborador: (data: RegisterColaboradorData, skipAutoRedirect?: boolean) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
 }
 
@@ -208,7 +208,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Cadastro de Colaborador (Administrador, Gerente, Síndico, Zelador, Porteiro)
-  const registerColaborador = async (data: RegisterColaboradorData): Promise<{ success: boolean; message?: string }> => {
+  const registerColaborador = async (
+    data: RegisterColaboradorData,
+    skipAutoRedirect: boolean = false,
+  ): Promise<{ success: boolean; message?: string }> => {
     if (!data.nome_completo || !data.email || !data.cpf || !data.senha || !data.cargo) {
       return { success: false, message: 'Preencha todos os campos obrigatórios.' };
     }
@@ -248,7 +251,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     listColabs.push(novoColaborador);
     localStorage.setItem('portaria_colaboradores', JSON.stringify(listColabs));
 
-    // Efetua login automático como colaborador
+    // Efetua login automático como colaborador se não for pular redirecionamento
     const authUser: UsuarioAuth = {
       id: novoColaborador.id,
       nome_completo: novoColaborador.nome_completo,
@@ -260,15 +263,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       lgpd_termo_aceito: true,
     };
 
-    setCurrentUser(authUser);
-    localStorage.setItem('portaria_auth_user', JSON.stringify(authUser));
+    if (!skipAutoRedirect) {
+      setCurrentUser(authUser);
+      localStorage.setItem('portaria_auth_user', JSON.stringify(authUser));
+      router.push('/');
+    }
 
-    router.push('/');
     return { success: true };
   };
 
   // Cadastro de Novo Morador
-  const registerMorador = async (data: RegisterMoradorData): Promise<{ success: boolean; message?: string }> => {
+  const registerMorador = async (
+    data: RegisterMoradorData,
+    skipAutoRedirect: boolean = false,
+  ): Promise<{ success: boolean; message?: string }> => {
     if (!data.nome_completo || !data.email || !data.cpf || !data.senha) {
       return { success: false, message: 'Preencha todos os campos obrigatórios.' };
     }
@@ -333,7 +341,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     localStorage.setItem('portaria_moradores', JSON.stringify(listGeral));
 
-    // Efetua login automático
+    // Efetua login automático se não for pular redirecionamento
     const authUser: UsuarioAuth = {
       id: novoUsuario.id,
       nome_completo: novoUsuario.nome_completo,
@@ -347,10 +355,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       lgpd_termo_aceito: true,
     };
 
-    setCurrentUser(authUser);
-    localStorage.setItem('portaria_auth_user', JSON.stringify(authUser));
+    if (!skipAutoRedirect) {
+      setCurrentUser(authUser);
+      localStorage.setItem('portaria_auth_user', JSON.stringify(authUser));
+      router.push('/morador');
+    }
 
-    router.push('/morador');
     return { success: true };
   };
 
