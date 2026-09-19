@@ -154,6 +154,10 @@ class SoundEffects {
   playAlert() {
     this.playErrorTone();
   }
+
+  playError() {
+    this.playErrorTone();
+  }
 }
 
 export const sounds = new SoundEffects();
