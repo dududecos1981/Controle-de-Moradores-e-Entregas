@@ -209,4 +209,100 @@ export interface PrestadorServico {
   observacoes?: string;
 }
 
+export type CategoriaOcorrencia = 'BARULHO' | 'MANUTENCAO' | 'SEGURANCA' | 'LIMPEZA' | 'CONVIVENCIA' | 'GARAGEM' | 'OUTRO';
+export type StatusOcorrencia = 'ABERTO' | 'EM_ANALISE' | 'EM_ANDAMENTO' | 'RESOLVIDO' | 'CANCELADO';
+
+export interface Ocorrencia {
+  id: string;
+  unidade_id: string;
+  unidade_bloco: string;
+  unidade_numero: string;
+  usuario_id: string;
+  solicitante_nome: string;
+  solicitante_telefone?: string;
+  solicitante_email?: string;
+  titulo: string;
+  descricao: string;
+  categoria: CategoriaOcorrencia;
+  foto_url?: string;
+  status: StatusOcorrencia;
+  resposta_sindico?: string;
+  respondido_por_id?: string;
+  respondido_por_nome?: string;
+  respondido_em?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface AreaComum {
+  id: string;
+  nome: string;
+  descricao?: string;
+  capacidade_maxima: number;
+  taxa_reserva: number;
+  foto_url?: string;
+  regras?: string;
+  status: 'DISPONIVEL' | 'MANUTENCAO' | 'BLOQUEADO';
+}
+
+export type PeriodoReserva = 'MANHA' | 'TARDE' | 'NOITE' | 'INTEGRAL';
+export type StatusReserva = 'SOLICITADO' | 'CONFIRMADO' | 'CANCELADO' | 'CONCLUIDO';
+
+export interface ReservaArea {
+  id: string;
+  area_id: string;
+  area_nome: string;
+  area_foto?: string;
+  area_capacidade?: number;
+  area_taxa?: number;
+  unidade_id: string;
+  unidade_bloco: string;
+  unidade_numero: string;
+  usuario_id: string;
+  solicitante_nome: string;
+  solicitante_telefone?: string;
+  data_reserva: string;
+  periodo: PeriodoReserva;
+  status: StatusReserva;
+  convidados_estimados?: number;
+  observacoes?: string;
+  created_at: string;
+}
+
+export interface VeiculoCompleto {
+  id: string;
+  unidade_id: string;
+  unidade_bloco: string;
+  unidade_numero: string;
+  usuario_id?: string;
+  proprietario_nome?: string;
+  proprietario_telefone?: string;
+  placa: string;
+  marca_modelo: string;
+  cor?: string;
+  tipo: 'CARRO' | 'MOTO' | 'BICICLETA' | 'CAMINHAO' | 'PATINETE' | 'OUTRO';
+  vaga_garagem?: string;
+  ativo: boolean;
+  observacoes?: string;
+  created_at: string;
+}
+
+export interface LogAuditoriaLGPD {
+  id: string;
+  tabela: string;
+  operacao: 'INSERT' | 'UPDATE' | 'DELETE' | 'ANONIMIZACAO_LGPD';
+  registro_id: string;
+  usuario_responsavel_id?: string;
+  usuario_responsavel_nome?: string;
+  usuario_responsavel_email?: string;
+  usuario_contexto?: string;
+  ip_origem?: string;
+  dados_anteriores?: any;
+  dados_novos?: any;
+  campos_alterados?: string[];
+  motivo_operacao?: string;
+  created_at: string;
+}
+
+
 

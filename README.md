@@ -11,7 +11,7 @@ O ecossistema é dividido em três camadas desacopladas e integradas em tempo re
 ```
 Cadastro de Pessoas e Entregas/
 ├── database/                   # 1. Neon Serverless PostgreSQL + RLS + LGPD
-│   ├── schema.sql              # DDL completo, ENUMs, Triggers de Auditoria LGPD & Políticas RLS
+│   ├── schema.sql              # DDL completo (Veículos, Ocorrências, Reservas, Triggers LGPD)
 │   ├── seed.sql                # Dados iniciais para homologação e testes
 │   └── README.md               # Documentação da modelagem relacional e segurança
 │
@@ -26,7 +26,12 @@ Cadastro de Pessoas e Entregas/
 │   │       ├── usuarios/       # Gestão de Moradores, Porteiros e Anonimização LGPD
 │   │       ├── visitantes/     # Visitantes, Prestadores de Serviço e Histórico
 │   │       ├── entregas/       # Registro, Notificações e Baixa de Encomendas
+│   │       ├── veiculos/       # Controle e busca de veículos e vagas de garagem
+│   │       ├── ocorrencias/    # Livro de ocorrências e chamados de manutenção
+│   │       ├── reservas/       # Agendamento e gestão de áreas de lazer
 │   │       ├── agendamentos/   # Pré-autorizações com QR Code
+│   │       ├── lgpd/           # Trilha de auditoria imutável e expurgo
+│   │       ├── events/         # WebSocket Gateway Socket.IO em tempo real
 │   │       └── upload/         # Upload seguro com compressão Sharp (WebP)
 │   └── README.md               # Documentação da API e Swagger Docs
 │
@@ -34,21 +39,27 @@ Cadastro de Pessoas e Entregas/
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── page.tsx            # Dashboard em tempo real com métricas e feed
-│   │   │   ├── encomendas/         # Registro de pacotes com leitor óptico USB/Câmera
+│   │   │   ├── login/              # Tela de login corporativo com troca rápida de perfil
+│   │   │   ├── encomendas/         # Registro de pacotes com leitor óptico e WhatsApp 1-Clique
 │   │   │   ├── visitantes/         # Cadastro ágil de visitantes com foto via Webcam
 │   │   │   ├── moradores/          # Ficha completa de residentes, veículos e LGPD
-│   │   │   ├── comunicados-ia/     # Assistente IA com Google Gemini para avisos e WhatsApp
-│   │   │   └── api/ia/             # Endpoint server-side seguro para chamadas de IA
-│   │   ├── components/             # WebcamCapture, BarcodeScanner, PackageWithdrawalModal
-│   │   └── lib/                    # Web Audio API (bips/shutter), Store e Client API
+│   │   │   ├── veiculos/           # Gestão de veículos e vagas com busca por placa
+│   │   │   ├── ocorrencias/        # Gestão de chamados e pareceres do síndico
+│   │   │   ├── reservas/           # Calendário de áreas comuns e aprovação de eventos
+│   │   │   ├── auditoria-lgpd/     # Trilha de auditoria imutável e expurgo LGPD
+│   │   │   ├── relatorios/         # Central de relatórios com exportação CSV e impressão
+│   │   │   └── comunicados-ia/     # Assistente IA com Google Gemini para avisos e WhatsApp
+│   │   ├── components/             # Sidebar, Navbar, WebcamCapture, BarcodeScanner
+│   │   └── lib/                    # API Client, Socket.IO, WhatsAppNotification, SoundEffects
 │   └── README.md                   # Guia de execução da portaria
 │
 └── mobile/                     # 4. App do Morador Pro (Next.js PWA / Mobile-First)
     ├── src/
     │   ├── app/
-    │   │   └── page.tsx            # Feed de encomendas, QR Code de retirada e convites
-    │   ├── components/             # BottomNav, SignatureCanvas, QRCodeDisplay
-    │   └── screens/                # FeedEncomendasScreen, CriarConviteScreen, PerfilMoradorScreen
+    │   │   ├── page.tsx            # Feed em tempo real, push alerts e assinatura digital
+    │   │   └── login/              # Tela de login para condôminos
+    │   ├── components/             # BottomNav com 6 abas, SignatureCanvas, QRCodeDisplay
+    │   └── screens/                # FeedEncomendas, CriarConvite, Ocorrencias, Reservas, Veiculos, Perfil
     └── README.md                   # Guia do aplicativo do morador
 ```
 

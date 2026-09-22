@@ -92,6 +92,57 @@ DO $$ BEGIN
     );
 EXCEPTION WHEN duplicate_object THEN null; END $$;
 
+DO $$ BEGIN
+    CREATE TYPE tipo_veiculo_enum AS ENUM (
+        'CARRO',
+        'MOTO',
+        'BICICLETA',
+        'CAMINHAO',
+        'PATINETE',
+        'OUTRO'
+    );
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE status_ocorrencia_enum AS ENUM (
+        'ABERTO',
+        'EM_ANALISE',
+        'EM_ANDAMENTO',
+        'RESOLVIDO',
+        'CANCELADO'
+    );
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE categoria_ocorrencia_enum AS ENUM (
+        'BARULHO',
+        'MANUTENCAO',
+        'SEGURANCA',
+        'LIMPEZA',
+        'CONVIVENCIA',
+        'GARAGEM',
+        'OUTRO'
+    );
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE status_reserva_enum AS ENUM (
+        'SOLICITADO',
+        'CONFIRMADO',
+        'CANCELADO',
+        'CONCLUIDO'
+    );
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
+DO $$ BEGIN
+    CREATE TYPE periodo_reserva_enum AS ENUM (
+        'MANHA',
+        'TARDE',
+        'NOITE',
+        'INTEGRAL'
+    );
+EXCEPTION WHEN duplicate_object THEN null; END $$;
+
 -- ------------------------------------------------------------------------------
 -- 3. TABELAS PRINCIPAIS
 -- ------------------------------------------------------------------------------
@@ -253,6 +304,78 @@ CREATE TABLE IF NOT EXISTS entregas (
 COMMENT ON TABLE entregas IS 'Controle de encomendas, pacotes e correspondências recebidas na portaria.';
 COMMENT ON COLUMN entregas.codigo_barras_qrcode IS 'Código de barras de rastreamento do pacote ou QR Code gerado pelo sistema.';
 
+-- Tabela: veiculos
+CREATE TABLE IF NOT EXISTS veiculos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    unidade_id UUID NOT NULL REFERENCES unidades(id) ON DELETE CASCADE,
+    usuario_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    placa VARCHAR(10) NOT NULL,
+    marca_modelo VARCHAR(100) NOT NULL,
+    cor VARCHAR(50),
+    tipo tipo_veiculo_enum NOT NULL DEFAULT 'CARRO',
+    vaga_garagem VARCHAR(30),
+    ativo BOOLEAN NOT NULL DEFAULT TRUE,
+    observacoes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    CONSTRAINT uk_veiculos_placa UNIQUE (placa)
+);
+
+COMMENT ON TABLE veiculos IS 'Cadastro e controle de veículos e vagas de garagem dos moradores e unidades.';
+
+-- Tabela: ocorrencias
+CREATE TABLE IF NOT EXISTS ocorrencias (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    unidade_id UUID NOT NULL REFERENCES unidades(id) ON DELETE CASCADE,
+    usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    titulo VARCHAR(150) NOT NULL,
+    descricao TEXT NOT NULL,
+    categoria categoria_ocorrencia_enum NOT NULL DEFAULT 'OUTRO',
+    foto_url TEXT,
+    status status_ocorrencia_enum NOT NULL DEFAULT 'ABERTO',
+    resposta_sindico TEXT,
+    respondido_por_id UUID REFERENCES usuarios(id) ON DELETE SET NULL,
+    respondido_em TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+
+COMMENT ON TABLE ocorrencias IS 'Livro de ocorrências, chamados de manutenção e relatos de moradores com resposta do síndico.';
+
+-- Tabela: areas_comuns
+CREATE TABLE IF NOT EXISTS areas_comuns (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    nome VARCHAR(100) NOT NULL,
+    descricao TEXT,
+    capacidade_maxima INTEGER NOT NULL DEFAULT 30,
+    taxa_reserva NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
+    foto_url TEXT,
+    regras TEXT,
+    status VARCHAR(20) NOT NULL DEFAULT 'DISPONIVEL',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+
+COMMENT ON TABLE areas_comuns IS 'Espaços comunitários do condomínio disponíveis para reserva (salão de festas, churrasqueira, etc).';
+
+-- Tabela: reservas_areas
+CREATE TABLE IF NOT EXISTS reservas_areas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    area_id UUID NOT NULL REFERENCES areas_comuns(id) ON DELETE RESTRICT,
+    unidade_id UUID NOT NULL REFERENCES unidades(id) ON DELETE CASCADE,
+    usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    data_reserva DATE NOT NULL,
+    periodo periodo_reserva_enum NOT NULL DEFAULT 'NOITE',
+    status status_reserva_enum NOT NULL DEFAULT 'SOLICITADO',
+    convidados_estimados INTEGER,
+    observacoes TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp(),
+    CONSTRAINT uk_reserva_area_data_periodo UNIQUE (area_id, data_reserva, periodo)
+);
+
+COMMENT ON TABLE reservas_areas IS 'Agendamento e reserva das áreas comuns pelos moradores.';
+
 -- ------------------------------------------------------------------------------
 -- 4. TABELA DE AUDITORIA & LGPD
 -- ------------------------------------------------------------------------------
@@ -313,6 +436,23 @@ CREATE INDEX IF NOT EXISTS idx_entregas_status_aguardando ON entregas (unidade_i
 CREATE INDEX IF NOT EXISTS idx_entregas_codigo_rastreio ON entregas (codigo_rastreio) 
     WHERE codigo_rastreio IS NOT NULL;
 
+-- Índices: veiculos
+CREATE INDEX IF NOT EXISTS idx_veiculos_placa ON veiculos (placa);
+CREATE INDEX IF NOT EXISTS idx_veiculos_unidade_id ON veiculos (unidade_id);
+CREATE INDEX IF NOT EXISTS idx_veiculos_usuario_id ON veiculos (usuario_id);
+CREATE INDEX IF NOT EXISTS idx_veiculos_placa_trgm ON veiculos USING gin (placa gin_trgm_ops);
+
+-- Índices: ocorrencias
+CREATE INDEX IF NOT EXISTS idx_ocorrencias_unidade_id ON ocorrencias (unidade_id);
+CREATE INDEX IF NOT EXISTS idx_ocorrencias_usuario_id ON ocorrencias (usuario_id);
+CREATE INDEX IF NOT EXISTS idx_ocorrencias_status ON ocorrencias (status);
+CREATE INDEX IF NOT EXISTS idx_ocorrencias_created_at ON ocorrencias (created_at DESC);
+
+-- Índices: areas_comuns e reservas_areas
+CREATE INDEX IF NOT EXISTS idx_reservas_area_id ON reservas_areas (area_id);
+CREATE INDEX IF NOT EXISTS idx_reservas_unidade_id ON reservas_areas (unidade_id);
+CREATE INDEX IF NOT EXISTS idx_reservas_data_status ON reservas_areas (data_reserva, status);
+
 -- Índices: logs_auditoria_lgpd
 CREATE INDEX IF NOT EXISTS idx_logs_auditoria_tabela_registro ON logs_auditoria_lgpd (tabela, registro_id);
 CREATE INDEX IF NOT EXISTS idx_logs_auditoria_created_at_desc ON logs_auditoria_lgpd (created_at DESC);
@@ -363,6 +503,30 @@ CREATE TRIGGER trg_agendamentos_visita_updated_at
 DROP TRIGGER IF EXISTS trg_entregas_updated_at ON entregas;
 CREATE TRIGGER trg_entregas_updated_at
     BEFORE UPDATE ON entregas
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_set_timestamp_updated_at();
+
+DROP TRIGGER IF EXISTS trg_veiculos_updated_at ON veiculos;
+CREATE TRIGGER trg_veiculos_updated_at
+    BEFORE UPDATE ON veiculos
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_set_timestamp_updated_at();
+
+DROP TRIGGER IF EXISTS trg_ocorrencias_updated_at ON ocorrencias;
+CREATE TRIGGER trg_ocorrencias_updated_at
+    BEFORE UPDATE ON ocorrencias
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_set_timestamp_updated_at();
+
+DROP TRIGGER IF EXISTS trg_areas_comuns_updated_at ON areas_comuns;
+CREATE TRIGGER trg_areas_comuns_updated_at
+    BEFORE UPDATE ON areas_comuns
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_set_timestamp_updated_at();
+
+DROP TRIGGER IF EXISTS trg_reservas_areas_updated_at ON reservas_areas;
+CREATE TRIGGER trg_reservas_areas_updated_at
+    BEFORE UPDATE ON reservas_areas
     FOR EACH ROW
     EXECUTE FUNCTION fn_set_timestamp_updated_at();
 
@@ -497,6 +661,18 @@ CREATE TRIGGER trg_audit_entregas_lgpd
     FOR EACH ROW
     EXECUTE FUNCTION fn_audit_lgpd_trigger();
 
+DROP TRIGGER IF EXISTS trg_audit_veiculos_lgpd ON veiculos;
+CREATE TRIGGER trg_audit_veiculos_lgpd
+    AFTER INSERT OR UPDATE OR DELETE ON veiculos
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_audit_lgpd_trigger();
+
+DROP TRIGGER IF EXISTS trg_audit_ocorrencias_lgpd ON ocorrencias;
+CREATE TRIGGER trg_audit_ocorrencias_lgpd
+    AFTER INSERT OR UPDATE OR DELETE ON ocorrencias
+    FOR EACH ROW
+    EXECUTE FUNCTION fn_audit_lgpd_trigger();
+
 -- ------------------------------------------------------------------------------
 -- 8. PROCEDURE / FUNÇÃO DE CONFORMIDADE LGPD: DIREITO AO ESQUECIMENTO / ANONIMIZAÇÃO
 -- ------------------------------------------------------------------------------
@@ -600,6 +776,10 @@ ALTER TABLE visitantes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE entregas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE agendamentos_visita ENABLE ROW LEVEL SECURITY;
 ALTER TABLE logs_auditoria_lgpd ENABLE ROW LEVEL SECURITY;
+ALTER TABLE veiculos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ocorrencias ENABLE ROW LEVEL SECURITY;
+ALTER TABLE areas_comuns ENABLE ROW LEVEL SECURITY;
+ALTER TABLE reservas_areas ENABLE ROW LEVEL SECURITY;
 
 -- 9.2 Políticas de Segurança: unidades
 DROP POLICY IF EXISTS p_unidades_select ON unidades;
@@ -672,4 +852,58 @@ DROP POLICY IF EXISTS p_audit_admin_select ON logs_auditoria_lgpd;
 CREATE POLICY p_audit_admin_select ON logs_auditoria_lgpd
     FOR SELECT
     USING (fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO'));
+
+-- 9.8 Políticas de Segurança: veiculos
+DROP POLICY IF EXISTS p_veiculos_select ON veiculos;
+CREATE POLICY p_veiculos_select ON veiculos
+    FOR SELECT
+    USING (
+        fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO', 'PORTEIRO')
+        OR unidade_id IN (SELECT unidade_id FROM usuarios WHERE id = fn_current_user_id())
+    );
+
+DROP POLICY IF EXISTS p_veiculos_mod ON veiculos;
+CREATE POLICY p_veiculos_mod ON veiculos
+    FOR ALL
+    USING (
+        fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO', 'PORTEIRO')
+        OR unidade_id IN (SELECT unidade_id FROM usuarios WHERE id = fn_current_user_id())
+    );
+
+-- 9.9 Políticas de Segurança: ocorrencias
+DROP POLICY IF EXISTS p_ocorrencias_select ON ocorrencias;
+CREATE POLICY p_ocorrencias_select ON ocorrencias
+    FOR SELECT
+    USING (
+        fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO', 'PORTEIRO')
+        OR usuario_id = fn_current_user_id()
+    );
+
+DROP POLICY IF EXISTS p_ocorrencias_mod ON ocorrencias;
+CREATE POLICY p_ocorrencias_mod ON ocorrencias
+    FOR ALL
+    USING (
+        fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO', 'PORTEIRO')
+        OR usuario_id = fn_current_user_id()
+    );
+
+-- 9.10 Políticas de Segurança: areas_comuns & reservas_areas
+DROP POLICY IF EXISTS p_areas_comuns_select ON areas_comuns;
+CREATE POLICY p_areas_comuns_select ON areas_comuns FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS p_reservas_select ON reservas_areas;
+CREATE POLICY p_reservas_select ON reservas_areas
+    FOR SELECT
+    USING (
+        fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO', 'PORTEIRO')
+        OR usuario_id = fn_current_user_id()
+    );
+
+DROP POLICY IF EXISTS p_reservas_mod ON reservas_areas;
+CREATE POLICY p_reservas_mod ON reservas_areas
+    FOR ALL
+    USING (
+        fn_current_user_perfil() IN ('ADMINISTRADOR', 'SINDICO', 'PORTEIRO')
+        OR usuario_id = fn_current_user_id()
+    );
 

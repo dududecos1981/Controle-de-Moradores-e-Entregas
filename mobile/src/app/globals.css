@@ -4,7 +4,12 @@
 
 @layer base {
   body {
-    @apply bg-[#090D16] text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white;
+    @apply bg-[#070A11] text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white relative min-h-screen;
+    background-image: linear-gradient(to bottom, rgba(7, 10, 17, 0.85), rgba(9, 13, 22, 0.95)), url('/images/building_bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
   }
 }
 

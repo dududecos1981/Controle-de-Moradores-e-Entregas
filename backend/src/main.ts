@@ -65,6 +65,9 @@ async function bootstrap() {
     .addTag('Visitantes', 'Cadastro de visitantes, prestadores de serviços e histórico de acessos')
     .addTag('Agendamentos de Visita', 'Controle de pré-autorizações e validação de QR Code na portaria')
     .addTag('Entregas', 'Recebimento, notificação e baixa de encomendas')
+    .addTag('Veículos', 'Controle e busca de veículos e vagas de garagem')
+    .addTag('Ocorrências', 'Livro de ocorrências e chamados de manutenção predial')
+    .addTag('Reservas & Áreas Comuns', 'Agendamento e controle de áreas de lazer')
     .addTag('Uploads', 'Upload seguro e compressão de imagens via Sharp (WebP)')
     .addTag('LGPD', 'Direito ao esquecimento, auditoria e expurgo de dados pessoais')
     .build();

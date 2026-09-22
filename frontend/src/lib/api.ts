@@ -7,12 +7,31 @@ export interface ApiResponse<T> {
   limit?: number;
 }
 
+export interface UserSession {
+  id: string;
+  nome_completo: string;
+  email: string;
+  perfil: 'ADMINISTRADOR' | 'SINDICO' | 'PORTEIRO' | 'MORADOR';
+  unidade_id?: string;
+  unidade_bloco?: string;
+  unidade_numero?: string;
+}
+
 class ApiService {
   private token: string | null = null;
+  private currentUser: UserSession | null = null;
 
   constructor() {
     if (typeof window !== 'undefined') {
       this.token = localStorage.getItem('auth_token');
+      const savedUser = localStorage.getItem('auth_user');
+      if (savedUser) {
+        try {
+          this.currentUser = JSON.parse(savedUser);
+        } catch (e) {
+          this.currentUser = null;
+        }
+      }
     }
   }
 
@@ -25,6 +44,38 @@ class ApiService {
         localStorage.removeItem('auth_token');
       }
     }
+  }
+
+  getToken(): string | null {
+    return this.token;
+  }
+
+  setUser(user: UserSession | null) {
+    this.currentUser = user;
+    if (typeof window !== 'undefined') {
+      if (user) {
+        localStorage.setItem('auth_user', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('auth_user');
+      }
+    }
+  }
+
+  getUser(): UserSession | null {
+    if (!this.currentUser && typeof window !== 'undefined') {
+      const saved = localStorage.getItem('auth_user');
+      if (saved) {
+        try {
+          this.currentUser = JSON.parse(saved);
+        } catch (e) {}
+      }
+    }
+    return this.currentUser;
+  }
+
+  logout() {
+    this.setToken(null);
+    this.setUser(null);
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -127,6 +178,96 @@ class ApiService {
     });
   }
 
+  async deleteMorador(id: string) {
+    return this.request<any>(`/usuarios/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Veículos
+  async getVeiculos(params?: Record<string, any>) {
+    const query = new URLSearchParams(params).toString();
+    return this.request<any>(`/veiculos${query ? `?${query}` : ''}`);
+  }
+
+  async getVeiculoByPlaca(placa: string) {
+    return this.request<any>(`/veiculos/placa/${encodeURIComponent(placa)}`);
+  }
+
+  async createVeiculo(data: any) {
+    return this.request<any>('/veiculos', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateVeiculo(id: string, data: any) {
+    return this.request<any>(`/veiculos/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async deleteVeiculo(id: string) {
+    return this.request<any>(`/veiculos/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Ocorrências & Manutenção
+  async getOcorrencias(params?: Record<string, any>) {
+    const query = new URLSearchParams(params).toString();
+    return this.request<any>(`/ocorrencias${query ? `?${query}` : ''}`);
+  }
+
+  async getOcorrenciaById(id: string) {
+    return this.request<any>(`/ocorrencias/${id}`);
+  }
+
+  async createOcorrencia(data: any) {
+    return this.request<any>('/ocorrencias', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async responderOcorrencia(id: string, data: { resposta_sindico: string; status: string }) {
+    return this.request<any>(`/ocorrencias/${id}/responder`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Áreas Comuns & Reservas
+  async getAreasComuns() {
+    return this.request<any>('/reservas/areas');
+  }
+
+  async getReservas(params?: Record<string, any>) {
+    const query = new URLSearchParams(params).toString();
+    return this.request<any>(`/reservas${query ? `?${query}` : ''}`);
+  }
+
+  async createReserva(data: any) {
+    return this.request<any>('/reservas', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateReservaStatus(id: string, status: string) {
+    return this.request<any>(`/reservas/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  // LGPD & Auditoria
+  async getAuditoriaLogs(params?: Record<string, any>) {
+    const query = new URLSearchParams(params).toString();
+    return this.request<any>(`/lgpd/auditoria${query ? `?${query}` : ''}`);
+  }
+
   async anonimizarMorador(id: string, motivo?: string) {
     return this.request<any>(`/lgpd/anonimizar/${id}`, {
       method: 'POST',
@@ -134,9 +275,9 @@ class ApiService {
     });
   }
 
-  async deleteMorador(id: string) {
-    return this.request<any>(`/usuarios/${id}`, {
-      method: 'DELETE',
+  async executarExpurgoLGPD(dias?: number) {
+    return this.request<any>(`/lgpd/executar-expurgo${dias ? `?dias=${dias}` : ''}`, {
+      method: 'POST',
     });
   }
 
@@ -149,7 +290,6 @@ class ApiService {
     detalhes: string;
     tom?: string;
   }) {
-    // Chamada à API Route interna de IA (Next.js server-side)
     const response = await fetch('/api/ia/gerar-comunicado', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -169,10 +309,34 @@ class ApiService {
     });
     if (res?.accessToken) {
       this.setToken(res.accessToken);
+      if (res.user) {
+        this.setUser(res.user);
+      }
+    }
+    return res;
+  }
+
+  async register(data: {
+    nome_completo: string;
+    cpf: string;
+    email: string;
+    senha: string;
+    telefone?: string;
+    perfil?: string;
+    unidade_id?: string;
+  }) {
+    const res = await this.request<any>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    if (res?.accessToken) {
+      this.setToken(res.accessToken);
+      if (res.user) {
+        this.setUser(res.user);
+      }
     }
     return res;
   }
 }
 
 export const api = new ApiService();
-

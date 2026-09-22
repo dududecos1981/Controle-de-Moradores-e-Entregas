@@ -18,7 +18,10 @@ Camada de persistência relacional modelada para **PostgreSQL** com otimizaçõe
 3. **`visitantes`**: Visitantes, prestadores de serviço e entregadores com suporte a biometria facial, RG/CPF e placa veicular.
 4. **`agendamentos_visita`**: Pré-autorizações de visita emitidas por moradores com controle de período e QR Code hash.
 5. **`entregas`**: Encomendas recebidas na portaria com código de barras, fotos do pacote/retirada e rastreamento de status.
-6. **`logs_auditoria_lgpd`**: Trilha imutável de auditoria registrando `INSERT`, `UPDATE`, `DELETE` e `ANONIMIZACAO_LGPD` com mascaramento automático de campos ultrassensíveis (como hashes de senhas).
+6. **`veiculos`**: Registro de carros, motos e bicicletas vinculados às unidades e vagas de garagem demarcadas com busca por placa.
+7. **`ocorrencias`**: Livro de ocorrências e chamados de manutenção (barulho, manutenção, segurança, limpeza, outros) com status e parecer administrativo.
+8. **`areas_comuns` & `reservas_areas`**: Gestão e agendamento de áreas de lazer (Espaço Gourmet, Salão Nobre, Quadras) com controle de capacidade, taxas e aprovação.
+9. **`logs_auditoria_lgpd`**: Trilha imutável de auditoria registrando `INSERT`, `UPDATE`, `DELETE` e `ANONIMIZACAO_LGPD` com mascaramento automático de campos ultrassensíveis (como hashes de senhas).
 
 ---
 

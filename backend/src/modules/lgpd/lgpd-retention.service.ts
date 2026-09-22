@@ -164,4 +164,109 @@ export class LgpdRetentionService {
       detalhes,
     };
   }
+
+  /**
+   * Consulta a trilha de auditoria LGPD com filtros e paginação
+   */
+  async getLogsAuditoria(filters: {
+    tabela?: string;
+    operacao?: string;
+    data_inicio?: string;
+    data_fim?: string;
+    busca?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{ data: any[]; total: number; page: number; limit: number }> {
+    const page = Math.max(1, Number(filters.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(filters.limit) || 25));
+    const offset = (page - 1) * limit;
+
+    const conditions: string[] = [];
+    const params: any[] = [];
+    let paramIndex = 1;
+
+    if (filters.tabela) {
+      conditions.push(`l.tabela = $${paramIndex++}`);
+      params.push(filters.tabela);
+    }
+    if (filters.operacao) {
+      conditions.push(`l.operacao = $${paramIndex++}`);
+      params.push(filters.operacao);
+    }
+    if (filters.data_inicio) {
+      conditions.push(`l.created_at >= $${paramIndex++}`);
+      params.push(filters.data_inicio);
+    }
+    if (filters.data_fim) {
+      conditions.push(`l.created_at <= $${paramIndex++}`);
+      params.push(filters.data_fim);
+    }
+    if (filters.busca) {
+      conditions.push(
+        `(l.tabela ILIKE $${paramIndex} OR l.motivo_operacao ILIKE $${paramIndex} OR l.usuario_contexto ILIKE $${paramIndex} OR u.nome_completo ILIKE $${paramIndex})`,
+      );
+      params.push(`%${filters.busca}%`);
+      paramIndex++;
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const countQuery = `
+      SELECT COUNT(*) as total 
+      FROM logs_auditoria_lgpd l
+      LEFT JOIN usuarios u ON u.id = l.usuario_responsavel_id
+      ${whereClause}
+    `;
+    const countRes = await this.databaseService.query(countQuery, params);
+    const total = parseInt(countRes.rows[0]?.total || '0', 10);
+
+    const query = `
+      SELECT 
+        l.id,
+        l.tabela,
+        l.operacao,
+        l.registro_id,
+        l.usuario_responsavel_id,
+        u.nome_completo as usuario_responsavel_nome,
+        u.email as usuario_responsavel_email,
+        l.usuario_contexto,
+        l.ip_origem,
+        l.dados_anteriores,
+        l.dados_novos,
+        l.campos_alterados,
+        l.motivo_operacao,
+        l.created_at
+      FROM logs_auditoria_lgpd l
+      LEFT JOIN usuarios u ON u.id = l.usuario_responsavel_id
+      ${whereClause}
+      ORDER BY l.created_at DESC
+      LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+    `;
+
+    params.push(limit, offset);
+    const result = await this.databaseService.query(query, params);
+
+    return {
+      data: result.rows,
+      total,
+      page,
+      limit,
+    };
+  }
+
+  /**
+   * Executa anonimização de usuário morador (Direito ao Esquecimento - Art 18 LGPD)
+   */
+  async anonimizarUsuario(usuarioId: string, motivo?: string): Promise<{ success: boolean; message: string }> {
+    const motivoFinal = motivo || 'Solicitação expressa do titular conforme Art. 18 da LGPD';
+    await this.databaseService.query(
+      `SELECT fn_anonimizar_usuario_lgpd($1, $2)`,
+      [usuarioId, motivoFinal],
+    );
+
+    return {
+      success: true,
+      message: `Dados do titular anonimizados com sucesso em conformidade com o Artigo 18 da LGPD.`,
+    };
+  }
 }

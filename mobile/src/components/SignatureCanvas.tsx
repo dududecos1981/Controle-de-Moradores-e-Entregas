@@ -77,7 +77,7 @@ export default function SignatureCanvas({
   const stopDrawing = () => {
     if (isDrawing && canvasRef.current) {
       setIsDrawing(false);
-      onSignatureDone(canvasRef.current.toDataURL());
+      onSignatureDone(canvasRef.current.toDataURL('image/webp', 0.8));
     }
   };
 

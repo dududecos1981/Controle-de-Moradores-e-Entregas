@@ -9,39 +9,51 @@ import {
   Building,
   Sparkles,
   Layers,
+  PackageCheck,
+  X,
 } from 'lucide-react';
 import BottomNav, { TabType } from '@/components/BottomNav';
 import FeedEncomendasScreen from '@/screens/FeedEncomendasScreen';
 import CriarConviteScreen from '@/screens/CriarConviteScreen';
 import PerfilMoradorScreen from '@/screens/PerfilMoradorScreen';
-import { EncomendaMorador, ConviteVisitante } from '@/lib/types';
-import { INITIAL_MORADOR_ENCOMENDAS, INITIAL_CONVITES, CURRENT_MORADOR } from '@/lib/mobileStore';
+import OcorrenciasMoradorScreen from '@/screens/OcorrenciasMoradorScreen';
+import ReservasMoradorScreen from '@/screens/ReservasMoradorScreen';
+import VeiculosMoradorScreen from '@/screens/VeiculosMoradorScreen';
+import {
+  EncomendaMorador,
+  ConviteVisitante,
+  OcorrenciaMorador,
+  ReservaMorador,
+} from '@/lib/types';
+import {
+  INITIAL_MORADOR_ENCOMENDAS,
+  INITIAL_CONVITES,
+  INITIAL_OCORRENCIAS_MORADOR,
+  INITIAL_RESERVAS_MORADOR,
+} from '@/lib/mobileStore';
+import { mobileSocket } from '@/lib/socket';
 
 export default function MobileAppPage() {
   const [activeTab, setActiveTab] = useState<TabType>('encomendas');
   const [encomendas, setEncomendas] = useState<EncomendaMorador[]>([]);
   const [convites, setConvites] = useState<ConviteVisitante[]>([]);
+  const [ocorrencias, setOcorrencias] = useState<OcorrenciaMorador[]>([]);
+  const [reservas, setReservas] = useState<ReservaMorador[]>([]);
   const [currentTime, setCurrentTime] = useState<string>('');
+  const [liveAlert, setLiveAlert] = useState<{ title: string; desc: string } | null>(null);
 
   useEffect(() => {
-    // Limpeza automática de dados fictícios legados
-    const isCleaned = localStorage.getItem('morador_data_cleaned_v2');
-    if (!isCleaned) {
-      localStorage.removeItem('morador_encomendas');
-      localStorage.removeItem('morador_convites');
-      localStorage.setItem('morador_data_cleaned_v2', 'true');
-    }
-
     // Carrega dados locais
     const savedEnc = localStorage.getItem('morador_encomendas');
     if (savedEnc) {
       try {
         setEncomendas(JSON.parse(savedEnc));
       } catch (e) {
-        setEncomendas([]);
+        setEncomendas(INITIAL_MORADOR_ENCOMENDAS);
       }
     } else {
-      setEncomendas([]);
+      setEncomendas(INITIAL_MORADOR_ENCOMENDAS);
+      localStorage.setItem('morador_encomendas', JSON.stringify(INITIAL_MORADOR_ENCOMENDAS));
     }
 
     const savedCnv = localStorage.getItem('morador_convites');
@@ -49,11 +61,56 @@ export default function MobileAppPage() {
       try {
         setConvites(JSON.parse(savedCnv));
       } catch (e) {
-        setConvites([]);
+        setConvites(INITIAL_CONVITES);
       }
     } else {
-      setConvites([]);
+      setConvites(INITIAL_CONVITES);
+      localStorage.setItem('morador_convites', JSON.stringify(INITIAL_CONVITES));
     }
+
+    const savedOc = localStorage.getItem('morador_ocorrencias');
+    if (savedOc) {
+      try {
+        setOcorrencias(JSON.parse(savedOc));
+      } catch (e) {
+        setOcorrencias(INITIAL_OCORRENCIAS_MORADOR);
+      }
+    } else {
+      setOcorrencias(INITIAL_OCORRENCIAS_MORADOR);
+      localStorage.setItem('morador_ocorrencias', JSON.stringify(INITIAL_OCORRENCIAS_MORADOR));
+    }
+
+    const savedRes = localStorage.getItem('morador_reservas');
+    if (savedRes) {
+      try {
+        setReservas(JSON.parse(savedRes));
+      } catch (e) {
+        setReservas(INITIAL_RESERVAS_MORADOR);
+      }
+    } else {
+      setReservas(INITIAL_RESERVAS_MORADOR);
+      localStorage.setItem('morador_reservas', JSON.stringify(INITIAL_RESERVAS_MORADOR));
+    }
+
+    // Conexão WebSocket em tempo real para a Unidade A-101
+    mobileSocket.connect('A', '101');
+    const unsubPackage = mobileSocket.on('encomenda_chegou', (data) => {
+      setLiveAlert({
+        title: '📦 Nova Encomenda Recebida!',
+        desc: data.mensagem || 'Um pacote seu acaba de ser registrado na portaria.',
+      });
+      // Atualiza lista
+      if (data.encomenda) {
+        setEncomendas((prev) => [data.encomenda, ...prev]);
+      }
+    });
+
+    const unsubOc = mobileSocket.on('ocorrencia_respondida', (data) => {
+      setLiveAlert({
+        title: '🔔 Resposta da Administração',
+        desc: data.mensagem || 'Sua ocorrência foi respondida pelo síndico.',
+      });
+    });
 
     // Relógio do status bar
     const updateTime = () => {
@@ -64,7 +121,12 @@ export default function MobileAppPage() {
     };
     updateTime();
     const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
+
+    return () => {
+      clearInterval(interval);
+      unsubPackage();
+      unsubOc();
+    };
   }, []);
 
   const handleConfirmWithdrawal = (id: string, signatureUrl: string) => {
@@ -74,7 +136,7 @@ export default function MobileAppPage() {
           ...enc,
           status: 'RETIRADO' as const,
           data_retirada: new Date().toISOString(),
-          retirado_por_nome: `${CURRENT_MORADOR.nome} (App Morador)`,
+          retirado_por_nome: 'Mariana Fernandes (App Morador)',
           assinatura_digital_url: signatureUrl || undefined,
         };
       }
@@ -90,11 +152,23 @@ export default function MobileAppPage() {
     localStorage.setItem('morador_convites', JSON.stringify(updated));
   };
 
+  const handleAddOcorrencia = (nova: OcorrenciaMorador) => {
+    const updated = [nova, ...ocorrencias];
+    setOcorrencias(updated);
+    localStorage.setItem('morador_ocorrencias', JSON.stringify(updated));
+  };
+
+  const handleAddReserva = (nova: ReservaMorador) => {
+    const updated = [nova, ...reservas];
+    setReservas(updated);
+    localStorage.setItem('morador_reservas', JSON.stringify(updated));
+  };
+
   const pendingCount = encomendas.filter((e) => e.status === 'AGUARDANDO_RETIRADA').length;
 
   return (
     <div className="w-full max-w-sm sm:max-w-md h-[100dvh] sm:h-[840px] bg-[#101726] sm:rounded-[44px] sm:border-[8px] sm:border-slate-800 shadow-2xl flex flex-col overflow-hidden relative sm:ring-1 sm:ring-slate-700/50">
-      {/* Dynamic Island / Top Notch (Mobile frame aesthetic) */}
+      {/* Dynamic Island / Top Notch */}
       <div className="h-10 bg-[#101726] shrink-0 px-6 flex items-center justify-between z-40 border-b border-slate-900">
         <span className="text-xs font-bold font-mono text-slate-200">
           {currentTime || '12:00'}
@@ -108,18 +182,34 @@ export default function MobileAppPage() {
         </div>
       </div>
 
+      {/* Push Alert Popup em Tempo Real */}
+      {liveAlert && (
+        <div className="absolute top-12 left-4 right-4 z-50 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-3.5 rounded-2xl shadow-2xl border border-indigo-400/40 flex items-start justify-between gap-3 animate-in slide-in-from-top-4">
+          <div className="flex items-start gap-2.5">
+            <PackageCheck className="w-5 h-5 text-indigo-200 shrink-0 mt-0.5" />
+            <div>
+              <p className="text-xs font-black text-white">{liveAlert.title}</p>
+              <p className="text-[11px] text-indigo-100 mt-0.5 leading-snug">{liveAlert.desc}</p>
+            </div>
+          </div>
+          <button onClick={() => setLiveAlert(null)} className="text-indigo-200 hover:text-white">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Header do Morador */}
       <header className="px-5 py-3.5 bg-[#101726]/80 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between z-20 shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white font-bold text-xs shadow-md shadow-indigo-500/20">
-            MR
+            MF
           </div>
           <div>
             <h2 className="text-xs font-bold text-white flex items-center gap-1.5">
-              {CURRENT_MORADOR.nome}
+              Mariana Fernandes
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             </h2>
-            <p className="text-[10px] text-slate-400 font-medium">Bloco {CURRENT_MORADOR.bloco} • Apto {CURRENT_MORADOR.apartamento}</p>
+            <p className="text-[10px] text-slate-400 font-medium">Bloco A • Apto 101</p>
           </div>
         </div>
 
@@ -150,6 +240,19 @@ export default function MobileAppPage() {
             onAddConvite={handleAddConvite}
           />
         )}
+        {activeTab === 'ocorrencias' && (
+          <OcorrenciasMoradorScreen
+            ocorrencias={ocorrencias}
+            onAddOcorrencia={handleAddOcorrencia}
+          />
+        )}
+        {activeTab === 'reservas' && (
+          <ReservasMoradorScreen
+            reservas={reservas}
+            onAddReserva={handleAddReserva}
+          />
+        )}
+        {activeTab === 'veiculos' && <VeiculosMoradorScreen />}
         {activeTab === 'perfil' && <PerfilMoradorScreen />}
       </main>
 

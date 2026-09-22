@@ -37,3 +37,46 @@ export interface MoradorPerfil {
   apartamento: string;
   condominio_nome: string;
 }
+
+export interface OcorrenciaMorador {
+  id: string;
+  titulo: string;
+  descricao: string;
+  categoria: 'BARULHO' | 'MANUTENCAO' | 'SEGURANCA' | 'LIMPEZA' | 'GARAGEM' | 'OUTRO';
+  foto_url?: string;
+  status: 'ABERTO' | 'EM_ANDAMENTO' | 'RESOLVIDO' | 'CANCELADO';
+  resposta_sindico?: string;
+  respondido_em?: string;
+  created_at: string;
+}
+
+export interface AreaComumMorador {
+  id: string;
+  nome: string;
+  descricao: string;
+  capacidade_maxima: number;
+  taxa_reserva: number;
+  foto_url?: string;
+  regras?: string;
+}
+
+export interface ReservaMorador {
+  id: string;
+  area_id: string;
+  area_nome: string;
+  data_reserva: string;
+  periodo: 'MANHA' | 'TARDE' | 'NOITE' | 'INTEGRAL';
+  status: 'SOLICITADO' | 'CONFIRMADO' | 'CANCELADO';
+  convidados_estimados?: number;
+  observacoes?: string;
+  created_at: string;
+}
+
+export interface VeiculoMorador {
+  id: string;
+  placa: string;
+  marca_modelo: string;
+  cor: string;
+  tipo: 'CARRO' | 'MOTO' | 'BICICLETA' | 'OUTRO';
+  vaga_garagem?: string;
+}

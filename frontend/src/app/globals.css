@@ -9,7 +9,12 @@
   }
 
   body {
-    @apply bg-[#0B0F19] text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white;
+    @apply bg-[#0B0F19] text-slate-100 font-sans antialiased selection:bg-indigo-500 selection:text-white relative min-h-screen;
+    background-image: linear-gradient(to bottom, rgba(10, 15, 29, 0.88), rgba(11, 15, 25, 0.95)), url('/images/building_bg.jpg');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
   }
 }
 
@@ -32,21 +37,47 @@
   background: #374151;
 }
 
+/* Barra de rolagem dedicada e visível da Barra Lateral (Sidebar) */
+.sidebar-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.45) rgba(15, 23, 42, 0.7);
+}
+
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.7);
+  border-radius: 8px;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.6), rgba(6, 182, 212, 0.6));
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.9), rgba(6, 182, 212, 0.9));
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.5);
+}
+
 /* Glassmorphism & Surface Utilities */
 .glass-panel {
-  background: rgba(17, 24, 39, 0.75);
-  backdrop-filter: blur(12px);
+  background: rgba(17, 24, 39, 0.78);
+  backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .glass-card {
-  background: rgba(22, 31, 48, 0.6);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(18, 26, 47, 0.72);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .glass-card:hover {
-  border-color: rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.35);
 }
 
 .neon-border-cyan {

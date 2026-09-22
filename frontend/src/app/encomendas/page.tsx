@@ -12,11 +12,13 @@ import {
   Package,
   Sparkles,
   Layers,
+  MessageCircle,
 } from 'lucide-react';
 import BarcodeScanner from '@/components/BarcodeScanner';
 import { Encomenda, StatusEntrega } from '@/lib/types';
 import { INITIAL_ENCOMENDAS, INITIAL_UNIDADES } from '@/lib/store';
 import { sounds } from '@/lib/SoundEffects';
+import { WhatsAppNotification } from '@/lib/WhatsAppNotification';
 
 export default function EncomendasPage() {
   const [encomendas, setEncomendas] = useState<Encomenda[]>([]);
@@ -24,9 +26,11 @@ export default function EncomendasPage() {
   const [bloco, setBloco] = useState('A');
   const [apartamento, setApartamento] = useState('101');
   const [moradorNome, setMoradorNome] = useState('Mariana Fernandes');
+  const [moradorTelefone, setMoradorTelefone] = useState('11965432109');
   const [transportadora, setTransportadora] = useState('Mercado Livre Express');
   const [descricaoPacote, setDescricaoPacote] = useState('Caixa Padrão');
   const [successBanner, setSuccessBanner] = useState<string | null>(null);
+  const [lastRegisteredPackage, setLastRegisteredPackage] = useState<Encomenda | null>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem('portaria_encomendas');
@@ -70,6 +74,7 @@ export default function EncomendasPage() {
       unidade_bloco: bloco,
       unidade_numero: apartamento,
       morador_nome: moradorNome,
+      morador_telefone: moradorTelefone,
       codigo_barras_qrcode: codigoLido.trim(),
       transportadora,
       descricao_pacote: descricaoPacote,
@@ -80,6 +85,7 @@ export default function EncomendasPage() {
 
     const updated = [novaEncomenda, ...encomendas];
     saveEncomendas(updated);
+    setLastRegisteredPackage(novaEncomenda);
 
     sounds.playSuccessChime();
     setSuccessBanner(
@@ -88,9 +94,6 @@ export default function EncomendasPage() {
 
     // Limpa código lido para a próxima bipagem
     setCodigoLido('');
-    setTimeout(() => {
-      setSuccessBanner(null);
-    }, 4000);
   };
 
   return (
@@ -108,11 +111,32 @@ export default function EncomendasPage() {
         </p>
       </div>
 
-      {/* Alerta de Sucesso */}
-      {successBanner && (
-        <div className="flex items-center gap-2.5 p-4 rounded-xl bg-emerald-950/70 border border-emerald-500/50 text-emerald-300 text-xs font-bold animate-in fade-in shadow-lg shadow-emerald-950/40">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span>{successBanner}</span>
+      {/* Alerta de Sucesso com Botão de WhatsApp */}
+      {successBanner && lastRegisteredPackage && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-emerald-950/70 border border-emerald-500/50 text-emerald-300 text-xs font-bold animate-in fade-in shadow-xl shadow-emerald-950/40">
+          <div className="flex items-center gap-2.5">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+            <span>{successBanner}</span>
+          </div>
+
+          <a
+            href={WhatsAppNotification.getPackageNotificationUrl({
+              moradorNome: lastRegisteredPackage.morador_nome,
+              telefone: lastRegisteredPackage.morador_telefone || '11965432109',
+              bloco: lastRegisteredPackage.unidade_bloco,
+              apartamento: lastRegisteredPackage.unidade_numero,
+              transportadora: lastRegisteredPackage.transportadora,
+              codigoPacote: lastRegisteredPackage.codigo_barras_qrcode,
+              descricaoPacote: lastRegisteredPackage.descricao_pacote,
+              porteiroNome: 'João Portaria',
+            })}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2 rounded-xl font-black text-xs shadow-md transition-all active:scale-95 shrink-0"
+          >
+            <MessageCircle className="w-4 h-4 fill-slate-950" />
+            Avisar Morador no WhatsApp (1-Clique)
+          </a>
         </div>
       )}
 
@@ -285,6 +309,29 @@ export default function EncomendasPage() {
                     </span>
                     <span>{new Date(item.data_recebimento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
+
+                  {item.status === 'AGUARDANDO_RETIRADA' && (
+                    <div className="pt-1">
+                      <a
+                        href={WhatsAppNotification.getPackageNotificationUrl({
+                          moradorNome: item.morador_nome,
+                          telefone: item.morador_telefone || '11965432109',
+                          bloco: item.unidade_bloco,
+                          apartamento: item.unidade_numero,
+                          transportadora: item.transportadora,
+                          codigoPacote: item.codigo_barras_qrcode,
+                          descricaoPacote: item.descricao_pacote,
+                          porteiroNome: 'João Portaria',
+                        })}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold transition-colors"
+                      >
+                        <MessageCircle className="w-3 h-3" />
+                        Reenviar Aviso no WhatsApp
+                      </a>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

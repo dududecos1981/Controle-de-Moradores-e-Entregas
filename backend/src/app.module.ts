@@ -17,6 +17,9 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { LgpdModule } from './modules/lgpd/lgpd.module';
 import { EntregasModule } from './modules/entregas/entregas.module';
 import { AgendamentosModule } from './modules/agendamentos/agendamentos.module';
+import { VeiculosModule } from './modules/veiculos/veiculos.module';
+import { OcorrenciasModule } from './modules/ocorrencias/ocorrencias.module';
+import { ReservasModule } from './modules/reservas/reservas.module';
 
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { LgpdSessionInterceptor } from './common/interceptors/lgpd-session.interceptor';
@@ -42,6 +45,9 @@ import { LgpdSessionInterceptor } from './common/interceptors/lgpd-session.inter
     VisitantesModule,
     EntregasModule,
     AgendamentosModule,
+    VeiculosModule,
+    OcorrenciasModule,
+    ReservasModule,
     UploadModule,
     EventsModule,
     NotificationsModule,
