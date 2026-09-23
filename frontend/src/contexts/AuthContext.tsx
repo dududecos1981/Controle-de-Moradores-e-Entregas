@@ -173,6 +173,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // 4. Busca nas contas registradas em portaria_registered_users
+    if (!found) {
+      const savedRegistered = localStorage.getItem('portaria_registered_users');
+      if (savedRegistered) {
+        try {
+          const list = JSON.parse(savedRegistered);
+          const regUser = list.find(
+            (u: any) =>
+              (u.email?.toLowerCase() === cleanId ||
+                (u.cpf && u.cpf.replace(/\D/g, '') === cleanDigits)) &&
+              (u.senha === senha || u.senha_hash === senha),
+          );
+          if (regUser) {
+            found = regUser;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+
     if (!found) {
       return {
         success: false,

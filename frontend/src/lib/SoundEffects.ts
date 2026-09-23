@@ -155,6 +155,10 @@ class SoundEffects {
     this.playErrorTone();
   }
 
+  playAlertBeep() {
+    this.playErrorTone();
+  }
+
   playError() {
     this.playErrorTone();
   }

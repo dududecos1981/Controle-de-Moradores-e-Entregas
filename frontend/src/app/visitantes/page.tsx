@@ -229,33 +229,39 @@ export default function VisitantesPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Bloco Destino
+                    Bloco / Torre Destino *
                   </label>
-                  <select
+                  <input
+                    type="text"
+                    required
+                    list="visitantes-blocos-list"
                     value={bloco}
                     onChange={(e) => setBloco(e.target.value)}
-                    className="w-full bg-slate-950 text-white text-sm px-3 py-2.5 rounded-xl border border-slate-700 focus:border-indigo-500 outline-none"
-                  >
-                    <option value="A">Bloco A</option>
-                    <option value="B">Bloco B</option>
-                    <option value="C">Bloco C</option>
-                  </select>
+                    placeholder="Ex: Bloco A, Torre 1"
+                    className="w-full bg-slate-950 text-white text-sm px-3.5 py-2.5 rounded-xl border border-slate-700 focus:border-indigo-500 outline-none"
+                  />
+                  <datalist id="visitantes-blocos-list">
+                    <option value="Bloco A" />
+                    <option value="Bloco B" />
+                    <option value="Bloco C" />
+                    <option value="Bloco D" />
+                    <option value="Torre 1" />
+                    <option value="Torre 2" />
+                    <option value="Quadra 1" />
+                  </datalist>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Apto / Sala
+                    Apto / Sala / Casa *
                   </label>
-                  <select
+                  <input
+                    type="text"
+                    required
                     value={apartamento}
                     onChange={(e) => setApartamento(e.target.value)}
-                    className="w-full bg-slate-950 text-white text-sm px-3 py-2.5 rounded-xl border border-slate-700 focus:border-indigo-500 outline-none"
-                  >
-                    <option value="101">101</option>
-                    <option value="102">102</option>
-                    <option value="201">201</option>
-                    <option value="202">202</option>
-                    <option value="PH01">PH01 (Cobertura)</option>
-                  </select>
+                    placeholder="Ex: 101, 204, PH01"
+                    className="w-full bg-slate-950 text-white text-sm px-3.5 py-2.5 rounded-xl border border-slate-700 focus:border-indigo-500 outline-none"
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5">

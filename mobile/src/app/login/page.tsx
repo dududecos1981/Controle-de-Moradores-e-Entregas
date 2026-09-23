@@ -258,8 +258,8 @@ export default function MobileLoginPage() {
 
       {/* Card do Formulário */}
       <div className="bg-[#182238]/95 backdrop-blur-md border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xl space-y-4 my-4 z-10">
-        {/* Abas: Login vs Primeiro Acesso vs Esqueci Senha */}
-        <div className="grid grid-cols-3 bg-slate-900/90 p-1 rounded-xl border border-slate-800 gap-1">
+        {/* Abas: Login vs Primeiro Acesso (Recuperação fica somente no link Esqueci a Senha) */}
+        <div className="grid grid-cols-2 bg-slate-900/90 p-1 rounded-xl border border-slate-800 gap-1">
           <button
             type="button"
             onClick={() => {
@@ -267,7 +267,7 @@ export default function MobileLoginPage() {
               setErrorMessage(null);
               setSuccessMessage(null);
             }}
-            className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+            className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'login'
                 ? 'bg-indigo-600 text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
@@ -284,7 +284,7 @@ export default function MobileLoginPage() {
               setErrorMessage(null);
               setSuccessMessage(null);
             }}
-            className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
+            className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
               activeTab === 'primeiro_acesso'
                 ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md'
                 : 'text-slate-400 hover:text-white'
@@ -292,24 +292,6 @@ export default function MobileLoginPage() {
           >
             <UserPlus className="w-3.5 h-3.5" />
             <span>1º Acesso</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => {
-              setActiveTab('esqueci_senha');
-              setErrorMessage(null);
-              setSuccessMessage(null);
-              if (loginEmail && !recEmail) setRecEmail(loginEmail);
-            }}
-            className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1 ${
-              activeTab === 'esqueci_senha'
-                ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Recuperar</span>
           </button>
         </div>
 
@@ -473,17 +455,23 @@ export default function MobileLoginPage() {
                 <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
                   Bloco / Torre
                 </label>
-                <select
+                <input
+                  type="text"
+                  list="mobile-login-blocos-list"
                   value={bloco}
                   onChange={(e) => setBloco(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
-                >
-                  <option value="A">Bloco A</option>
-                  <option value="B">Bloco B</option>
-                  <option value="C">Bloco C</option>
-                  <option value="TORRE_1">Torre 1</option>
-                  <option value="TORRE_2">Torre 2</option>
-                </select>
+                  placeholder="Ex: Bloco A, Torre 1"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                />
+                <datalist id="mobile-login-blocos-list">
+                  <option value="Bloco A" />
+                  <option value="Bloco B" />
+                  <option value="Bloco C" />
+                  <option value="Bloco D" />
+                  <option value="Torre 1" />
+                  <option value="Torre 2" />
+                  <option value="Quadra 1" />
+                </datalist>
               </div>
 
               <div>

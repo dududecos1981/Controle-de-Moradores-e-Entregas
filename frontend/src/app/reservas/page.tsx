@@ -90,7 +90,7 @@ export default function ReservasPage() {
     descricao: '',
     regras: '',
     foto_url: '',
-    status: 'DISPONIVEL' as 'DISPONIVEL' | 'EM_MANUTENCAO' | 'INDISPONIVEL',
+    status: 'DISPONIVEL' as AreaComum['status'],
   });
 
   // Carrega do LocalStorage
@@ -536,18 +536,24 @@ export default function ReservasPage() {
 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Bloco</label>
-                    <select
+                    <label className="block text-xs font-bold text-slate-300 uppercase mb-1">Bloco / Torre</label>
+                    <input
+                      type="text"
+                      list="reservas-blocos-list"
+                      placeholder="Ex: Bloco A, Torre 1"
                       value={formReserva.unidade_bloco}
                       onChange={(e) => setFormReserva({ ...formReserva, unidade_bloco: e.target.value })}
-                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
-                    >
-                      <option value="A">Bloco A</option>
-                      <option value="B">Bloco B</option>
-                      <option value="C">Bloco C</option>
-                      <option value="TORRE_1">Torre 1</option>
-                      <option value="TORRE_2">Torre 2</option>
-                    </select>
+                      className="w-full bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+                    />
+                    <datalist id="reservas-blocos-list">
+                      <option value="Bloco A" />
+                      <option value="Bloco B" />
+                      <option value="Bloco C" />
+                      <option value="Bloco D" />
+                      <option value="Torre 1" />
+                      <option value="Torre 2" />
+                      <option value="Quadra 1" />
+                    </datalist>
                   </div>
 
                   <div>

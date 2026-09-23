@@ -282,8 +282,11 @@ export default function VeiculosPage() {
             className="bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-semibold text-slate-300 focus:outline-none focus:border-indigo-500"
           >
             <option value="TODOS">Todos os Blocos</option>
-            <option value="A">Bloco A</option>
-            <option value="B">Bloco B</option>
+            {Array.from(new Set(veiculos.map((v) => v.unidade_bloco).filter(Boolean))).map((b) => (
+              <option key={b} value={b}>
+                {b.toLowerCase().includes('bloco') || b.toLowerCase().includes('torre') || b.toLowerCase().includes('quadra') ? b : `Bloco ${b}`}
+              </option>
+            ))}
           </select>
         </div>
       </div>
@@ -443,15 +446,25 @@ export default function VeiculosPage() {
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Bloco</label>
-                  <select
+                  <label className="block text-xs font-semibold text-slate-400 uppercase mb-1">Bloco / Torre</label>
+                  <input
+                    type="text"
+                    required
+                    list="veiculos-blocos-list"
+                    placeholder="Ex: Bloco A, Torre 1"
                     value={formData.unidade_bloco}
                     onChange={(e) => setFormData({ ...formData, unidade_bloco: e.target.value })}
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
-                  >
-                    <option value="A">Bloco A</option>
-                    <option value="B">Bloco B</option>
-                  </select>
+                  />
+                  <datalist id="veiculos-blocos-list">
+                    <option value="Bloco A" />
+                    <option value="Bloco B" />
+                    <option value="Bloco C" />
+                    <option value="Bloco D" />
+                    <option value="Torre 1" />
+                    <option value="Torre 2" />
+                    <option value="Quadra 1" />
+                  </datalist>
                 </div>
 
                 <div>

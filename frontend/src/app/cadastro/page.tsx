@@ -60,8 +60,8 @@ export default function CadastroPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Campos específicos de Morador
-  const [bloco, setBloco] = useState('A');
-  const [apartamento, setApartamento] = useState('101');
+  const [bloco, setBloco] = useState('');
+  const [apartamento, setApartamento] = useState('');
 
   // Campos específicos de Colaborador
   const [cargo, setCargo] = useState<CargoColaborador>('PORTEIRO');
@@ -131,6 +131,12 @@ export default function CadastroPage() {
 
     if (!lgpdAceito) {
       setErrorMessage('Você deve aceitar o Termo de Consentimento LGPD para concluir o cadastro.');
+      SoundEffects.playError();
+      return;
+    }
+
+    if (tipoCadastro === 'MORADOR' && (!bloco.trim() || !apartamento.trim())) {
+      setErrorMessage('Por favor, preencha o Bloco/Torre e o Número da Unidade (Apto/Casa).');
       SoundEffects.playError();
       return;
     }
@@ -555,31 +561,49 @@ export default function CadastroPage() {
 
             {/* Seletor de Unidade Residencial (Apenas Morador) */}
             {tipoCadastro === 'MORADOR' && (
-              <div className="grid grid-cols-2 gap-3 p-3 bg-slate-950/60 rounded-2xl border border-slate-800/80">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-950/60 rounded-2xl border border-slate-800/80">
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-400">Bloco / Torre</label>
-                  <select
+                  <label className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                    <Building className="w-3.5 h-3.5 text-cyan-400" />
+                    Bloco / Torre / Quadra *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    list="cadastro-blocos-list"
                     value={bloco}
                     onChange={(e) => setBloco(e.target.value)}
-                    className="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-500 cursor-pointer"
-                  >
-                    <option value="A">Bloco A</option>
-                    <option value="B">Bloco B</option>
-                  </select>
+                    placeholder="Ex: Bloco A, Torre 1, Quadra B"
+                    className="w-full bg-slate-900 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 placeholder:text-slate-600 transition-all"
+                  />
+                  <datalist id="cadastro-blocos-list">
+                    <option value="Bloco A" />
+                    <option value="Bloco B" />
+                    <option value="Bloco C" />
+                    <option value="Bloco D" />
+                    <option value="Torre 1" />
+                    <option value="Torre 2" />
+                    <option value="Torre 3" />
+                    <option value="Torre Norte" />
+                    <option value="Torre Sul" />
+                    <option value="Quadra 1" />
+                    <option value="Quadra 2" />
+                  </datalist>
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-400">Apartamento</label>
-                  <select
+                  <label className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                    <Building className="w-3.5 h-3.5 text-cyan-400" />
+                    Número da Unidade / Apto / Casa *
+                  </label>
+                  <input
+                    type="text"
+                    required
                     value={apartamento}
                     onChange={(e) => setApartamento(e.target.value)}
-                    className="w-full bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-500 cursor-pointer"
-                  >
-                    <option value="101">Apto 101</option>
-                    <option value="102">Apto 102</option>
-                    <option value="201">Apto 201</option>
-                    <option value="PH01">Cobertura PH01</option>
-                  </select>
+                    placeholder="Ex: 101, 204, 1502, PH01, Casa 12"
+                    className="w-full bg-slate-900 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 placeholder:text-slate-600 transition-all"
+                  />
                 </div>
               </div>
             )}

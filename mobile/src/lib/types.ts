@@ -54,8 +54,8 @@ export interface AreaComumMorador {
   id: string;
   nome: string;
   descricao: string;
-  capacidade_maxima: number;
-  taxa_reserva: number;
+  capacidade_maxima?: number;
+  taxa_reserva?: number;
   foto_url?: string;
   regras?: string;
 }

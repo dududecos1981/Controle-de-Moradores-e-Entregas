@@ -876,15 +876,24 @@ export default function PrestadoresPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Bloco</label>
-                    <select
+                    <label className="text-xs font-semibold text-slate-300">Bloco / Torre Destino</label>
+                    <input
+                      type="text"
+                      list="prestadores-blocos-list"
+                      placeholder="Ex: Bloco A, Torre 1"
                       value={formData.unidade_destino_bloco}
                       onChange={(e) => setFormData({ ...formData, unidade_destino_bloco: e.target.value })}
                       className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
-                    >
-                      <option value="A">Bloco A</option>
-                      <option value="B">Bloco B</option>
-                    </select>
+                    />
+                    <datalist id="prestadores-blocos-list">
+                      <option value="Bloco A" />
+                      <option value="Bloco B" />
+                      <option value="Bloco C" />
+                      <option value="Bloco D" />
+                      <option value="Torre 1" />
+                      <option value="Torre 2" />
+                      <option value="Quadra 1" />
+                    </datalist>
                   </div>
 
                   <div className="space-y-1.5">

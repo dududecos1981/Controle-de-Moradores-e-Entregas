@@ -151,7 +151,7 @@ export default function MoradoresPage() {
       cpf: '',
       email: '',
       telefone: '',
-      unidade_bloco: 'A',
+      unidade_bloco: '',
       unidade_numero: '',
       perfil: 'MORADOR',
       status: 'ATIVO',
@@ -551,8 +551,11 @@ export default function MoradoresPage() {
             className="bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
           >
             <option value="TODOS">Todos os Blocos</option>
-            <option value="A">Bloco A</option>
-            <option value="B">Bloco B</option>
+            {Array.from(new Set(moradores.map((m) => m.unidade_bloco).filter(Boolean))).map((b) => (
+              <option key={b} value={b}>
+                {b.toLowerCase().includes('bloco') || b.toLowerCase().includes('torre') || b.toLowerCase().includes('quadra') ? b : `Bloco ${b}`}
+              </option>
+            ))}
           </select>
 
           <div className="flex items-center gap-2 text-xs text-slate-400 shrink-0 ml-2">
@@ -839,15 +842,29 @@ export default function MoradoresPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Bloco</label>
-                    <select
+                    <label className="text-xs font-semibold text-slate-300">Bloco / Torre / Quadra *</label>
+                    <input
+                      type="text"
+                      required
+                      list="moradores-blocos-list"
+                      placeholder="Ex: Bloco A, Torre 1, Quadra B"
                       value={formData.unidade_bloco}
                       onChange={(e) => setFormData({ ...formData, unidade_bloco: e.target.value })}
                       className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-                    >
-                      <option value="A">Bloco A</option>
-                      <option value="B">Bloco B</option>
-                    </select>
+                    />
+                    <datalist id="moradores-blocos-list">
+                      <option value="Bloco A" />
+                      <option value="Bloco B" />
+                      <option value="Bloco C" />
+                      <option value="Bloco D" />
+                      <option value="Torre 1" />
+                      <option value="Torre 2" />
+                      <option value="Torre 3" />
+                      <option value="Torre Norte" />
+                      <option value="Torre Sul" />
+                      <option value="Quadra 1" />
+                      <option value="Quadra 2" />
+                    </datalist>
                   </div>
 
                   <div className="space-y-1.5">

@@ -23,9 +23,11 @@ import {
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { sounds } from '@/lib/SoundEffects';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [activeTab, setActiveTab] = useState<'login' | 'primeiro_acesso' | 'esqueci_senha'>('login');
 
   // Estados de Login
@@ -85,48 +87,16 @@ export default function LoginPage() {
     setSuccessMessage(null);
 
     try {
-      const res = await api.login(loginEmail.trim(), loginPassword);
-      sounds.playSuccessChime();
-      router.push('/');
-    } catch (err: any) {
-      console.warn('Tentativa via API offline:', err.message);
-
-      // Verificação em banco local (LocalStorage)
-      const localUsersStr = localStorage.getItem('portaria_registered_users');
-      const localUsers = localUsersStr ? JSON.parse(localUsersStr) : [];
-      const matchedUser = localUsers.find(
-        (u: any) => u.email.toLowerCase() === loginEmail.trim().toLowerCase() && u.senha === loginPassword,
-      );
-
-      // Credenciais padrão de emergência caso nenhum usuário tenha sido cadastrado ainda
-      const isAdminMaster = loginEmail.trim() === 'admin@condominio.com.br' && loginPassword === 'SenhaSegura123!';
-      const isPorteiroMaster = loginEmail.trim() === 'porteiro.joao@condominio.com.br' && loginPassword === 'SenhaSegura123!';
-
-      if (matchedUser || isAdminMaster || isPorteiroMaster) {
-        const userSession = matchedUser
-          ? {
-              id: matchedUser.id,
-              nome_completo: matchedUser.nome_completo,
-              email: matchedUser.email,
-              perfil: matchedUser.perfil,
-              unidade_bloco: matchedUser.unidade_bloco,
-              unidade_numero: matchedUser.unidade_numero,
-            }
-          : {
-              id: 'master-user',
-              nome_completo: isAdminMaster ? 'Administrador Geral' : 'Operador de Portaria',
-              email: loginEmail.trim(),
-              perfil: isAdminMaster ? 'ADMINISTRADOR' : 'PORTEIRO',
-            };
-
-        api.setToken('auth-token-' + Date.now());
-        api.setUser(userSession as any);
+      const res = await login(loginEmail.trim(), loginPassword);
+      if (res.success) {
         sounds.playSuccessChime();
-        router.push('/');
       } else {
-        setErrorMessage('E-mail ou senha incorretos. Caso seja seu primeiro acesso, crie seu cadastro ou clique em "Esqueceu a senha?".');
+        setErrorMessage(res.message || 'E-mail ou senha incorretos. Caso seja seu primeiro acesso, crie seu cadastro.');
         sounds.playAlertBeep();
       }
+    } catch (err: any) {
+      setErrorMessage('Erro ao processar login. Verifique suas credenciais.');
+      sounds.playAlertBeep();
     } finally {
       setIsLoading(false);
     }
@@ -342,8 +312,8 @@ export default function LoginPage() {
 
         {/* Card Principal */}
         <div className="bg-[#121a2f]/90 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
-          {/* Alternador de 3 Abas Principais */}
-          <div className="grid grid-cols-3 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 gap-1">
+          {/* Alternador de 2 Abas Principais (Entrar e 1º Acesso) */}
+          <div className="grid grid-cols-2 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800 gap-1">
             <button
               type="button"
               onClick={() => {
@@ -375,25 +345,7 @@ export default function LoginPage() {
               }`}
             >
               <UserPlus className="w-4 h-4 shrink-0" />
-              <span>1º Acesso</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab('esqueci_senha');
-                setErrorMessage(null);
-                setSuccessMessage(null);
-                if (loginEmail && !recEmail) setRecEmail(loginEmail);
-              }}
-              className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
-                activeTab === 'esqueci_senha'
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/30'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-              }`}
-            >
-              <RotateCcw className="w-4 h-4 shrink-0" />
-              <span>Esqueci Senha</span>
+              <span>1º Acesso / Cadastrar</span>
             </button>
           </div>
 
@@ -595,17 +547,22 @@ export default function LoginPage() {
                     <label className="block text-[11px] font-semibold uppercase text-slate-400 mb-1">
                       Bloco / Torre
                     </label>
-                    <select
+                    <input
+                      type="text"
+                      list="login-blocos-list"
                       value={bloco}
                       onChange={(e) => setBloco(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
-                    >
-                      <option value="A">Bloco A</option>
-                      <option value="B">Bloco B</option>
-                      <option value="C">Bloco C</option>
-                      <option value="TORRE_1">Torre 1</option>
-                      <option value="TORRE_2">Torre 2</option>
-                    </select>
+                      placeholder="Ex: Bloco A, Torre 1"
+                      className="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                    />
+                    <datalist id="login-blocos-list">
+                      <option value="Bloco A" />
+                      <option value="Bloco B" />
+                      <option value="Bloco C" />
+                      <option value="Torre 1" />
+                      <option value="Torre 2" />
+                      <option value="Quadra 1" />
+                    </datalist>
                   </div>
 
                   <div>

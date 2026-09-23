@@ -242,7 +242,7 @@ export interface AreaComum {
   taxa_reserva: number;
   foto_url?: string;
   regras?: string;
-  status: 'DISPONIVEL' | 'MANUTENCAO' | 'BLOQUEADO';
+  status: 'DISPONIVEL' | 'MANUTENCAO' | 'EM_MANUTENCAO' | 'BLOQUEADO' | 'INDISPONIVEL';
 }
 
 export type PeriodoReserva = 'MANHA' | 'TARDE' | 'NOITE' | 'INTEGRAL';

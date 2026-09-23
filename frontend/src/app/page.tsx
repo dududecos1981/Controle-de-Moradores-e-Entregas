@@ -800,15 +800,24 @@ export default function DashboardPage() {
               {/* Unidade */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="space-y-1">
-                  <label className="text-xs font-semibold text-slate-300">Bloco</label>
-                  <select
+                  <label className="text-xs font-semibold text-slate-300">Bloco / Torre</label>
+                  <input
+                    type="text"
+                    list="dashboard-blocos-list"
+                    placeholder="Ex: Bloco A, Torre 1"
                     value={quickAccessData.unidade_bloco}
                     onChange={(e) => setQuickAccessData({ ...quickAccessData, unidade_bloco: e.target.value })}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200"
-                  >
-                    <option value="A">Bloco A</option>
-                    <option value="B">Bloco B</option>
-                  </select>
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                  />
+                  <datalist id="dashboard-blocos-list">
+                    <option value="Bloco A" />
+                    <option value="Bloco B" />
+                    <option value="Bloco C" />
+                    <option value="Bloco D" />
+                    <option value="Torre 1" />
+                    <option value="Torre 2" />
+                    <option value="Quadra 1" />
+                  </datalist>
                 </div>
 
                 <div className="space-y-1">

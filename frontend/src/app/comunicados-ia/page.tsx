@@ -205,15 +205,24 @@ export default function ComunicadosIAPage() {
 
           {destinatarios === 'BLOCO' && (
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-slate-300">Selecione o Bloco</label>
-              <select
+              <label className="text-xs font-semibold text-slate-300">Bloco / Torre Destino</label>
+              <input
+                type="text"
+                list="comunicados-blocos-list"
+                placeholder="Ex: Bloco A, Torre 1"
                 value={bloco}
                 onChange={(e) => setBloco(e.target.value)}
                 className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
-              >
-                <option value="A">Bloco A</option>
-                <option value="B">Bloco B</option>
-              </select>
+              />
+              <datalist id="comunicados-blocos-list">
+                <option value="Bloco A" />
+                <option value="Bloco B" />
+                <option value="Bloco C" />
+                <option value="Bloco D" />
+                <option value="Torre 1" />
+                <option value="Torre 2" />
+                <option value="Quadra 1" />
+              </datalist>
             </div>
           )}
 
