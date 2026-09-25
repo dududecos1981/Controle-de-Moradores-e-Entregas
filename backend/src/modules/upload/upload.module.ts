@@ -13,6 +13,11 @@ import { S3StorageService } from './services/s3-storage.service';
     LocalStorageService,
     S3StorageService,
   ],
-  exports: [UploadService, ImageProcessorService],
+  exports: [
+    UploadService,
+    ImageProcessorService,
+    LocalStorageService,
+    S3StorageService,
+  ],
 })
 export class UploadModule {}

@@ -29,7 +29,7 @@ export default function PerfilMoradorScreen() {
   const handleLogout = () => {
     localStorage.removeItem('morador_auth_token');
     localStorage.removeItem('morador_auth_user');
-    router.push('/login');
+    router.replace('/login');
   };
 
   const initials = morador.nome

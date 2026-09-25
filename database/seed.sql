@@ -16,58 +16,10 @@ INSERT INTO unidades (id, bloco, numero, tipo, status, andar, observacoes) VALUE
 ON CONFLICT (bloco, numero) DO NOTHING;
 
 -- ------------------------------------------------------------------------------
--- 2. USUÁRIOS ADMINISTRATIVOS BASE (ADMIN & PORTEIRO)
+-- 2. USUÁRIOS (Inserção manual pelo administrador/usuários)
 -- ------------------------------------------------------------------------------
--- Senha de teste padrão: "SenhaSegura123!" (hash bcrypt válido)
-INSERT INTO usuarios (
-    id,
-    unidade_id,
-    nome_completo,
-    cpf,
-    email,
-    senha_hash,
-    telefone,
-    perfil,
-    status,
-    is_responsavel_unidade,
-    lgpd_termo_aceito,
-    lgpd_data_aceite,
-    lgpd_versao_termo,
-    lgpd_ip_aceite
-) VALUES
-(
-    'b0000000-0000-0000-0000-000000000001',
-    NULL,
-    'Administrador Geral',
-    '111.222.333-44',
-    'admin@condominio.com.br',
-    '$2a$10$6C5kaiBO/rd5GE8HQGW/EOJZFAJpfQ8VVR.GOG1he29jOWII2yAk2',
-    '11987654321',
-    'ADMINISTRADOR',
-    'ATIVO',
-    FALSE,
-    TRUE,
-    clock_timestamp(),
-    '1.0',
-    '127.0.0.1'
-),
-(
-    'b0000000-0000-0000-0000-000000000002',
-    NULL,
-    'Operador de Portaria',
-    '222.333.444-55',
-    'porteiro.joao@condominio.com.br',
-    '$2a$10$6C5kaiBO/rd5GE8HQGW/EOJZFAJpfQ8VVR.GOG1he29jOWII2yAk2',
-    '11976543210',
-    'PORTEIRO',
-    'ATIVO',
-    FALSE,
-    TRUE,
-    clock_timestamp(),
-    '1.0',
-    '127.0.0.1'
-)
-ON CONFLICT (cpf) DO NOTHING;
+-- Base de usuários inicial limpa para cadastro manual dos administradores,
+-- porteiros, síndicos e moradores.
 
 -- ------------------------------------------------------------------------------
 -- 3. ÁREAS COMUNS (LAZER & EVENTOS)

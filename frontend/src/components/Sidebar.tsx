@@ -24,7 +24,8 @@ import {
   Sliders,
   ChevronRight,
 } from 'lucide-react';
-import { api, UserSession } from '@/lib/api';
+import { api } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 const OPERACAO_ITEMS = [
   {
@@ -104,20 +105,15 @@ const GOVERNANCA_ITEMS = [
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [currentUser, setCurrentUser] = useState<UserSession | null>(null);
-
-  useEffect(() => {
-    setCurrentUser(api.getUser());
-  }, [pathname]);
+  const { currentUser, logout } = useAuth();
 
   const handleLogout = (e: React.MouseEvent) => {
     e.preventDefault();
-    api.logout();
-    router.push('/login');
+    logout();
   };
 
   // Não exibe a barra lateral na tela de login
-  if (pathname === '/login') return null;
+  if (pathname === '/login' || pathname === '/cadastro') return null;
 
   const userInitials = currentUser?.nome_completo
     ? currentUser.nome_completo

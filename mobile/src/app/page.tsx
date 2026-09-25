@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Bell,
   Wifi,
@@ -34,6 +35,7 @@ import {
 import { mobileSocket } from '@/lib/socket';
 
 export default function MobileAppPage() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('encomendas');
   const [encomendas, setEncomendas] = useState<EncomendaMorador[]>([]);
   const [convites, setConvites] = useState<ConviteVisitante[]>([]);
@@ -43,6 +45,12 @@ export default function MobileAppPage() {
   const [liveAlert, setLiveAlert] = useState<{ title: string; desc: string } | null>(null);
 
   useEffect(() => {
+    // Validação de autenticação do morador
+    const authUser = localStorage.getItem('morador_auth_user');
+    if (!authUser) {
+      router.replace('/login');
+      return;
+    }
     // Carrega dados locais
     const savedEnc = localStorage.getItem('morador_encomendas');
     if (savedEnc) {
@@ -112,6 +120,34 @@ export default function MobileAppPage() {
       });
     });
 
+    // Canal BroadcastChannel em tempo real entre abas / dispositivos
+    let channel: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      channel = new BroadcastChannel('condominio_realtime');
+      channel.onmessage = (event) => {
+        if (event.data?.type === 'NOVA_ENCOMENDA') {
+          const item = event.data.data;
+          setLiveAlert({
+            title: '📦 Nova Encomenda Recebida!',
+            desc: `Pacote #${item.codigo_rastreio} (${item.transportadora}) registrado na portaria.`,
+          });
+          setEncomendas((prev) => [
+            {
+              id: item.id || `enc-${Date.now()}`,
+              codigo_barras_qrcode: item.codigo_barras_qrcode || item.codigo_rastreio || `PKG-${Date.now()}`,
+              codigo_rastreio: item.codigo_rastreio,
+              transportadora: item.transportadora || 'Transportadora',
+              descricao_pacote: item.descricao_pacote || item.descricao || '',
+              status: 'AGUARDANDO_RETIRADA',
+              data_recebimento: item.data_recebimento || item.data_chegada || new Date().toISOString(),
+              porteiro_recebedor_nome: item.porteiro_recebedor_nome || 'Portaria',
+            },
+            ...prev,
+          ]);
+        }
+      };
+    }
+
     // Relógio do status bar
     const updateTime = () => {
       const now = new Date();
@@ -126,6 +162,7 @@ export default function MobileAppPage() {
       clearInterval(interval);
       unsubPackage();
       unsubOc();
+      if (channel) channel.close();
     };
   }, []);
 

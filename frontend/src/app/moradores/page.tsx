@@ -86,18 +86,54 @@ export default function MoradoresPage() {
   const [encomendasList, setEncomendasList] = useState<any[]>([]);
   const [visitantesList, setVisitantesList] = useState<any[]>([]);
 
-  // Inicialização com LocalStorage
+  // Inicialização com API Neon e LocalStorage
   useEffect(() => {
-    const saved = localStorage.getItem('portaria_moradores');
-    if (saved) {
+    const loadData = async () => {
       try {
-        setMoradores(JSON.parse(saved));
-      } catch (e) {
+        const res = await api.getMoradores();
+        if (Array.isArray(res?.data) && res.data.length > 0) {
+          const backendList = res.data.map((u: any) => ({
+            id: u.id,
+            nome_completo: u.nome_completo,
+            cpf: u.cpf,
+            email: u.email,
+            telefone: u.telefone || '',
+            unidade_bloco: u.unidade_bloco || 'A',
+            unidade_numero: u.unidade_numero || '101',
+            unidade_id: u.unidade_id,
+            perfil: u.perfil || 'MORADOR',
+            status: u.status || 'ATIVO',
+            is_responsavel_unidade: u.is_responsavel_unidade ?? true,
+            data_cadastro: u.created_at || new Date().toISOString(),
+            veiculos: u.veiculos || [],
+            dependentes: u.dependentes || [],
+            contatos_emergencia: u.contatos_emergencia || [],
+            observacoes: u.observacoes || '',
+            lgpd_termo_aceito: u.lgpd_termo_aceito ?? true,
+            lgpd_data_aceite: u.lgpd_data_aceite,
+            lgpd_anonimizado: u.lgpd_anonimizado ?? false,
+          }));
+          setMoradores(backendList);
+          localStorage.setItem('portaria_moradores', JSON.stringify(backendList));
+          return;
+        }
+      } catch (err) {
+        console.warn('Carregamento inicial de moradores da API:', err);
+      }
+
+      const saved = localStorage.getItem('portaria_moradores');
+      if (saved) {
+        try {
+          setMoradores(JSON.parse(saved));
+        } catch (e) {
+          setMoradores([]);
+        }
+      } else {
         setMoradores([]);
       }
-    } else {
-      setMoradores([]);
-    }
+    };
+
+    loadData();
 
     const savedEnc = localStorage.getItem('portaria_encomendas');
     if (savedEnc) {

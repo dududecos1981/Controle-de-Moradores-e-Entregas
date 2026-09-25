@@ -218,7 +218,7 @@ export default function LoginPage() {
   };
 
   // Submissão de Recuperação de Senha (Esqueci a Senha)
-  const handleRecuperarSenha = (e: React.FormEvent) => {
+  const handleRecuperarSenha = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage(null);
@@ -236,7 +236,34 @@ export default function LoginPage() {
       return;
     }
 
-    setTimeout(() => {
+    try {
+      // 1. Tenta redefinir senha no banco de dados Neon via API
+      await api.redefinirSenha(recEmail.trim(), recCpf.trim(), novaSenha);
+      
+      // Atualiza também storage local caso exista
+      const localUsersStr = localStorage.getItem('portaria_registered_users');
+      if (localUsersStr) {
+        let localUsers = JSON.parse(localUsersStr);
+        const uIdx = localUsers.findIndex(
+          (u: any) => u.email?.toLowerCase() === recEmail.trim().toLowerCase()
+        );
+        if (uIdx !== -1) {
+          localUsers[uIdx].senha = novaSenha;
+          localStorage.setItem('portaria_registered_users', JSON.stringify(localUsers));
+        }
+      }
+
+      sounds.playSuccessChime();
+      setSuccessMessage('Senha redefinida no banco de dados com sucesso! Você já pode acessar o sistema.');
+      setLoginEmail(recEmail.trim());
+      setLoginPassword(novaSenha);
+
+      setTimeout(() => {
+        setActiveTab('login');
+        setIsLoading(false);
+      }, 1400);
+    } catch (err: any) {
+      // Fallback local se a API retornar erro de conexão ou usuário local
       const localUsersStr = localStorage.getItem('portaria_registered_users');
       let localUsers = localUsersStr ? JSON.parse(localUsersStr) : [];
 
@@ -247,7 +274,7 @@ export default function LoginPage() {
       );
 
       const isMasterAdmin = recEmail.trim() === 'admin@condominio.com.br';
-      const isMasterPorteiro = recEmail.trim() === 'porteiro.joao@condominio.com.br';
+      const isMasterPorteiro = recEmail.trim() === 'porteiro.joao@condominio.com.br' || recEmail.trim() === 'porteiro@condominio.com.br';
 
       if (userIndex !== -1) {
         localUsers[userIndex].senha = novaSenha;
@@ -264,7 +291,7 @@ export default function LoginPage() {
         });
         localStorage.setItem('portaria_registered_users', JSON.stringify(localUsers));
       } else {
-        setErrorMessage('Nenhum cadastro localizado com esse E-mail e CPF. Verifique os dados digitados.');
+        setErrorMessage(err.message || 'Nenhum cadastro localizado com esse E-mail e CPF. Verifique os dados digitados.');
         setIsLoading(false);
         return;
       }
@@ -278,7 +305,7 @@ export default function LoginPage() {
         setActiveTab('login');
         setIsLoading(false);
       }, 1400);
-    }, 500);
+    }
   };
 
   return (

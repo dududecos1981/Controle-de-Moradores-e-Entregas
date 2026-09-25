@@ -19,6 +19,7 @@ import {
   AlertCircle,
   RotateCcw,
 } from 'lucide-react';
+import { mobileApi } from '@/lib/api';
 
 export default function MobileLoginPage() {
   const router = useRouter();
@@ -70,43 +71,51 @@ export default function MobileLoginPage() {
       .slice(0, 15);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage(null);
 
-    setTimeout(() => {
-      const registeredUsersStr = localStorage.getItem('morador_registered_users');
-      const registeredUsers = registeredUsersStr ? JSON.parse(registeredUsersStr) : [];
-      const matched = registeredUsers.find(
-        (u: any) => u.email.toLowerCase() === loginEmail.trim().toLowerCase() && u.senha === loginPassword,
-      );
-
-      // Usuário master de emergência
-      const isDefaultMorador =
-        loginEmail.trim() === 'morador@condominio.com.br' && loginPassword === 'SenhaSegura123!';
-
-      if (matched || isDefaultMorador) {
-        const user = matched || {
-          id: 'usr-morador-01',
-          nome: 'Morador',
-          email: loginEmail.trim(),
-          telefone: '',
-          bloco: 'A',
-          apartamento: '101',
+    // 1. Tenta login direto via API / Neon DB
+    try {
+      const res = await mobileApi.login(loginEmail.trim(), loginPassword);
+      if (res?.user) {
+        const user = {
+          id: res.user.id,
+          nome: res.user.nome_completo,
+          email: res.user.email,
+          cpf: res.user.cpf,
+          telefone: res.user.telefone || '',
+          bloco: res.user.unidade_bloco || 'A',
+          apartamento: res.user.unidade_numero || '101',
         };
-
-        localStorage.setItem('morador_auth_token', 'jwt-' + Date.now());
         localStorage.setItem('morador_auth_user', JSON.stringify(user));
         router.push('/');
-      } else {
-        setErrorMessage('E-mail ou senha incorretos. Clique em "Esqueci a Senha" para redefinir.');
-        setIsLoading(false);
+        return;
       }
-    }, 400);
+    } catch (err: any) {
+      console.warn('Tentando fallback local no mobile:', err?.message);
+    }
+
+    // 2. Fallback local para contas salvas ou conta padrão
+    const registeredUsersStr = localStorage.getItem('morador_registered_users');
+    const registeredUsers = registeredUsersStr ? JSON.parse(registeredUsersStr) : [];
+    const matched = registeredUsers.find(
+      (u: any) => u.email.toLowerCase() === loginEmail.trim().toLowerCase() && u.senha === loginPassword,
+    );
+
+    if (matched) {
+      const user = matched;
+      localStorage.setItem('morador_auth_token', 'jwt-' + Date.now());
+      localStorage.setItem('morador_auth_user', JSON.stringify(user));
+      router.push('/');
+    } else {
+      setErrorMessage('E-mail ou senha incorretos. Verifique seus dados ou cadastre-se no 1º Acesso.');
+      setIsLoading(false);
+    }
   };
 
-  const handlePrimeiroAcesso = (e: React.FormEvent) => {
+  const handlePrimeiroAcesso = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage(null);
@@ -133,6 +142,7 @@ export default function MobileLoginPage() {
     const novoMorador = {
       id: `usr-mor-${Date.now()}`,
       nome: nome.trim(),
+      nome_completo: nome.trim(),
       cpf: cpf.trim(),
       email: emailCadastro.trim().toLowerCase(),
       telefone: telefone.trim(),
@@ -144,33 +154,48 @@ export default function MobileLoginPage() {
       created_at: new Date().toISOString(),
     };
 
-    setTimeout(() => {
-      const registeredUsersStr = localStorage.getItem('morador_registered_users');
-      const registeredUsers = registeredUsersStr ? JSON.parse(registeredUsersStr) : [];
+    // 1. Tenta salvar na API / Neon DB
+    try {
+      await mobileApi.register({
+        nome_completo: novoMorador.nome_completo,
+        cpf: novoMorador.cpf,
+        email: novoMorador.email,
+        senha: novoMorador.senha,
+        telefone: novoMorador.telefone,
+        perfil: 'MORADOR',
+        unidade_bloco: novoMorador.bloco,
+        unidade_numero: novoMorador.apartamento,
+      });
+    } catch (err: any) {
+      console.warn('Persistência remota mobile (fallback local ativo):', err?.message);
+    }
 
-      const exists = registeredUsers.some(
-        (u: any) => u.email.toLowerCase() === novoMorador.email || u.cpf === novoMorador.cpf,
-      );
+    // 2. Persiste localmente
+    const registeredUsersStr = localStorage.getItem('morador_registered_users');
+    const registeredUsers = registeredUsersStr ? JSON.parse(registeredUsersStr) : [];
 
-      if (exists) {
-        setErrorMessage('Este e-mail ou CPF já possui cadastro. Faça o login ou recupere a senha.');
-        setIsLoading(false);
-        return;
-      }
+    const exists = registeredUsers.some(
+      (u: any) => u.email.toLowerCase() === novoMorador.email || u.cpf === novoMorador.cpf,
+    );
 
-      registeredUsers.push(novoMorador);
-      localStorage.setItem('morador_registered_users', JSON.stringify(registeredUsers));
+    if (exists) {
+      setErrorMessage('Este e-mail ou CPF já possui cadastro. Faça o login ou recupere a senha.');
+      setIsLoading(false);
+      return;
+    }
 
-      // Salva sessão
-      localStorage.setItem('morador_auth_token', 'jwt-' + Date.now());
-      localStorage.setItem('morador_auth_user', JSON.stringify(novoMorador));
+    registeredUsers.push(novoMorador);
+    localStorage.setItem('morador_registered_users', JSON.stringify(registeredUsers));
 
-      setSuccessMessage('Primeiro acesso concluído com sucesso!');
-      setTimeout(() => router.push('/'), 800);
-    }, 400);
+    // Salva sessão
+    localStorage.setItem('morador_auth_token', 'jwt-' + Date.now());
+    localStorage.setItem('morador_auth_user', JSON.stringify(novoMorador));
+
+    setSuccessMessage('Primeiro acesso concluído com sucesso!');
+    setTimeout(() => router.push('/'), 800);
   };
 
-  const handleRecuperarSenha = (e: React.FormEvent) => {
+  const handleRecuperarSenha = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMessage(null);
@@ -188,40 +213,23 @@ export default function MobileLoginPage() {
       return;
     }
 
-    setTimeout(() => {
+    // 1. Tenta redefinir na API / Neon DB
+    try {
+      await mobileApi.redefinirSenha(recEmail.trim(), recCpf.trim(), novaSenha);
+      
       const registeredUsersStr = localStorage.getItem('morador_registered_users');
-      let registeredUsers = registeredUsersStr ? JSON.parse(registeredUsersStr) : [];
-
-      const userIndex = registeredUsers.findIndex(
-        (u: any) =>
-          u.email.toLowerCase() === recEmail.trim().toLowerCase() &&
-          (u.cpf.replace(/\D/g, '') === recCpf.replace(/\D/g, '') || !u.cpf),
-      );
-
-      const isDefaultMorador = recEmail.trim().toLowerCase() === 'morador@condominio.com.br';
-
-      if (userIndex !== -1) {
-        registeredUsers[userIndex].senha = novaSenha;
-        localStorage.setItem('morador_registered_users', JSON.stringify(registeredUsers));
-      } else if (isDefaultMorador) {
-        registeredUsers.push({
-          id: `usr-mor-rec-${Date.now()}`,
-          nome: 'Morador Titular',
-          cpf: recCpf.trim() || '000.000.000-00',
-          email: recEmail.trim().toLowerCase(),
-          bloco: 'A',
-          apartamento: '101',
-          senha: novaSenha,
-          created_at: new Date().toISOString(),
-        });
-        localStorage.setItem('morador_registered_users', JSON.stringify(registeredUsers));
-      } else {
-        setErrorMessage('Nenhum cadastro de morador localizado com este E-mail e CPF.');
-        setIsLoading(false);
-        return;
+      if (registeredUsersStr) {
+        let registeredUsers = JSON.parse(registeredUsersStr);
+        const idx = registeredUsers.findIndex(
+          (u: any) => u.email?.toLowerCase() === recEmail.trim().toLowerCase()
+        );
+        if (idx !== -1) {
+          registeredUsers[idx].senha = novaSenha;
+          localStorage.setItem('morador_registered_users', JSON.stringify(registeredUsers));
+        }
       }
 
-      setSuccessMessage('Senha redefinida com sucesso! Você já pode entrar.');
+      setSuccessMessage('Senha redefinida no banco de dados com sucesso! Você já pode entrar.');
       setLoginEmail(recEmail.trim());
       setLoginPassword(novaSenha);
 
@@ -229,7 +237,38 @@ export default function MobileLoginPage() {
         setActiveTab('login');
         setIsLoading(false);
       }, 1200);
-    }, 400);
+      return;
+    } catch (err: any) {
+      console.warn('Tentando redefinição local:', err?.message);
+    }
+
+    // 2. Fallback local
+    const registeredUsersStr = localStorage.getItem('morador_registered_users');
+    let registeredUsers = registeredUsersStr ? JSON.parse(registeredUsersStr) : [];
+
+    const userIndex = registeredUsers.findIndex(
+      (u: any) =>
+        u.email.toLowerCase() === recEmail.trim().toLowerCase() &&
+        (u.cpf.replace(/\D/g, '') === recCpf.replace(/\D/g, '') || !u.cpf),
+    );
+
+    if (userIndex !== -1) {
+      registeredUsers[userIndex].senha = novaSenha;
+      localStorage.setItem('morador_registered_users', JSON.stringify(registeredUsers));
+    } else {
+      setErrorMessage('Nenhum cadastro de morador localizado com este E-mail e CPF.');
+      setIsLoading(false);
+      return;
+    }
+
+    setSuccessMessage('Senha redefinida com sucesso! Você já pode entrar.');
+    setLoginEmail(recEmail.trim());
+    setLoginPassword(novaSenha);
+
+    setTimeout(() => {
+      setActiveTab('login');
+      setIsLoading(false);
+    }, 1200);
   };
 
   return (

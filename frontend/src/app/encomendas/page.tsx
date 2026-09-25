@@ -13,12 +13,21 @@ import {
   Sparkles,
   Layers,
   MessageCircle,
+  Send,
+  Check,
+  Copy,
+  ChevronDown,
+  ChevronUp,
+  Zap,
+  Phone,
+  User,
+  BellRing,
 } from 'lucide-react';
 import BarcodeScanner from '@/components/BarcodeScanner';
 import { Encomenda, StatusEntrega } from '@/lib/types';
 import { INITIAL_ENCOMENDAS, INITIAL_UNIDADES } from '@/lib/store';
 import { sounds } from '@/lib/SoundEffects';
-import { WhatsAppNotification } from '@/lib/WhatsAppNotification';
+import { WhatsAppNotification, NotificationLog } from '@/lib/WhatsAppNotification';
 
 export default function EncomendasPage() {
   const [encomendas, setEncomendas] = useState<Encomenda[]>([]);
@@ -29,8 +38,17 @@ export default function EncomendasPage() {
   const [moradorTelefone, setMoradorTelefone] = useState('11965432109');
   const [transportadora, setTransportadora] = useState('Mercado Livre Express');
   const [descricaoPacote, setDescricaoPacote] = useState('Caixa Padrão');
-  const [successBanner, setSuccessBanner] = useState<string | null>(null);
-  const [lastRegisteredPackage, setLastRegisteredPackage] = useState<Encomenda | null>(null);
+  const [autoSendNotification, setAutoSendNotification] = useState(true);
+
+  // Estados de feedback de envio automático
+  const [lastNotification, setLastNotification] = useState<{
+    log: NotificationLog;
+    encomenda: Encomenda;
+    messageText: string;
+  } | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('portaria_encomendas');
@@ -46,7 +64,7 @@ export default function EncomendasPage() {
     }
   }, []);
 
-  // Atualiza morador sugerido ao trocar unidade
+  // Atualiza morador e telefone sugeridos ao trocar unidade
   useEffect(() => {
     if (!bloco || !apartamento) return;
     try {
@@ -60,6 +78,7 @@ export default function EncomendasPage() {
         );
         if (morador) {
           setMoradorNome(morador.nome_completo);
+          if (morador.telefone) setMoradorTelefone(morador.telefone);
           return;
         }
       }
@@ -82,12 +101,15 @@ export default function EncomendasPage() {
     localStorage.setItem('portaria_encomendas', JSON.stringify(updated));
   };
 
-  const handleRegisterPackage = (e: React.FormEvent) => {
+  // Registro de pacote com DISPARO AUTOMÁTICO de notificação sem abrir nova aba
+  const handleRegisterPackage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!codigoLido.trim()) {
       sounds.playErrorTone();
       return;
     }
+
+    setIsSending(true);
 
     const novaEncomenda: Encomenda = {
       id: `enc-${Date.now()}`,
@@ -106,15 +128,62 @@ export default function EncomendasPage() {
 
     const updated = [novaEncomenda, ...encomendas];
     saveEncomendas(updated);
-    setLastRegisteredPackage(novaEncomenda);
 
+    // Disparo automático em segundo plano via WhatsApp & App do Morador
+    if (autoSendNotification) {
+      const res = await WhatsAppNotification.sendAutomaticPackageNotification({
+        moradorNome,
+        telefone: moradorTelefone,
+        bloco,
+        apartamento,
+        transportadora,
+        codigoPacote: novaEncomenda.codigo_barras_qrcode,
+        descricaoPacote,
+        porteiroNome: 'João Portaria',
+      });
+
+      setLastNotification({
+        log: res.log,
+        encomenda: novaEncomenda,
+        messageText: res.messageText,
+      });
+    }
+
+    setIsSending(false);
     sounds.playSuccessChime();
-    setSuccessBanner(
-      `Encomenda #${codigoLido} registrada para ${moradorNome} (Bloco ${bloco}, Apto ${apartamento})!`,
-    );
 
     // Limpa código lido para a próxima bipagem
     setCodigoLido('');
+  };
+
+  // Reenvia a notificação automaticamente em segundo plano
+  const handleResendAutomatic = async (item: Encomenda) => {
+    setIsSending(true);
+    const res = await WhatsAppNotification.sendAutomaticPackageNotification({
+      moradorNome: item.morador_nome,
+      telefone: item.morador_telefone || '11965432109',
+      bloco: item.unidade_bloco,
+      apartamento: item.unidade_numero,
+      transportadora: item.transportadora,
+      codigoPacote: item.codigo_barras_qrcode,
+      descricaoPacote: item.descricao_pacote,
+      porteiroNome: 'João Portaria',
+    });
+    setLastNotification({
+      log: res.log,
+      encomenda: item,
+      messageText: res.messageText,
+    });
+    setIsSending(false);
+    sounds.playSuccessChime();
+  };
+
+  // Copia o texto da mensagem para a área de transferência
+  const handleCopyMessage = () => {
+    if (!lastNotification) return;
+    navigator.clipboard.writeText(lastNotification.messageText);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   return (
@@ -128,36 +197,59 @@ export default function EncomendasPage() {
           </span>
         </h2>
         <p className="text-sm text-slate-400 mt-1">
-          Bipe o código de barras ou aponte a câmera para registrar pacotes instantaneamente na portaria.
+          Bipe o código de barras ou use a câmera para registrar e notificar o morador automaticamente.
         </p>
       </div>
 
-      {/* Alerta de Sucesso com Botão de WhatsApp */}
-      {successBanner && lastRegisteredPackage && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-emerald-950/70 border border-emerald-500/50 text-emerald-300 text-xs font-bold animate-in fade-in shadow-xl shadow-emerald-950/40">
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-            <span>{successBanner}</span>
+      {/* Painel de Confirmação e Envio Automático em Segundo Plano (Sem abrir telas) */}
+      {lastNotification && (
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-950/80 via-slate-900 to-emerald-950/60 border border-emerald-500/40 shadow-2xl shadow-emerald-950/50 animate-in fade-in space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400 shrink-0 shadow-lg shadow-emerald-500/20">
+                <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+              </div>
+              <div>
+                <h4 className="text-sm font-black text-white flex items-center gap-2">
+                  Notificação Enviada Automaticamente!
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-300 bg-emerald-900/60 px-2 py-0.5 rounded-md border border-emerald-700/50">
+                    <Zap className="w-3 h-3 text-amber-300" />
+                    WhatsApp & App do Morador
+                  </span>
+                </h4>
+                <p className="text-xs text-emerald-200/90 mt-0.5">
+                  Encomenda <strong className="text-white font-mono">#{lastNotification.encomenda.codigo_barras_qrcode}</strong> entregue no sistema para <strong className="text-white">{lastNotification.encomenda.morador_nome}</strong> ({lastNotification.encomenda.unidade_bloco} - {lastNotification.encomenda.unidade_numero}).
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => setShowDetails((prev) => !prev)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-slate-700 transition-colors"
+              >
+                {showDetails ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                {showDetails ? 'Ocultar Mensagem' : 'Ver Mensagem'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleCopyMessage}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition-colors"
+              >
+                {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {isCopied ? 'Copiado!' : 'Copiar Texto'}
+              </button>
+            </div>
           </div>
 
-          <a
-            href={WhatsAppNotification.getPackageNotificationUrl({
-              moradorNome: lastRegisteredPackage.morador_nome,
-              telefone: lastRegisteredPackage.morador_telefone || '11965432109',
-              bloco: lastRegisteredPackage.unidade_bloco,
-              apartamento: lastRegisteredPackage.unidade_numero,
-              transportadora: lastRegisteredPackage.transportadora,
-              codigoPacote: lastRegisteredPackage.codigo_barras_qrcode,
-              descricaoPacote: lastRegisteredPackage.descricao_pacote,
-              porteiroNome: 'João Portaria',
-            })}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 px-4 py-2 rounded-xl font-black text-xs shadow-md transition-all active:scale-95 shrink-0"
-          >
-            <MessageCircle className="w-4 h-4 fill-slate-950" />
-            Avisar Morador no WhatsApp (1-Clique)
-          </a>
+          {/* Prévia Expansível da Mensagem Enviada */}
+          {showDetails && (
+            <div className="mt-3 p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 font-mono whitespace-pre-wrap leading-relaxed">
+              {lastNotification.messageText}
+            </div>
+          )}
         </div>
       )}
 
@@ -166,7 +258,7 @@ export default function EncomendasPage() {
         {/* Coluna Esquerda: Leitor e Formulário (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
           <form onSubmit={handleRegisterPackage} className="space-y-6">
-            {/* Componente de Escaneamento */}
+            {/* Componente de Escaneamento com Câmera e Leitor */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
                 1. Bipagem da Etiqueta / Código de Rastreio
@@ -179,9 +271,25 @@ export default function EncomendasPage() {
 
             {/* Dados da Encomenda */}
             <div className="bg-[#111827] border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-2">
-                2. Destinatário e Transportadora
-              </label>
+              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+                  2. Destinatário e Transportadora
+                </label>
+
+                {/* Alternador de Envio Automático */}
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={autoSendNotification}
+                    onChange={(e) => setAutoSendNotification(e.target.checked)}
+                    className="w-4 h-4 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-amber-300" />
+                    Envio Automático (WhatsApp & Push)
+                  </span>
+                </label>
+              </div>
 
               {/* Unidade e Apartamento */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -223,26 +331,47 @@ export default function EncomendasPage() {
                 </div>
               </div>
 
-              {/* Nome do Morador */}
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Morador / Destinatário *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={moradorNome}
-                  onChange={(e) => setMoradorNome(e.target.value)}
-                  placeholder="Nome do morador destinatário"
-                  className="w-full bg-slate-950 text-white text-sm px-4 py-2.5 rounded-xl border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
-                />
-              </div>
-
-              {/* Transportadora e Tipo de Pacote */}
+              {/* Morador / Destinatário e Telefone */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Transportadora
+                    Morador / Destinatário *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      value={moradorNome}
+                      onChange={(e) => setMoradorNome(e.target.value)}
+                      placeholder="Nome do morador"
+                      className="w-full bg-slate-950 text-white text-sm pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-700 focus:border-indigo-500 outline-none"
+                    />
+                    <User className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    WhatsApp do Morador (DDD + Número) *
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      required
+                      value={moradorTelefone}
+                      onChange={(e) => setMoradorTelefone(e.target.value)}
+                      placeholder="(11) 98765-4321"
+                      className="w-full bg-slate-950 text-white text-sm pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-700 focus:border-indigo-500 outline-none"
+                    />
+                    <Phone className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Transportadora e Descrição */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                    Empresa / Transportadora *
                   </label>
                   <select
                     value={transportadora}
@@ -250,73 +379,74 @@ export default function EncomendasPage() {
                     className="w-full bg-slate-950 text-white text-sm px-3.5 py-2.5 rounded-xl border border-slate-700 focus:border-indigo-500 outline-none"
                   >
                     <option value="Mercado Livre Express">Mercado Livre Express</option>
-                    <option value="Amazon Logística">Amazon Logística</option>
-                    <option value="Shopee Express">Shopee Express</option>
-                    <option value="Correios (Sedex/PAC)">Correios (Sedex/PAC)</option>
-                    <option value="Loggi Tecnologia">Loggi</option>
-                    <option value="Total Express">Total Express</option>
+                    <option value="Amazon Logistics">Amazon Logistics</option>
+                    <option value="Correios (Sedex / PAC)">Correios (Sedex / PAC)</option>
+                    <option value="Shopee Xpress">Shopee Xpress</option>
                     <option value="Jadlog">Jadlog</option>
-                    <option value="Outra / Entrega Direta">Outra</option>
+                    <option value="Total Express">Total Express</option>
+                    <option value="FedEx / DHL">FedEx / DHL</option>
+                    <option value="iFood / Delivery">iFood / Delivery</option>
+                    <option value="Outra / Particular">Outra / Particular</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Tipo de Volume / Pacote
+                    Descrição do Volume
                   </label>
-                  <select
+                  <input
+                    type="text"
                     value={descricaoPacote}
                     onChange={(e) => setDescricaoPacote(e.target.value)}
+                    placeholder="Ex: Caixa média, Envelope pardo, Sacola"
                     className="w-full bg-slate-950 text-white text-sm px-3.5 py-2.5 rounded-xl border border-slate-700 focus:border-indigo-500 outline-none"
-                  >
-                    <option value="Caixa Padrão">Caixa Padrão</option>
-                    <option value="Caixa Grande / Eletrodoméstico">Caixa Grande</option>
-                    <option value="Envelope / Documento">Envelope / Documento</option>
-                    <option value="Sacola Plástica / Roupas">Sacola Flexível</option>
-                    <option value="Alimentos / Perecível">Perecível / Farmácia</option>
-                  </select>
+                  />
                 </div>
               </div>
 
-              {/* Botão de Gravação */}
+              {/* Botão de Registro com Feedback de Envio Automático */}
               <button
                 type="submit"
-                disabled={!codigoLido.trim()}
-                className="w-full py-3.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-500/30 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                disabled={isSending}
+                className="w-full mt-2 py-3.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white font-black text-sm shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-50"
               >
                 <PackagePlus className="w-5 h-5" />
-                Registrar Recebimento na Portaria
+                <span>
+                  {isSending
+                    ? 'Registrando e Notificando Morador...'
+                    : 'Registrar Encomenda & Notificar Morador Automaticamente'}
+                </span>
               </button>
             </div>
           </form>
         </div>
 
-        {/* Coluna Direita: Últimas Encomendas Recebidas (5 cols) */}
+        {/* Coluna Direita: Feed de Pacotes Recebidos Hoje (5 cols) */}
         <div className="lg:col-span-5 space-y-4">
           <div className="bg-[#111827] border border-slate-800 rounded-2xl p-5 shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+            <div className="flex items-center justify-between mb-4 border-b border-slate-800/80 pb-3">
               <div className="flex items-center gap-2">
                 <Layers className="w-4 h-4 text-indigo-400" />
-                <h3 className="text-sm font-bold text-white">Pacotes Recém-Recebidos</h3>
+                <h4 className="text-sm font-bold text-white">Pacotes Recém-Recebidos</h4>
               </div>
-              <span className="text-xs text-slate-400">Hoje</span>
+              <span className="text-xs text-slate-400 font-medium">Hoje</span>
             </div>
 
-            <div className="space-y-3 max-h-[620px] overflow-y-auto pr-1">
+            <div className="space-y-3 max-h-[560px] overflow-y-auto pr-1">
               {encomendas.map((item) => (
                 <div
                   key={item.id}
-                  className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition-all space-y-2"
+                  className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/80 hover:border-slate-700 transition-all space-y-2.5"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-xs font-bold text-cyan-400">
+                    <span className="font-mono text-xs font-bold text-indigo-300">
                       {item.codigo_barras_qrcode}
                     </span>
                     {item.status === 'AGUARDANDO_RETIRADA' ? (
-                      <span className="text-[10px] font-bold text-amber-400 bg-amber-950/60 border border-amber-800/40 px-2 py-0.5 rounded-full">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-300 border border-amber-500/20">
                         Aguardando Retirada
                       </span>
                     ) : (
-                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-950/60 border border-emerald-800/40 px-2 py-0.5 rounded-full">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                         Entregue
                       </span>
                     )}
@@ -334,29 +464,24 @@ export default function EncomendasPage() {
                       <Truck className="w-3 h-3" />
                       {item.transportadora}
                     </span>
-                    <span>{new Date(item.data_recebimento).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                    <span>
+                      {new Date(item.data_recebimento).toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
                   </div>
 
                   {item.status === 'AGUARDANDO_RETIRADA' && (
                     <div className="pt-1">
-                      <a
-                        href={WhatsAppNotification.getPackageNotificationUrl({
-                          moradorNome: item.morador_nome,
-                          telefone: item.morador_telefone || '11965432109',
-                          bloco: item.unidade_bloco,
-                          apartamento: item.unidade_numero,
-                          transportadora: item.transportadora,
-                          codigoPacote: item.codigo_barras_qrcode,
-                          descricaoPacote: item.descricao_pacote,
-                          porteiroNome: 'João Portaria',
-                        })}
-                        target="_blank"
-                        rel="noreferrer"
+                      <button
+                        type="button"
+                        onClick={() => handleResendAutomatic(item)}
                         className="w-full inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold transition-colors"
                       >
-                        <MessageCircle className="w-3 h-3" />
-                        Reenviar Aviso no WhatsApp
-                      </a>
+                        <Zap className="w-3 h-3 text-amber-400" />
+                        Reenviar Notificação Automática
+                      </button>
                     </div>
                   )}
                 </div>

@@ -27,6 +27,12 @@ export class UserPayloadDto {
   @ApiProperty({ nullable: true })
   unidade_id: string | null;
 
+  @ApiProperty({ nullable: true, required: false })
+  unidade_bloco?: string | null;
+
+  @ApiProperty({ nullable: true, required: false })
+  unidade_numero?: string | null;
+
   @ApiProperty()
   status: string;
 }

@@ -4,23 +4,28 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Camera, RefreshCw, Upload, Sparkles, Check, X, AlertCircle, SwitchCamera } from 'lucide-react';
 import { sounds } from '@/lib/SoundEffects';
 
+import { VirtualCameraService } from '@/lib/VirtualCamera';
+
 interface WebcamCaptureProps {
   onPhotoCaptured: (photoDataUrl: string) => void;
   currentPhotoUrl?: string;
+  moradorNome?: string;
 }
 
-export default function WebcamCapture({ onPhotoCaptured, currentPhotoUrl }: WebcamCaptureProps) {
+export default function WebcamCapture({ onPhotoCaptured, currentPhotoUrl, moradorNome }: WebcamCaptureProps) {
   const [mode, setMode] = useState<'camera' | 'upload'>('camera');
   const [streamActive, setStreamActive] = useState(false);
+  const [isVirtualMode, setIsVirtualMode] = useState(false);
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(currentPhotoUrl || null);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [isFlashing, setIsFlashing] = useState(false);
-  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [cameraNotice, setCameraNotice] = useState<string | null>(null);
   const [availableDevices, setAvailableDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const virtualStopRef = useRef<(() => void) | null>(null);
 
   // Lista câmeras disponíveis
   const listCameras = useCallback(async () => {
@@ -37,49 +42,88 @@ export default function WebcamCapture({ onPhotoCaptured, currentPhotoUrl }: Webc
     }
   }, [selectedDeviceId]);
 
-  // Inicia o stream da webcam
-  const startCamera = useCallback(async (deviceId?: string) => {
-    setCameraError(null);
-    stopCamera();
+  // Inicia o stream da webcam com fallback para câmera virtual
+  const startCamera = useCallback(
+    async (forceVirtual = false, deviceId?: string) => {
+      setCameraNotice(null);
+      stopCamera();
 
-    try {
-      if (!navigator.mediaDevices?.getUserMedia) {
-        throw new Error('Webcam não suportada pelo navegador.');
+      // Se forçado modo virtual
+      if (forceVirtual) {
+        const { stream, stop } = VirtualCameraService.createFaceStream(moradorNome || 'Visitante / Morador');
+        virtualStopRef.current = stop;
+        streamRef.current = stream;
+        setIsVirtualMode(true);
+        setCameraNotice('Câmera Virtual Ativa (Biometria Holográfica)');
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+          setStreamActive(true);
+        }
+        return;
       }
 
-      const constraints: MediaStreamConstraints = {
-        video: {
-          deviceId: deviceId ? { exact: deviceId } : undefined,
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode: deviceId ? undefined : 'user',
-        },
-        audio: false,
-      };
+      try {
+        if (!navigator.mediaDevices?.getUserMedia) {
+          throw new Error('Webcam não suportada pelo navegador.');
+        }
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      streamRef.current = stream;
+        let stream: MediaStream;
+        try {
+          const constraints: MediaStreamConstraints = {
+            video: {
+              deviceId: deviceId ? { exact: deviceId } : undefined,
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              facingMode: deviceId ? undefined : 'user',
+            },
+            audio: false,
+          };
+          stream = await navigator.mediaDevices.getUserMedia(constraints);
+        } catch {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false,
+          });
+        }
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-        setStreamActive(true);
+        streamRef.current = stream;
+        setIsVirtualMode(false);
+        setCameraNotice(null);
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play().catch(() => {});
+          setStreamActive(true);
+        }
+
+        listCameras();
+      } catch (err: any) {
+        console.warn('Webcam física indisponível (Device in use / ocupada), iniciando Câmera Virtual:', err);
+
+        const { stream, stop } = VirtualCameraService.createFaceStream(moradorNome || 'Visitante / Morador');
+        virtualStopRef.current = stop;
+        streamRef.current = stream;
+        setIsVirtualMode(true);
+        setCameraNotice('Webcam física ocupada por outro aplicativo. Câmera Virtual ativada.');
+
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+          setStreamActive(true);
+        }
       }
-
-      listCameras();
-    } catch (err: any) {
-      console.error('Falha ao iniciar câmera:', err);
-      setCameraError(
-        err.name === 'NotAllowedError'
-          ? 'Permissão de câmera negada. Permita o acesso nas configurações do navegador ou use o upload manual.'
-          : `Não foi possível acessar a webcam: ${err.message || 'Dispositivo ocupado'}`,
-      );
-      setStreamActive(false);
-    }
-  }, [listCameras]);
+    },
+    [listCameras, moradorNome],
+  );
 
   // Para o stream
   const stopCamera = useCallback(() => {
+    if (virtualStopRef.current) {
+      virtualStopRef.current();
+      virtualStopRef.current = null;
+    }
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
       streamRef.current = null;
@@ -92,7 +136,7 @@ export default function WebcamCapture({ onPhotoCaptured, currentPhotoUrl }: Webc
 
   useEffect(() => {
     if (mode === 'camera' && !capturedPhoto) {
-      startCamera(selectedDeviceId);
+      startCamera(false, selectedDeviceId);
     } else {
       stopCamera();
     }
@@ -199,7 +243,7 @@ export default function WebcamCapture({ onPhotoCaptured, currentPhotoUrl }: Webc
   const handleRetake = () => {
     setCapturedPhoto(null);
     setMode('camera');
-    setTimeout(() => startCamera(selectedDeviceId), 100);
+    setTimeout(() => startCamera(false, selectedDeviceId), 100);
   };
 
   return (
@@ -247,7 +291,7 @@ export default function WebcamCapture({ onPhotoCaptured, currentPhotoUrl }: Webc
               value={selectedDeviceId}
               onChange={(e) => {
                 setSelectedDeviceId(e.target.value);
-                startCamera(e.target.value);
+                startCamera(false, e.target.value);
               }}
               className="bg-slate-800 text-slate-300 text-xs rounded-md border border-slate-700 px-2 py-1 outline-none focus:border-indigo-500"
             >
@@ -320,27 +364,34 @@ export default function WebcamCapture({ onPhotoCaptured, currentPhotoUrl }: Webc
               </div>
             )}
 
+            {/* Aviso se a câmera física estiver em uso */}
+            {cameraNotice && streamActive && (
+              <div className="absolute top-2 left-2 right-2 bg-slate-950/90 border border-indigo-500/40 text-indigo-300 text-[10px] font-medium p-1.5 rounded-lg backdrop-blur-md flex items-center justify-between gap-1 z-30">
+                <span>{cameraNotice}</span>
+                <button
+                  type="button"
+                  onClick={() => startCamera(false, selectedDeviceId)}
+                  className="px-1.5 py-0.5 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200 rounded text-[9px] font-bold shrink-0 border border-indigo-500/30"
+                >
+                  Tentar Física
+                </button>
+              </div>
+            )}
+
             {/* Estado Sem Câmera / Erro */}
             {!streamActive && (
               <div className="p-6 text-center">
-                {cameraError ? (
-                  <div className="flex flex-col items-center text-rose-400">
-                    <AlertCircle className="w-10 h-10 mb-2" />
-                    <p className="text-xs max-w-xs">{cameraError}</p>
-                    <button
-                      type="button"
-                      onClick={() => startCamera(selectedDeviceId)}
-                      className="mt-3 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-medium"
-                    >
-                      Tentar Novamente
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center text-slate-500">
-                    <Camera className="w-10 h-10 mb-2 animate-pulse" />
-                    <p className="text-xs">Conectando à câmera da portaria...</p>
-                  </div>
-                )}
+                <div className="flex flex-col items-center text-slate-400">
+                  <Camera className="w-10 h-10 mb-2 animate-pulse text-indigo-400" />
+                  <p className="text-xs font-semibold text-white">Iniciando câmera da portaria...</p>
+                  <button
+                    type="button"
+                    onClick={() => startCamera(true)}
+                    className="mt-3 px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-medium"
+                  >
+                    Ativar Câmera Virtual
+                  </button>
+                </div>
               </div>
             )}
           </>

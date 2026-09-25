@@ -28,6 +28,7 @@ import { LgpdSessionInterceptor } from './common/interceptors/lgpd-session.inter
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: ['.env', join(__dirname, '../.env'), join(__dirname, '../../.env')],
       load: [configuration],
     }),
     ScheduleModule.forRoot(),

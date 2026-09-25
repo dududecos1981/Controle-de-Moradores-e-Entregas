@@ -14,6 +14,8 @@ import { RegisterDto } from './dto/register.dto';
 import { AuthResponseDto } from './dto/refresh-token.dto';
 import { JwtPayload } from './strategies/jwt.strategy';
 
+import { ResetPasswordDto } from './dto/reset-password.dto';
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
@@ -28,12 +30,20 @@ export class AuthService {
    * Autenticação via Email e Senha
    */
   async login(dto: LoginDto, ipAddress?: string): Promise<AuthResponseDto> {
+    const rawInput = (dto.email || '').trim();
+    const cleanDigits = rawInput.replace(/\D/g, '');
+
     const userQuery = `
-      SELECT id, nome_completo, cpf, email, senha_hash, perfil, status, unidade_id, lgpd_anonimizado
-      FROM usuarios
-      WHERE email = $1
+      SELECT u.id, u.nome_completo, u.cpf, u.email, u.senha_hash, u.perfil, u.status, u.unidade_id, u.lgpd_anonimizado,
+             un.bloco as unidade_bloco, un.numero as unidade_numero
+      FROM usuarios u
+      LEFT JOIN unidades un ON un.id = u.unidade_id
+      WHERE LOWER(TRIM(u.email)) = LOWER($1)
+         OR u.cpf = $1
+         OR ($2 <> '' AND regexp_replace(u.cpf, '[^0-9]', '', 'g') = $2)
+      LIMIT 1
     `;
-    const result = await this.databaseService.query(userQuery, [dto.email]);
+    const result = await this.databaseService.query(userQuery, [rawInput, cleanDigits]);
 
     if (result.rowCount === 0) {
       throw new UnauthorizedException('Credenciais de acesso incorretas.');
@@ -72,14 +82,30 @@ export class AuthService {
       }
     }
 
+    let finalUnidadeId = dto.unidade_id || null;
+
     // Se informou unidade_id, valida existência
-    if (dto.unidade_id) {
+    if (finalUnidadeId) {
       const checkUnidade = await this.databaseService.query(
         `SELECT id FROM unidades WHERE id = $1 AND status = 'ATIVO'`,
-        [dto.unidade_id],
+        [finalUnidadeId],
       );
       if (checkUnidade.rowCount === 0) {
         throw new BadRequestException('A unidade informada não existe ou está inativa.');
+      }
+    } else if (dto.unidade_bloco && dto.unidade_numero) {
+      const checkUnidade = await this.databaseService.query(
+        `SELECT id FROM unidades WHERE bloco = $1 AND numero = $2 LIMIT 1`,
+        [dto.unidade_bloco.trim(), dto.unidade_numero.trim()],
+      );
+      if (checkUnidade.rowCount > 0) {
+        finalUnidadeId = checkUnidade.rows[0].id;
+      } else {
+        const createUnidade = await this.databaseService.query(
+          `INSERT INTO unidades (bloco, numero, tipo, status) VALUES ($1, $2, 'APARTAMENTO', 'ATIVO') RETURNING id`,
+          [dto.unidade_bloco.trim(), dto.unidade_numero.trim()],
+        );
+        finalUnidadeId = createUnidade.rows[0].id;
       }
     }
 
@@ -112,7 +138,7 @@ export class AuthService {
         senhaHash,
         dto.telefone || null,
         dto.perfil || 'MORADOR',
-        dto.unidade_id || null,
+        finalUnidadeId,
         ipAddress || '127.0.0.1',
       ],
       {
@@ -122,10 +148,54 @@ export class AuthService {
       },
     );
 
-    const newUser = insertResult.rows[0];
+    const newUser = {
+      ...insertResult.rows[0],
+      unidade_bloco: dto.unidade_bloco || null,
+      unidade_numero: dto.unidade_numero || null,
+    };
     this.logger.log(`Novo usuário registrado com sucesso: ${newUser.email} (${newUser.perfil})`);
 
     return this.generateTokens(newUser);
+  }
+
+  /**
+   * Redefinição de senha com validação de CPF e E-mail
+   */
+  async redefinirSenha(dto: ResetPasswordDto, ipAddress?: string): Promise<{ success: boolean; message: string }> {
+    const rawEmail = (dto.email || '').trim();
+    const rawCpf = (dto.cpf || '').trim();
+    const cleanDigits = rawCpf.replace(/\D/g, '');
+
+    const userQuery = `
+      SELECT id, nome_completo, cpf, email, status
+      FROM usuarios
+      WHERE LOWER(TRIM(email)) = LOWER($1)
+        AND (cpf = $2 OR ($3 <> '' AND regexp_replace(cpf, '[^0-9]', '', 'g') = $3))
+      LIMIT 1
+    `;
+    const result = await this.databaseService.query(userQuery, [rawEmail, rawCpf, cleanDigits]);
+
+    if (result.rowCount === 0) {
+      throw new BadRequestException('Nenhum usuário localizado com o e-mail e CPF informados.');
+    }
+
+    const user = result.rows[0];
+    const saltRounds = this.configService.get<number>('jwt.bcryptSaltRounds', 10);
+    const senhaHash = await bcrypt.hash(dto.nova_senha, saltRounds);
+
+    await this.databaseService.queryWithLgpdContext(
+      `UPDATE usuarios SET senha_hash = $1, updated_at = clock_timestamp() WHERE id = $2`,
+      [senhaHash, user.id],
+      {
+        userId: user.id,
+        userName: user.nome_completo,
+        clientIp: ipAddress,
+        reason: 'Redefinição de senha do usuário',
+      },
+    );
+
+    this.logger.log(`Senha redefinida com sucesso para o usuário: ${user.email}`);
+    return { success: true, message: 'Senha redefinida com sucesso.' };
   }
 
   /**
@@ -167,6 +237,8 @@ export class AuthService {
         cpf: user.cpf,
         perfil: user.perfil,
         unidade_id: user.unidade_id || null,
+        unidade_bloco: user.unidade_bloco || null,
+        unidade_numero: user.unidade_numero || null,
         status: user.status,
       },
     };

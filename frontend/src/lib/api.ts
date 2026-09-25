@@ -76,6 +76,12 @@ class ApiService {
   logout() {
     this.setToken(null);
     this.setUser(null);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('auth_user');
+      localStorage.removeItem('portaria_auth_user');
+      localStorage.removeItem('portaria_session');
+    }
   }
 
   private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -324,6 +330,8 @@ class ApiService {
     telefone?: string;
     perfil?: string;
     unidade_id?: string;
+    unidade_bloco?: string;
+    unidade_numero?: string;
   }) {
     const res = await this.request<any>('/auth/register', {
       method: 'POST',
@@ -336,6 +344,13 @@ class ApiService {
       }
     }
     return res;
+  }
+
+  async redefinirSenha(email: string, cpf: string, nova_senha: string) {
+    return this.request<any>('/auth/redefinir-senha', {
+      method: 'POST',
+      body: JSON.stringify({ email, cpf, nova_senha }),
+    });
   }
 }
 

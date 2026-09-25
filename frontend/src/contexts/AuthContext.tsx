@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { PerfilUsuario, CargoColaborador, TurnoTrabalho, Colaborador } from '@/lib/types';
 import { INITIAL_UNIDADES } from '@/lib/store';
 
+import { api } from '@/lib/api';
+
 export type { PerfilUsuario };
 
 export interface UsuarioAuth {
@@ -54,41 +56,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Contas de sistema institucionais (Administração, Portaria e Síndico)
-const DEFAULT_SYSTEM_USERS: (UsuarioAuth & { senha_hash: string })[] = [
-  {
-    id: 'usr-admin-01',
-    nome_completo: 'Administrador Geral',
-    email: 'admin@condominio.com.br',
-    cpf: '111.222.333-44',
-    telefone: '(11) 98765-4321',
-    perfil: 'ADMINISTRADOR',
-    senha_hash: 'SenhaSegura123!',
-    lgpd_termo_aceito: true,
-  },
-  {
-    id: 'usr-porteiro-01',
-    nome_completo: 'Portaria Principal',
-    email: 'porteiro@condominio.com.br',
-    cpf: '222.333.444-55',
-    telefone: '(11) 97654-3210',
-    perfil: 'PORTEIRO',
-    senha_hash: 'SenhaSegura123!',
-    lgpd_termo_aceito: true,
-  },
-  {
-    id: 'usr-sindico-01',
-    nome_completo: 'Síndico Geral',
-    email: 'sindico@condominio.com.br',
-    cpf: '444.555.666-77',
-    telefone: '(11) 95432-1098',
-    perfil: 'SINDICO',
-    unidade_bloco: 'B',
-    unidade_numero: 'PH01',
-    senha_hash: 'SenhaSegura123!',
-    lgpd_termo_aceito: true,
-  },
-];
+// Base de usuários padrão limpa para inserção e cadastro manual
+const DEFAULT_SYSTEM_USERS: (UsuarioAuth & { senha_hash: string })[] = [];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<UsuarioAuth | null>(null);
@@ -109,12 +78,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Login com E-mail ou CPF
+  // Login com E-mail ou CPF (conectado ao backend com fallback local)
   const login = async (identificador: string, senha: string): Promise<{ success: boolean; message?: string }> => {
     const cleanId = identificador.trim().toLowerCase();
     const cleanDigits = identificador.replace(/\D/g, '');
 
-    // 1. Busca nas contas padrão institucionais
+    // 1. Tenta autenticação real com a API / Banco Neon
+    try {
+      const apiRes = await api.login(identificador.trim(), senha);
+      if (apiRes?.user) {
+        const authUser: UsuarioAuth = {
+          id: apiRes.user.id,
+          nome_completo: apiRes.user.nome_completo,
+          email: apiRes.user.email,
+          cpf: apiRes.user.cpf,
+          telefone: apiRes.user.telefone,
+          perfil: apiRes.user.perfil,
+          unidade_bloco: apiRes.user.unidade_bloco,
+          unidade_numero: apiRes.user.unidade_numero,
+          is_responsavel_unidade: apiRes.user.is_responsavel_unidade ?? true,
+          lgpd_termo_aceito: true,
+        };
+
+        setCurrentUser(authUser);
+        localStorage.setItem('portaria_auth_user', JSON.stringify(authUser));
+
+        if (authUser.perfil === 'MORADOR') {
+          router.push('/morador');
+        } else {
+          router.push('/');
+        }
+        return { success: true };
+      }
+    } catch (apiError: any) {
+      console.warn('Tentando fallback local após resposta da API:', apiError?.message);
+    }
+
+    // 2. Busca nas contas padrão institucionais
     let found: any = DEFAULT_SYSTEM_USERS.find(
       (u) =>
         (u.email.toLowerCase() === cleanId ||
@@ -122,7 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         u.senha_hash === senha,
     );
 
-    // 2. Busca nas contas de colaboradores cadastradas
+    // 3. Busca nas contas de colaboradores cadastradas
     if (!found) {
       const savedColabs = localStorage.getItem('portaria_colaboradores');
       if (savedColabs) {
@@ -152,7 +152,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // 3. Busca nas contas de moradores cadastradas dinamicamente
+    // 4. Busca nas contas de moradores cadastradas dinamicamente
     if (!found) {
       const savedMoradores = localStorage.getItem('portaria_moradores_contas');
       if (savedMoradores) {
@@ -173,7 +173,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // 4. Busca nas contas registradas em portaria_registered_users
+    // 5. Busca nas contas registradas em portaria_registered_users
     if (!found) {
       const savedRegistered = localStorage.getItem('portaria_registered_users');
       if (savedRegistered) {
@@ -269,6 +269,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       senha_hash: data.senha,
     };
 
+    // Tenta persistir no banco de dados via API
+    try {
+      await api.register({
+        nome_completo: data.nome_completo.trim(),
+        cpf: data.cpf,
+        email: cleanEmail,
+        senha: data.senha,
+        telefone: data.telefone,
+        perfil: data.cargo,
+      });
+    } catch (e: any) {
+      console.warn('Persistência remota do colaborador (fallback local ativo):', e?.message);
+    }
+
     listColabs.push(novoColaborador);
     localStorage.setItem('portaria_colaboradores', JSON.stringify(listColabs));
 
@@ -332,6 +346,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       senha_hash: data.senha,
     };
 
+    // Tenta persistir no banco de dados via API
+    try {
+      await api.register({
+        nome_completo: data.nome_completo.trim(),
+        cpf: data.cpf,
+        email: cleanEmail,
+        senha: data.senha,
+        telefone: data.telefone,
+        perfil: 'MORADOR',
+        unidade_bloco: data.unidade_bloco,
+        unidade_numero: data.unidade_numero,
+      });
+    } catch (e: any) {
+      console.warn('Persistência remota do morador (fallback local ativo):', e?.message);
+    }
+
     // Salva na lista de contas de moradores
     listMoradores.push(novoUsuario);
     localStorage.setItem('portaria_moradores_contas', JSON.stringify(listMoradores));
@@ -388,8 +418,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Logout seguro
   const logout = () => {
     setCurrentUser(null);
-    localStorage.removeItem('portaria_auth_user');
-    router.push('/login');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('portaria_auth_user');
+      localStorage.removeItem('auth_user');
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('portaria_session');
+    }
+    api.logout();
+    router.replace('/login');
   };
 
   return (

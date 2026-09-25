@@ -54,4 +54,14 @@ export class RegisterDto {
   @IsOptional()
   @IsUUID('4', { message: 'ID da unidade deve ser um UUID v4 válido.' })
   unidade_id?: string;
+
+  @ApiPropertyOptional({ example: 'A', description: 'Bloco ou Torre' })
+  @IsOptional()
+  @IsString()
+  unidade_bloco?: string;
+
+  @ApiPropertyOptional({ example: '101', description: 'Número do Apartamento' })
+  @IsOptional()
+  @IsString()
+  unidade_numero?: string;
 }

@@ -13,6 +13,7 @@ import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { RefreshTokenDto, AuthResponseDto, UserPayloadDto } from './dto/refresh-token.dto';
 import { JwtRefreshGuard } from '../../common/guards/jwt-refresh.guard';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -41,6 +42,16 @@ export class AuthController {
   async register(@Body() dto: RegisterDto, @Req() req: Request): Promise<AuthResponseDto> {
     const clientIp = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip) as string;
     return this.authService.register(dto, clientIp);
+  }
+
+  @Post('redefinir-senha')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Redefinição de senha com CPF e Email' })
+  @ApiResponse({ status: 200, description: 'Senha alterada com sucesso' })
+  @ApiResponse({ status: 400, description: 'Dados incorretos ou usuário não encontrado' })
+  async redefinirSenha(@Body() dto: ResetPasswordDto, @Req() req: Request): Promise<{ success: boolean; message: string }> {
+    const clientIp = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip) as string;
+    return this.authService.redefinirSenha(dto, clientIp);
   }
 
   @Post('refresh')
