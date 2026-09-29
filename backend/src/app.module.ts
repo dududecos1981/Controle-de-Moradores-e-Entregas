@@ -2,7 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ScheduleModule } from '@nestjs/schedule';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { join } from 'path';
 
 import configuration from './config/configuration';
@@ -32,6 +33,12 @@ import { LgpdSessionInterceptor } from './common/interceptors/lgpd-session.inter
       envFilePath: ['.env', join(__dirname, '../.env'), join(__dirname, '../../.env')],
       load: [configuration],
     }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 120, // 120 requisições por minuto por IP (global)
+      },
+    ]),
     ScheduleModule.forRoot(),
     ServeStaticModule.forRoot({
       rootPath: join(process.cwd(), 'uploads'),
@@ -64,6 +71,10 @@ import { LgpdSessionInterceptor } from './common/interceptors/lgpd-session.inter
     {
       provide: APP_INTERCEPTOR,
       useClass: LgpdSessionInterceptor,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
     },
   ],
 })

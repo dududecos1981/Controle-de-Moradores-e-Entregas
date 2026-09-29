@@ -9,6 +9,7 @@ import {
   Get,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -24,16 +25,19 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // Máximo 10 tentativas por minuto
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Autenticação de usuário com email e senha' })
   @ApiResponse({ status: 200, type: AuthResponseDto, description: 'Login efetuado com sucesso' })
   @ApiResponse({ status: 401, description: 'Credenciais inválidas ou usuário inativo' })
+  @ApiResponse({ status: 429, description: 'Muitas tentativas. Tente novamente em 1 minuto.' })
   async login(@Body() dto: LoginDto, @Req() req: Request): Promise<AuthResponseDto> {
     const clientIp = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip) as string;
     return this.authService.login(dto, clientIp);
   }
 
+  @Throttle({ default: { limit: 8, ttl: 60000 } })
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Cadastro/Registro de novo usuário no condomínio' })
@@ -44,6 +48,7 @@ export class AuthController {
     return this.authService.register(dto, clientIp);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('redefinir-senha')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Redefinição de senha com CPF e Email' })

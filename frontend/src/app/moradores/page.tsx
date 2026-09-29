@@ -32,18 +32,21 @@ import {
   UserPlus,
   AlertTriangle,
   Check,
+  EyeOff,
 } from 'lucide-react';
 import { Morador, Veiculo, Dependente, ContatoEmergencia, StatusEntrega } from '@/lib/types';
 import { INITIAL_MORADORES, INITIAL_ENCOMENDAS, INITIAL_VISITANTES } from '@/lib/store';
 import { api } from '@/lib/api';
 import WebcamCapture from '@/components/WebcamCapture';
 import SoundEffects from '@/lib/SoundEffects';
+import { maskCpf, maskPhone, maskEmail } from '@/lib/mask';
 
 export default function MoradoresPage() {
   const [moradores, setMoradores] = useState<Morador[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [blocoFilter, setBlocoFilter] = useState('TODOS');
   const [statusFilter, setStatusFilter] = useState('TODOS');
+  const [revealLgpd, setRevealLgpd] = useState(false);
   
   // Modais
   const [isCadastroModalOpen, setIsCadastroModalOpen] = useState(false);
@@ -608,6 +611,20 @@ export default function MoradoresPage() {
             <option value="BLOQUEADO">Bloqueado</option>
             <option value="PENDENTE_APROVACAO">Pendente</option>
           </select>
+
+          {/* Botão de Proteção Visual LGPD */}
+          <button
+            onClick={() => setRevealLgpd(!revealLgpd)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition-all shrink-0 ml-2 ${
+              revealLgpd
+                ? 'bg-amber-500/10 text-amber-300 border-amber-500/40 hover:bg-amber-500/20'
+                : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20'
+            }`}
+            title="Alternar proteção visual de dados pessoais (LGPD)"
+          >
+            {revealLgpd ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            <span>{revealLgpd ? 'Ocultar LGPD' : 'LGPD Protegido'}</span>
+          </button>
         </div>
       </div>
 
@@ -672,28 +689,28 @@ export default function MoradoresPage() {
                 </div>
               </div>
 
-              {/* Informações de Contato e Documentos */}
+              {/* Informações de Contato e Documentos com LGPD Masking */}
               <div className="mt-4 space-y-2 py-3 border-y border-slate-800/60 text-xs">
                 <div className="flex items-center justify-between text-slate-400">
                   <span className="flex items-center gap-1.5">
                     <Phone className="w-3.5 h-3.5 text-slate-500" />
                     Telefone:
                   </span>
-                  <span className="font-mono text-slate-200">{morador.telefone}</span>
+                  <span className="font-mono text-slate-200">{maskPhone(morador.telefone, revealLgpd)}</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-400">
                   <span className="flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5 text-slate-500" />
                     E-mail:
                   </span>
-                  <span className="text-slate-300 truncate max-w-[160px]">{morador.email}</span>
+                  <span className="text-slate-300 truncate max-w-[160px]">{maskEmail(morador.email, revealLgpd)}</span>
                 </div>
                 <div className="flex items-center justify-between text-slate-400">
                   <span className="flex items-center gap-1.5">
                     <Shield className="w-3.5 h-3.5 text-slate-500" />
                     CPF:
                   </span>
-                  <span className="font-mono text-slate-300">{morador.cpf}</span>
+                  <span className="font-mono text-slate-300">{maskCpf(morador.cpf, revealLgpd)}</span>
                 </div>
               </div>
 
