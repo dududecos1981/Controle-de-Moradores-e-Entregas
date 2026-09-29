@@ -25,6 +25,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { Encomenda, StatusEntrega } from '@/lib/types';
 import SoundEffects from '@/lib/SoundEffects';
+import { api } from '@/lib/api';
 
 interface Convite {
   id: string;
@@ -80,7 +81,61 @@ export default function MoradorDashboardPage() {
   useEffect(() => {
     if (!currentUser) return;
 
-    // Encomendas
+    async function loadData() {
+      try {
+        const [encs, vsts, veics] = await Promise.allSettled([
+          api.getEntregas(),
+          api.getVisitantes(),
+          api.getVeiculos(),
+        ]);
+
+        if (encs.status === 'fulfilled' && Array.isArray(encs.value)) {
+          const minhasEnc = encs.value.filter(
+            (e: any) =>
+              (e.unidade_bloco === currentUser?.unidade_bloco || !currentUser?.unidade_bloco) &&
+              (e.unidade_numero === currentUser?.unidade_numero || !currentUser?.unidade_numero),
+          );
+          if (minhasEnc.length > 0) {
+            setEncomendas(minhasEnc);
+          }
+        }
+
+        if (vsts.status === 'fulfilled' && Array.isArray(vsts.value)) {
+          const mapped: Convite[] = vsts.value.map((v: any) => ({
+            id: v.id,
+            nome_convidado: v.nome_completo || v.nome,
+            tipo: (v.tipo === 'PRESTADOR' ? 'PRESTADOR' : 'VISITA') as any,
+            data: new Date().toISOString().split('T')[0],
+            hora_inicio: '14:00',
+            hora_fim: '22:00',
+            token_qrcode: v.codigo_acesso || `QR-${v.id.slice(0, 6)}`,
+            status: v.ativo ? 'ATIVO' : 'UTILIZADO',
+            criado_em: v.created_at || new Date().toISOString(),
+          }));
+          if (mapped.length > 0) {
+            setConvites(mapped);
+          }
+        }
+
+        if (veics.status === 'fulfilled' && Array.isArray(veics.value)) {
+          const mappedVeic: VeiculoMorador[] = veics.value.map((v: any) => ({
+            id: v.id,
+            placa: v.placa,
+            modelo: `${v.marca || ''} ${v.modelo || ''}`.trim() || 'Veículo',
+            cor: v.cor || 'Preto',
+            tipo: (v.tipo?.toUpperCase() === 'MOTO' ? 'MOTO' : 'CARRO') as any,
+          }));
+          if (mappedVeic.length > 0) {
+            setVeiculos(mappedVeic);
+          }
+        }
+      } catch (err) {
+        console.warn('Erro ao sincronizar com backend no portal do morador:', err);
+      }
+    }
+    loadData();
+
+    // Fallback Local Storage
     const savedEnc = localStorage.getItem('portaria_encomendas');
     if (savedEnc) {
       try {
@@ -90,41 +145,33 @@ export default function MoradorDashboardPage() {
             e.unidade_bloco === currentUser.unidade_bloco &&
             e.unidade_numero === currentUser.unidade_numero,
         );
-        setEncomendas(minhasEnc);
-      } catch (e) {
-        console.error(e);
-      }
+        if (encomendas.length === 0) setEncomendas(minhasEnc);
+      } catch (e) {}
     }
 
-    // Convites
     const keyConvites = `morador_convites_${currentUser.unidade_bloco}_${currentUser.unidade_numero}`;
     const savedCnv = localStorage.getItem(keyConvites);
-    if (savedCnv) {
+    if (savedCnv && convites.length === 0) {
       try {
         setConvites(JSON.parse(savedCnv));
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) {}
     }
 
-    // Veículos
     const keyVeiculos = `morador_veiculos_${currentUser.unidade_bloco}_${currentUser.unidade_numero}`;
     const savedVeic = localStorage.getItem(keyVeiculos);
-    if (savedVeic) {
+    if (savedVeic && veiculos.length === 0) {
       try {
         setVeiculos(JSON.parse(savedVeic));
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) {}
     }
   }, [currentUser]);
 
   // Salvar Convite
-  const handleCriarConvite = (e: React.FormEvent) => {
+  const handleCriarConvite = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoConvite.nome_convidado.trim()) return;
 
-    const token = `QR-${currentUser?.unidade_bloco}${currentUser?.unidade_numero}-${Date.now().toString().slice(-6)}`;
+    const token = `QR-${currentUser?.unidade_bloco || 'A'}${currentUser?.unidade_numero || '101'}-${Date.now().toString().slice(-6)}`;
     const novo: Convite = {
       id: `cnv-${Date.now()}`,
       nome_convidado: novoConvite.nome_convidado.trim(),
@@ -145,6 +192,19 @@ export default function MoradorDashboardPage() {
         JSON.stringify(updated),
       );
     }
+
+    // Persistência Neon
+    try {
+      await api.createVisitante({
+        nome_completo: novo.nome_convidado,
+        tipo: novo.tipo === 'PRESTADOR' ? 'PRESTADOR_SERVICO' : 'VISITANTE',
+        unidade_destino_bloco: currentUser?.unidade_bloco || 'A',
+        unidade_destino_numero: currentUser?.unidade_numero || '101',
+      });
+    } catch (err) {
+      console.warn('Erro ao salvar convite no Neon:', err);
+    }
+
     setIsNovoConviteModalOpen(false);
     setNovoConvite({
       nome_convidado: '',
@@ -164,7 +224,7 @@ export default function MoradorDashboardPage() {
   };
 
   // Salvar Veículo
-  const handleSalvarVeiculo = (e: React.FormEvent) => {
+  const handleSalvarVeiculo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!novoVeiculo.placa.trim() || !novoVeiculo.modelo.trim()) return;
 
@@ -184,6 +244,21 @@ export default function MoradorDashboardPage() {
         JSON.stringify(updated),
       );
     }
+
+    // Persistência Neon
+    try {
+      await api.createVeiculo({
+        placa: novo.placa,
+        marca_modelo: novo.modelo,
+        cor: novo.cor,
+        tipo: novo.tipo,
+        unidade_bloco: currentUser?.unidade_bloco || 'A',
+        unidade_numero: currentUser?.unidade_numero || '101',
+      });
+    } catch (err) {
+      console.warn('Erro ao salvar veículo no Neon:', err);
+    }
+
     setIsNovoVeiculoModalOpen(false);
     setNovoVeiculo({ placa: '', modelo: '', cor: '', tipo: 'CARRO' });
     SoundEffects.playSuccess();

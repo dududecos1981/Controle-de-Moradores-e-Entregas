@@ -18,6 +18,7 @@ import WebcamCapture from '@/components/WebcamCapture';
 import { Visitante, TipoVisitante } from '@/lib/types';
 import { INITIAL_VISITANTES, INITIAL_UNIDADES } from '@/lib/store';
 import { sounds } from '@/lib/SoundEffects';
+import { api } from '@/lib/api';
 
 export default function VisitantesPage() {
   const [visitantes, setVisitantes] = useState<Visitante[]>([]);
@@ -34,17 +35,49 @@ export default function VisitantesPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('portaria_visitantes');
-    if (saved) {
+    const loadVisitantes = async () => {
       try {
-        setVisitantes(JSON.parse(saved));
-      } catch (e) {
+        const res = await api.getVisitantes();
+        if (Array.isArray(res?.data) && res.data.length > 0) {
+          const list: Visitante[] = res.data.map((v: any) => ({
+            id: v.id,
+            nome_completo: v.nome_completo,
+            cpf: v.cpf,
+            rg: v.rg,
+            telefone: v.telefone,
+            tipo: v.tipo || 'VISITANTE',
+            empresa: v.empresa,
+            placa_veiculo: v.placa_veiculo,
+            unidade_destino_bloco: v.unidade_destino_bloco || 'A',
+            unidade_destino_numero: v.unidade_destino_numero || '101',
+            foto_url: v.foto_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
+            ativo: v.ativo ?? true,
+            status_acesso: v.ativo ? 'DENTRO' : 'CONCLUIDO',
+            data_cadastro: v.created_at || new Date().toISOString(),
+            hora_entrada: new Date(v.created_at || Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+            observacoes: v.observacoes,
+          }));
+          setVisitantes(list);
+          localStorage.setItem('portaria_visitantes', JSON.stringify(list));
+          return;
+        }
+      } catch (err) {
+        console.warn('Carregamento inicial de visitantes da API:', err);
+      }
+
+      const saved = localStorage.getItem('portaria_visitantes');
+      if (saved) {
+        try {
+          setVisitantes(JSON.parse(saved));
+        } catch (e) {
+          setVisitantes(INITIAL_VISITANTES);
+        }
+      } else {
         setVisitantes(INITIAL_VISITANTES);
       }
-    } else {
-      setVisitantes(INITIAL_VISITANTES);
-      localStorage.setItem('portaria_visitantes', JSON.stringify(INITIAL_VISITANTES));
-    }
+    };
+
+    loadVisitantes();
   }, []);
 
   const saveVisitantes = (updated: Visitante[]) => {
@@ -52,12 +85,30 @@ export default function VisitantesPage() {
     localStorage.setItem('portaria_visitantes', JSON.stringify(updated));
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!nomeCompleto.trim()) return;
 
+    let createdRecord: any = null;
+    try {
+      createdRecord = await api.createVisitante({
+        nome_completo: nomeCompleto.trim(),
+        cpf: documento.trim() || undefined,
+        rg: !documento.trim() ? 'ISENTO' : undefined,
+        telefone: telefone.trim() || undefined,
+        tipo,
+        empresa: empresa.trim() || undefined,
+        placa_veiculo: placaVeiculo.trim() ? placaVeiculo.toUpperCase().trim() : undefined,
+        foto_url: fotoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
+        observacoes: observacoes.trim() ? `[Destino: Bloco ${bloco} - Apto ${apartamento}] ${observacoes.trim()}` : `[Destino: Bloco ${bloco} - Apto ${apartamento}]`,
+        ativo: true,
+      });
+    } catch (apiErr) {
+      console.warn('Salvando visitante localmente (fallback):', apiErr);
+    }
+
     const newVisitante: Visitante = {
-      id: `vis-${Date.now()}`,
+      id: createdRecord?.id || `vis-${Date.now()}`,
       nome_completo: nomeCompleto.trim(),
       cpf: documento.trim() || undefined,
       telefone: telefone.trim() || undefined,
@@ -69,7 +120,7 @@ export default function VisitantesPage() {
       foto_url: fotoUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
       ativo: true,
       status_acesso: 'DENTRO',
-      data_cadastro: new Date().toISOString(),
+      data_cadastro: createdRecord?.created_at || new Date().toISOString(),
       hora_entrada: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
       observacoes: observacoes.trim() || undefined,
     };

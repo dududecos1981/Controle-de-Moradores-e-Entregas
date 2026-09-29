@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Calendar,
   Plus,
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { AreaComumMorador, ReservaMorador } from '@/lib/types';
 import { INITIAL_AREAS_MORADOR } from '@/lib/mobileStore';
+import { mobileApi } from '@/lib/api';
 
 interface Props {
   reservas: ReservaMorador[];
@@ -20,12 +21,36 @@ interface Props {
 }
 
 export default function ReservasMoradorScreen({ reservas, onAddReserva }: Props) {
-  const [areas] = useState<AreaComumMorador[]>(INITIAL_AREAS_MORADOR);
+  const [areas, setAreas] = useState<AreaComumMorador[]>(INITIAL_AREAS_MORADOR);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedAreaId, setSelectedAreaId] = useState(INITIAL_AREAS_MORADOR[0].id);
   const [dataReserva, setDataReserva] = useState(
     new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
   );
+
+  useEffect(() => {
+    async function loadAreas() {
+      try {
+        const data = await mobileApi.getAreasComuns();
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: AreaComumMorador[] = data.map((a: any) => ({
+            id: a.id,
+            nome: a.nome,
+            descricao: a.descricao || '',
+            capacidade_maxima: a.capacidade_maxima || a.capacidade || 30,
+            foto_url: a.foto_url || '',
+            regras: a.regras_uso || a.regras || '',
+            dias_antecedencia_max: 30,
+          }));
+          setAreas(mapped);
+          if (mapped[0]) setSelectedAreaId(mapped[0].id);
+        }
+      } catch (e) {
+        console.warn('Erro ao buscar áreas comuns:', e);
+      }
+    }
+    loadAreas();
+  }, []);
   const [periodo, setPeriodo] = useState<'MANHA' | 'TARDE' | 'NOITE' | 'INTEGRAL'>('NOITE');
   const [convidados, setConvidados] = useState(15);
   const [observacoes, setObservacoes] = useState('');

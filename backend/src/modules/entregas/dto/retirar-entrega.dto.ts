@@ -4,7 +4,7 @@ import { IsString, IsNotEmpty, IsOptional, MaxLength } from 'class-validator';
 export class RetirarEntregaDto {
   @ApiProperty({
     description: 'Nome completo da pessoa que está retirando a encomenda',
-    example: 'Mariana Fernandes',
+    example: 'Nome de Quem Retirou',
   })
   @IsString({ message: 'Nome de quem retirou é obrigatório.' })
   @IsNotEmpty({ message: 'Informe o nome de quem está retirando a encomenda.' })

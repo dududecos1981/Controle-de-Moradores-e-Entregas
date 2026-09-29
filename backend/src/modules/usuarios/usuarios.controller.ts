@@ -50,15 +50,15 @@ export class UsuariosController {
   }
 
   @Post()
-  @Roles('ADMINISTRADOR', 'SINDICO')
-  @ApiOperation({ summary: 'Cadastrar novo usuário (Apenas ADMIN e SÍNDICO)' })
+  @Roles('ADMINISTRADOR', 'SINDICO', 'PORTEIRO')
+  @ApiOperation({ summary: 'Cadastrar novo usuário (ADMIN, SÍNDICO e PORTEIRO)' })
   @ApiResponse({ status: 201, type: UsuarioResponseDto, description: 'Usuário cadastrado com sucesso' })
   async create(@Body() dto: CreateUsuarioDto, @Req() req: any) {
     return this.usuariosService.create(dto, req.lgpdContext);
   }
 
   @Put(':id')
-  @Roles('ADMINISTRADOR', 'SINDICO')
+  @Roles('ADMINISTRADOR', 'SINDICO', 'PORTEIRO')
   @ApiOperation({ summary: 'Atualizar cadastro de usuário' })
   @ApiParam({ name: 'id', description: 'UUID do usuário' })
   @ApiResponse({ status: 200, type: UsuarioResponseDto })

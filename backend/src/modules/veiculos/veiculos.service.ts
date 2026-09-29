@@ -15,12 +15,54 @@ export class VeiculosService {
 
   constructor(private readonly databaseService: DatabaseService) {}
 
+  private async resolveUnidadeId(unidadeId?: string, bloco?: string, numero?: string): Promise<string> {
+    if (unidadeId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(unidadeId)) {
+      const check = await this.databaseService.query('SELECT id FROM unidades WHERE id = $1', [unidadeId]);
+      if (check.rowCount > 0) return check.rows[0].id;
+    }
+
+    let searchBloco = bloco;
+    let searchNumero = numero;
+
+    if (!searchBloco && !searchNumero && unidadeId && unidadeId.includes('-')) {
+      const parts = unidadeId.replace(/^u-/, '').split('-');
+      if (parts.length >= 2) {
+        searchBloco = parts[0];
+        searchNumero = parts[1];
+      }
+    }
+
+    if (searchBloco && searchNumero) {
+      const cleanB = searchBloco.trim().toUpperCase();
+      const cleanN = searchNumero.trim().toUpperCase();
+      const check = await this.databaseService.query(
+        'SELECT id FROM unidades WHERE UPPER(bloco) = $1 AND UPPER(numero) = $2 LIMIT 1',
+        [cleanB, cleanN],
+      );
+      if (check.rowCount > 0) return check.rows[0].id;
+
+      const created = await this.databaseService.query(
+        `INSERT INTO unidades (bloco, numero, tipo, status) VALUES ($1, $2, 'APARTAMENTO', 'ATIVO') RETURNING id`,
+        [cleanB, cleanN],
+      );
+      return created.rows[0].id;
+    }
+
+    const fallback = await this.databaseService.query('SELECT id FROM unidades WHERE status = \'ATIVO\' LIMIT 1');
+    if (fallback.rowCount > 0) return fallback.rows[0].id;
+
+    const createdDefault = await this.databaseService.query(
+      `INSERT INTO unidades (bloco, numero, tipo, status) VALUES ('A', '101', 'APARTAMENTO', 'ATIVO') RETURNING id`,
+    );
+    return createdDefault.rows[0].id;
+  }
+
   /**
    * Lista veículos com filtros e paginação
    */
   async findAll(filters: FilterVeiculoDto): Promise<{ data: any[]; total: number; page: number; limit: number }> {
     const page = Math.max(1, Number(filters.page) || 1);
-    const limit = Math.min(100, Math.max(1, Number(filters.limit) || 20));
+    const limit = Math.min(100, Math.max(1, Number(filters.limit) || 50));
     const offset = (page - 1) * limit;
 
     const conditions: string[] = [];
@@ -192,16 +234,16 @@ export class VeiculosService {
       [placaClean],
     );
     if (exists.rowCount > 0) {
-      throw new ConflictException(`Já existe um veículo cadastrado com a placa '${placaClean}'.`);
+      // Se já existe, atualiza os dados
+      return this.update(exists.rows[0].id, dto as any, context);
     }
 
-    // Valida unidade
-    const unidade = await this.databaseService.query(
-      `SELECT id FROM unidades WHERE id = $1 AND status = 'ATIVO'`,
-      [dto.unidade_id],
-    );
-    if (unidade.rowCount === 0) {
-      throw new BadRequestException('Unidade informada não encontrada ou inativa.');
+    const finalUnidadeId = await this.resolveUnidadeId(dto.unidade_id, dto.unidade_bloco, dto.unidade_numero);
+
+    let finalUsuarioId: string | null = null;
+    if (dto.usuario_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(dto.usuario_id)) {
+      const checkU = await this.databaseService.query('SELECT id FROM usuarios WHERE id = $1', [dto.usuario_id]);
+      if (checkU.rowCount > 0) finalUsuarioId = checkU.rows[0].id;
     }
 
     const insertQuery = `
@@ -222,8 +264,8 @@ export class VeiculosService {
     const res = await this.databaseService.queryWithLgpdContext(
       insertQuery,
       [
-        dto.unidade_id,
-        dto.usuario_id || null,
+        finalUnidadeId,
+        finalUsuarioId,
         placaClean,
         dto.marca_modelo,
         dto.cor || null,
@@ -251,13 +293,18 @@ export class VeiculosService {
     const values: any[] = [];
     let idx = 1;
 
-    if (dto.unidade_id) {
+    if (dto.unidade_id || (dto.unidade_bloco && dto.unidade_numero)) {
+      const resolvedUId = await this.resolveUnidadeId(dto.unidade_id, dto.unidade_bloco, dto.unidade_numero);
       fields.push(`unidade_id = $${idx++}`);
-      values.push(dto.unidade_id);
+      values.push(resolvedUId);
     }
     if (dto.usuario_id !== undefined) {
+      let finalUsuarioId: string | null = null;
+      if (dto.usuario_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(dto.usuario_id)) {
+        finalUsuarioId = dto.usuario_id;
+      }
       fields.push(`usuario_id = $${idx++}`);
-      values.push(dto.usuario_id || null);
+      values.push(finalUsuarioId);
     }
     if (dto.placa) {
       const placaClean = dto.placa.trim().toUpperCase();
@@ -296,7 +343,7 @@ export class VeiculosService {
     values.push(id);
     const query = `
       UPDATE veiculos
-      SET ${fields.join(', ')}
+      SET ${fields.join(', ')}, updated_at = clock_timestamp()
       WHERE id = $${idx}
       RETURNING id
     `;

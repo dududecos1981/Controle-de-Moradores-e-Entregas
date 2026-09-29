@@ -33,6 +33,7 @@ import {
   INITIAL_RESERVAS_MORADOR,
 } from '@/lib/mobileStore';
 import { mobileSocket } from '@/lib/socket';
+import { mobileApi } from '@/lib/api';
 
 export default function MobileAppPage() {
   const router = useRouter();
@@ -43,15 +44,26 @@ export default function MobileAppPage() {
   const [reservas, setReservas] = useState<ReservaMorador[]>([]);
   const [currentTime, setCurrentTime] = useState<string>('');
   const [liveAlert, setLiveAlert] = useState<{ title: string; desc: string } | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>({
+    nome: 'Morador',
+    bloco: 'A',
+    apartamento: '',
+  });
 
   useEffect(() => {
     // Validação de autenticação do morador
-    const authUser = localStorage.getItem('morador_auth_user');
-    if (!authUser) {
+    const authUserStr = localStorage.getItem('morador_auth_user');
+    if (!authUserStr) {
       router.replace('/login');
       return;
     }
-    // Carrega dados locais
+    let userObj = { nome: 'Morador', bloco: 'A', apartamento: '' };
+    try {
+      userObj = JSON.parse(authUserStr);
+      setCurrentUser(userObj);
+    } catch (e) {}
+
+    // 1. Carrega dados de fallback locais
     const savedEnc = localStorage.getItem('morador_encomendas');
     if (savedEnc) {
       try {
@@ -61,7 +73,6 @@ export default function MobileAppPage() {
       }
     } else {
       setEncomendas(INITIAL_MORADOR_ENCOMENDAS);
-      localStorage.setItem('morador_encomendas', JSON.stringify(INITIAL_MORADOR_ENCOMENDAS));
     }
 
     const savedCnv = localStorage.getItem('morador_convites');
@@ -73,7 +84,6 @@ export default function MobileAppPage() {
       }
     } else {
       setConvites(INITIAL_CONVITES);
-      localStorage.setItem('morador_convites', JSON.stringify(INITIAL_CONVITES));
     }
 
     const savedOc = localStorage.getItem('morador_ocorrencias');
@@ -85,7 +95,6 @@ export default function MobileAppPage() {
       }
     } else {
       setOcorrencias(INITIAL_OCORRENCIAS_MORADOR);
-      localStorage.setItem('morador_ocorrencias', JSON.stringify(INITIAL_OCORRENCIAS_MORADOR));
     }
 
     const savedRes = localStorage.getItem('morador_reservas');
@@ -97,11 +106,95 @@ export default function MobileAppPage() {
       }
     } else {
       setReservas(INITIAL_RESERVAS_MORADOR);
-      localStorage.setItem('morador_reservas', JSON.stringify(INITIAL_RESERVAS_MORADOR));
     }
 
-    // Conexão WebSocket em tempo real para a Unidade A-101
-    mobileSocket.connect('A', '101');
+    // 2. Busca dados em tempo real no backend Neon DB
+    async function fetchFromBackend() {
+      try {
+        const [encs, vsts, ocs, rsvs] = await Promise.allSettled([
+          mobileApi.getEntregas(),
+          mobileApi.getVisitantes(),
+          mobileApi.getOcorrencias(),
+          mobileApi.getReservas(),
+        ]);
+
+        if (encs.status === 'fulfilled' && Array.isArray(encs.value) && encs.value.length > 0) {
+          const mapped: EncomendaMorador[] = encs.value.map((e: any) => ({
+            id: e.id,
+            codigo_barras_qrcode: e.codigo_barras_qrcode || e.codigo_rastreio || `PKG-${e.id.slice(0, 6)}`,
+            codigo_rastreio: e.codigo_rastreio,
+            transportadora: e.transportadora || 'Transportadora',
+            descricao_pacote: e.descricao_pacote || e.descricao || '',
+            status: e.status || 'AGUARDANDO_RETIRADA',
+            data_recebimento: e.data_recebimento || e.data_chegada || e.created_at,
+            data_retirada: e.data_retirada,
+            retirado_por_nome: e.retirado_por_nome,
+            porteiro_recebedor_nome: e.porteiro_recebedor_nome || 'Portaria',
+            foto_pacote_url: e.foto_pacote_url,
+            observacoes: e.observacoes,
+          }));
+          setEncomendas(mapped);
+          localStorage.setItem('morador_encomendas', JSON.stringify(mapped));
+        }
+
+        if (vsts.status === 'fulfilled' && Array.isArray(vsts.value) && vsts.value.length > 0) {
+          const mapped: ConviteVisitante[] = vsts.value.map((v: any) => ({
+            id: v.id,
+            nome_convidado: v.nome_completo || v.nome,
+            documento: v.cpf || v.documento,
+            tipo_visita: (v.tipo || 'VISITA') as any,
+            data_valida: v.data_valida || new Date().toISOString().split('T')[0],
+            hora_inicio: '12:00',
+            hora_fim: '22:00',
+            qr_code_token: v.codigo_acesso || `QR-VIS-${v.id.slice(0, 6)}`,
+            status: v.ativo ? 'ATIVO' : 'UTILIZADO',
+            created_at: v.created_at || new Date().toISOString(),
+            observacoes: v.observacoes,
+          }));
+          setConvites(mapped);
+          localStorage.setItem('morador_convites', JSON.stringify(mapped));
+        }
+
+        if (ocs.status === 'fulfilled' && Array.isArray(ocs.value) && ocs.value.length > 0) {
+          const mapped: OcorrenciaMorador[] = ocs.value.map((o: any) => ({
+            id: o.id,
+            titulo: o.titulo,
+            descricao: o.descricao,
+            categoria: o.categoria || 'OUTRO',
+            status: o.status || 'ABERTO',
+            resposta_sindico: o.resposta_sindico || o.resposta,
+            foto_url: o.foto_url,
+            created_at: o.created_at || new Date().toISOString(),
+          }));
+          setOcorrencias(mapped);
+          localStorage.setItem('morador_ocorrencias', JSON.stringify(mapped));
+        }
+
+        if (rsvs.status === 'fulfilled' && Array.isArray(rsvs.value) && rsvs.value.length > 0) {
+          const mapped: ReservaMorador[] = rsvs.value.map((r: any) => ({
+            id: r.id,
+            area_id: r.area_comum_id || r.area_id,
+            area_nome: r.area_comum_nome || r.area_nome || 'Área Comum',
+            data_reserva: r.data_reserva,
+            periodo: r.periodo || 'NOITE',
+            status: r.status || 'CONFIRMADO',
+            convidados_estimados: r.quantidade_pessoas || r.convidados_estimados || 10,
+            observacoes: r.observacoes,
+            created_at: r.created_at || new Date().toISOString(),
+          }));
+          setReservas(mapped);
+          localStorage.setItem('morador_reservas', JSON.stringify(mapped));
+        }
+      } catch (err) {
+        console.warn('Erro ao sincronizar com backend Neon:', err);
+      }
+    }
+    fetchFromBackend();
+
+    // Conexão WebSocket em tempo real para a Unidade
+    const userBloco = userObj.bloco || 'A';
+    const userApt = userObj.apartamento || '101';
+    mobileSocket.connect(userBloco, userApt);
     const unsubPackage = mobileSocket.on('encomenda_chegou', (data) => {
       setLiveAlert({
         title: '📦 Nova Encomenda Recebida!',
@@ -166,14 +259,14 @@ export default function MobileAppPage() {
     };
   }, []);
 
-  const handleConfirmWithdrawal = (id: string, signatureUrl: string) => {
+  const handleConfirmWithdrawal = async (id: string, signatureUrl: string) => {
     const updated = encomendas.map((enc) => {
       if (enc.id === id) {
         return {
           ...enc,
           status: 'RETIRADO' as const,
           data_retirada: new Date().toISOString(),
-          retirado_por_nome: 'Mariana Fernandes (App Morador)',
+          retirado_por_nome: `${currentUser.nome || 'Morador'} (App Morador)`,
           assinatura_digital_url: signatureUrl || undefined,
         };
       }
@@ -181,27 +274,86 @@ export default function MobileAppPage() {
     });
     setEncomendas(updated);
     localStorage.setItem('morador_encomendas', JSON.stringify(updated));
+
+    // Persistência Neon DB
+    try {
+      await mobileApi.retirarEntrega(id, {
+        retirado_por_nome: `${currentUser.nome || 'Morador'} (App Morador)`,
+        assinatura_digital_url: signatureUrl,
+      });
+    } catch (e) {
+      console.warn('Erro ao confirmar retirada no Neon:', e);
+    }
   };
 
-  const handleAddConvite = (novo: ConviteVisitante) => {
+  const handleAddConvite = async (novo: ConviteVisitante) => {
     const updated = [novo, ...convites];
     setConvites(updated);
     localStorage.setItem('morador_convites', JSON.stringify(updated));
+
+    // Persistência Neon DB
+    try {
+      await mobileApi.createConvite({
+        nome_completo: novo.nome_convidado,
+        cpf: novo.documento,
+        tipo: novo.tipo_visita,
+        unidade_destino_bloco: currentUser.bloco || 'A',
+        unidade_destino_numero: currentUser.apartamento || '101',
+        observacoes: novo.observacoes,
+      });
+    } catch (e) {
+      console.warn('Erro ao salvar convite no Neon:', e);
+    }
   };
 
-  const handleAddOcorrencia = (nova: OcorrenciaMorador) => {
+  const handleAddOcorrencia = async (nova: OcorrenciaMorador) => {
     const updated = [nova, ...ocorrencias];
     setOcorrencias(updated);
     localStorage.setItem('morador_ocorrencias', JSON.stringify(updated));
+
+    // Persistência Neon DB
+    try {
+      await mobileApi.createOcorrencia({
+        titulo: nova.titulo,
+        descricao: nova.descricao,
+        categoria: nova.categoria,
+        foto_url: nova.foto_url,
+        unidade_bloco: currentUser.bloco || 'A',
+        unidade_numero: currentUser.apartamento || '101',
+      });
+    } catch (e) {
+      console.warn('Erro ao salvar ocorrencia no Neon:', e);
+    }
   };
 
-  const handleAddReserva = (nova: ReservaMorador) => {
+  const handleAddReserva = async (nova: ReservaMorador) => {
     const updated = [nova, ...reservas];
     setReservas(updated);
     localStorage.setItem('morador_reservas', JSON.stringify(updated));
+
+    // Persistência Neon DB
+    try {
+      await mobileApi.createReserva({
+        area_id: nova.area_id,
+        data_reserva: nova.data_reserva,
+        periodo: nova.periodo,
+        convidados_estimados: nova.convidados_estimados,
+        observacoes: nova.observacoes,
+        unidade_bloco: currentUser.bloco || 'A',
+        unidade_numero: currentUser.apartamento || '101',
+      });
+    } catch (e) {
+      console.warn('Erro ao salvar reserva no Neon:', e);
+    }
   };
 
   const pendingCount = encomendas.filter((e) => e.status === 'AGUARDANDO_RETIRADA').length;
+  const initials = (currentUser.nome || 'MF')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((n: string) => n[0].toUpperCase())
+    .join('');
 
   return (
     <div className="w-full max-w-sm sm:max-w-md h-[100dvh] sm:h-[840px] bg-[#101726] sm:rounded-[44px] sm:border-[8px] sm:border-slate-800 shadow-2xl flex flex-col overflow-hidden relative sm:ring-1 sm:ring-slate-700/50">
@@ -239,14 +391,16 @@ export default function MobileAppPage() {
       <header className="px-5 py-3.5 bg-[#101726]/80 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between z-20 shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white font-bold text-xs shadow-md shadow-indigo-500/20">
-            MF
+            {initials || 'MO'}
           </div>
           <div>
             <h2 className="text-xs font-bold text-white flex items-center gap-1.5">
-              Mariana Fernandes
+              {currentUser.nome || 'Morador'}
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             </h2>
-            <p className="text-[10px] text-slate-400 font-medium">Bloco A • Apto 101</p>
+            <p className="text-[10px] text-slate-400 font-medium">
+              Bloco {currentUser.bloco || 'A'} • Apto {currentUser.apartamento || 'S/N'}
+            </p>
           </div>
         </div>
 

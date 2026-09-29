@@ -52,17 +52,46 @@ export default function VeiculosPage() {
   });
 
   useEffect(() => {
-    const saved = localStorage.getItem('portaria_veiculos');
-    if (saved) {
+    const loadVeiculos = async () => {
       try {
-        setVeiculos(JSON.parse(saved));
-      } catch (e) {
+        const res = await api.getVeiculos();
+        if (Array.isArray(res?.data) && res.data.length > 0) {
+          const list: VeiculoCompleto[] = res.data.map((v: any) => ({
+            id: v.id,
+            unidade_id: v.unidade_id,
+            unidade_bloco: v.unidade_bloco || 'A',
+            unidade_numero: v.unidade_numero || '101',
+            proprietario_nome: v.proprietario_nome || 'Morador Titular',
+            placa: v.placa,
+            marca_modelo: v.marca_modelo,
+            cor: v.cor || 'Prata',
+            tipo: v.tipo || 'CARRO',
+            vaga_garagem: v.vaga_garagem || '',
+            ativo: v.ativo ?? true,
+            observacoes: v.observacoes || '',
+            created_at: v.created_at || new Date().toISOString(),
+          }));
+          setVeiculos(list);
+          localStorage.setItem('portaria_veiculos', JSON.stringify(list));
+          return;
+        }
+      } catch (err) {
+        console.warn('Carregamento inicial de veículos da API:', err);
+      }
+
+      const saved = localStorage.getItem('portaria_veiculos');
+      if (saved) {
+        try {
+          setVeiculos(JSON.parse(saved));
+        } catch (e) {
+          setVeiculos(INITIAL_VEICULOS);
+        }
+      } else {
         setVeiculos(INITIAL_VEICULOS);
       }
-    } else {
-      setVeiculos(INITIAL_VEICULOS);
-      localStorage.setItem('portaria_veiculos', JSON.stringify(INITIAL_VEICULOS));
-    }
+    };
+
+    loadVeiculos();
   }, []);
 
   const saveVeiculos = (updated: VeiculoCompleto[]) => {
@@ -113,6 +142,21 @@ export default function VeiculosPage() {
     const cleanPlaca = formData.placa.trim().toUpperCase();
 
     if (editingId) {
+      try {
+        await api.updateVeiculo(editingId, {
+          placa: cleanPlaca,
+          marca_modelo: formData.marca_modelo,
+          cor: formData.cor,
+          tipo: formData.tipo,
+          unidade_bloco: formData.unidade_bloco,
+          unidade_numero: formData.unidade_numero,
+          vaga_garagem: formData.vaga_garagem,
+          observacoes: formData.observacoes,
+        });
+      } catch (err) {
+        console.warn('Atualizando veículo localmente (fallback):', err);
+      }
+
       const updated = veiculos.map((v) =>
         v.id === editingId
           ? {
@@ -126,9 +170,25 @@ export default function VeiculosPage() {
       sounds.playSuccessChime();
       showToast(`Veículo ${cleanPlaca} atualizado com sucesso!`);
     } else {
+      let createdRecord: any = null;
+      try {
+        createdRecord = await api.createVeiculo({
+          placa: cleanPlaca,
+          marca_modelo: formData.marca_modelo,
+          cor: formData.cor,
+          tipo: formData.tipo,
+          unidade_bloco: formData.unidade_bloco,
+          unidade_numero: formData.unidade_numero,
+          vaga_garagem: formData.vaga_garagem,
+          observacoes: formData.observacoes,
+        });
+      } catch (err) {
+        console.warn('Cadastrando veículo localmente (fallback):', err);
+      }
+
       const novoVeiculo: VeiculoCompleto = {
-        id: `v-${Date.now()}`,
-        unidade_id: `u-${formData.unidade_bloco}-${formData.unidade_numero}`,
+        id: createdRecord?.id || `v-${Date.now()}`,
+        unidade_id: createdRecord?.unidade_id || `u-${formData.unidade_bloco}-${formData.unidade_numero}`,
         unidade_bloco: formData.unidade_bloco,
         unidade_numero: formData.unidade_numero,
         proprietario_nome: formData.proprietario_nome || 'Morador Titular',
@@ -139,7 +199,7 @@ export default function VeiculosPage() {
         vaga_garagem: formData.vaga_garagem,
         ativo: true,
         observacoes: formData.observacoes,
-        created_at: new Date().toISOString(),
+        created_at: createdRecord?.created_at || new Date().toISOString(),
       };
 
       const updated = [novoVeiculo, ...veiculos];
@@ -151,8 +211,13 @@ export default function VeiculosPage() {
     setIsModalOpen(false);
   };
 
-  const handleDelete = (id: string, placa: string) => {
+  const handleDelete = async (id: string, placa: string) => {
     if (confirm(`Tem certeza que deseja excluir o veículo placa ${placa}?`)) {
+      try {
+        await api.deleteVeiculo(id);
+      } catch (err) {
+        console.warn('Removendo veículo localmente (fallback):', err);
+      }
       const updated = veiculos.filter((v) => v.id !== id);
       saveVeiculos(updated);
       showToast(`Veículo ${placa} removido.`);

@@ -50,7 +50,7 @@ export class VisitantesController {
   }
 
   @Post()
-  @Roles('ADMINISTRADOR', 'SINDICO', 'PORTEIRO')
+  @Roles('ADMINISTRADOR', 'SINDICO', 'PORTEIRO', 'MORADOR')
   @ApiOperation({ summary: 'Cadastrar novo visitante ou prestador de serviço' })
   @ApiResponse({ status: 201, type: VisitanteResponseDto, description: 'Visitante cadastrado' })
   async create(@Body() dto: CreateVisitanteDto, @Req() req: any) {
@@ -58,7 +58,7 @@ export class VisitantesController {
   }
 
   @Put(':id')
-  @Roles('ADMINISTRADOR', 'SINDICO', 'PORTEIRO')
+  @Roles('ADMINISTRADOR', 'SINDICO', 'PORTEIRO', 'MORADOR')
   @ApiOperation({ summary: 'Atualizar cadastro do visitante' })
   @ApiParam({ name: 'id', description: 'UUID do visitante' })
   @ApiResponse({ status: 200, type: VisitanteResponseDto })

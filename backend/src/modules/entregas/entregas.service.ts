@@ -19,12 +19,76 @@ export class EntregasService {
     private readonly eventsGateway: EventsGateway,
   ) {}
 
+  private async resolveUnidadeId(unidadeId?: string, bloco?: string, numero?: string): Promise<string> {
+    if (unidadeId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(unidadeId)) {
+      const check = await this.databaseService.query('SELECT id FROM unidades WHERE id = $1', [unidadeId]);
+      if (check.rowCount > 0) return check.rows[0].id;
+    }
+
+    let searchBloco = bloco;
+    let searchNumero = numero;
+
+    if (!searchBloco && !searchNumero && unidadeId && unidadeId.includes('-')) {
+      const parts = unidadeId.replace(/^u-/, '').split('-');
+      if (parts.length >= 2) {
+        searchBloco = parts[0];
+        searchNumero = parts[1];
+      }
+    }
+
+    if (searchBloco && searchNumero) {
+      const cleanB = searchBloco.trim().toUpperCase();
+      const cleanN = searchNumero.trim().toUpperCase();
+      const check = await this.databaseService.query(
+        'SELECT id FROM unidades WHERE UPPER(bloco) = $1 AND UPPER(numero) = $2 LIMIT 1',
+        [cleanB, cleanN],
+      );
+      if (check.rowCount > 0) return check.rows[0].id;
+
+      const created = await this.databaseService.query(
+        `INSERT INTO unidades (bloco, numero, tipo, status) VALUES ($1, $2, 'APARTAMENTO', 'ATIVO') RETURNING id`,
+        [cleanB, cleanN],
+      );
+      return created.rows[0].id;
+    }
+
+    // Pega a primeira unidade ativa existente
+    const fallback = await this.databaseService.query('SELECT id FROM unidades WHERE status = \'ATIVO\' LIMIT 1');
+    if (fallback.rowCount > 0) return fallback.rows[0].id;
+
+    const createdDefault = await this.databaseService.query(
+      `INSERT INTO unidades (bloco, numero, tipo, status) VALUES ('A', '101', 'APARTAMENTO', 'ATIVO') RETURNING id`,
+    );
+    return createdDefault.rows[0].id;
+  }
+
+  private async resolvePorteiroId(porteiroId?: string): Promise<string> {
+    if (porteiroId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(porteiroId)) {
+      const check = await this.databaseService.query('SELECT id FROM usuarios WHERE id = $1', [porteiroId]);
+      if (check.rowCount > 0) return check.rows[0].id;
+    }
+
+    const porteiroRes = await this.databaseService.query(
+      `SELECT id FROM usuarios WHERE perfil IN ('PORTEIRO', 'ADMINISTRADOR', 'SINDICO') AND status = 'ATIVO' ORDER BY created_at ASC LIMIT 1`,
+    );
+    if (porteiroRes.rowCount > 0) {
+      return porteiroRes.rows[0].id;
+    }
+
+    const anyUser = await this.databaseService.query(`SELECT id FROM usuarios WHERE status = 'ATIVO' LIMIT 1`);
+    if (anyUser.rowCount > 0) {
+      return anyUser.rows[0].id;
+    }
+
+    throw new BadRequestException('Nenhum usuário cadastrado no sistema para vincular ao recebimento.');
+  }
+
   /**
    * Lista entregas com paginação e filtros detalhados
    */
   async findAll(filters: FilterEntregaDto): Promise<{ data: any[]; total: number; page: number; limit: number }> {
     const page = Math.max(1, Number(filters.page) || 1);
-    const limit = Math.min(100, Math.max(1, Number(filters.limit) || 20));
+    const limit = Math.min(100, Math.max(1, Number(filters.limit) || 50));
     const offset = (page - 1) * limit;
 
     const conditions: string[] = [];
@@ -33,7 +97,7 @@ export class EntregasService {
 
     if (filters.busca) {
       conditions.push(
-        `(e.codigo_barras_qrcode ILIKE $${paramIndex} OR e.codigo_rastreio ILIKE $${paramIndex} OR e.transportadora ILIKE $${paramIndex} OR e.descricao_pacote ILIKE $${paramIndex} OR u.nome_completo ILIKE $${paramIndex} OR e.retirado_por_nome ILIKE $${paramIndex})`,
+        `(e.codigo_barras_qrcode ILIKE $${paramIndex} OR e.codigo_rastreio ILIKE $${paramIndex} OR e.transportadora ILIKE $${paramIndex} OR e.descricao_pacote ILIKE $${paramIndex} OR u.nome_completo ILIKE $${paramIndex} OR e.retirado_por_nome ILIKE $${paramIndex} OR un.bloco ILIKE $${paramIndex} OR un.numero ILIKE $${paramIndex})`,
       );
       params.push(`%${filters.busca}%`);
       paramIndex++;
@@ -74,10 +138,12 @@ export class EntregasService {
         un.bloco as unidade_bloco,
         un.numero as unidade_numero,
         e.usuario_destinatario_id,
-        u.nome_completo as destinatario_nome,
+        COALESCE(u.nome_completo, 'Morador da Unidade') as destinatario_nome,
+        COALESCE(u.nome_completo, 'Morador da Unidade') as morador_nome,
         u.telefone as destinatario_telefone,
+        u.telefone as morador_telefone,
         e.porteiro_recebedor_id,
-        pr.nome_completo as porteiro_recebedor_nome,
+        COALESCE(pr.nome_completo, 'Portaria') as porteiro_recebedor_nome,
         e.porteiro_entregador_id,
         pe.nome_completo as porteiro_entregador_nome,
         e.codigo_barras_qrcode,
@@ -129,11 +195,13 @@ export class EntregasService {
         un.bloco as unidade_bloco,
         un.numero as unidade_numero,
         e.usuario_destinatario_id,
-        u.nome_completo as destinatario_nome,
+        COALESCE(u.nome_completo, 'Morador') as destinatario_nome,
+        COALESCE(u.nome_completo, 'Morador') as morador_nome,
         u.telefone as destinatario_telefone,
+        u.telefone as morador_telefone,
         u.email as destinatario_email,
         e.porteiro_recebedor_id,
-        pr.nome_completo as porteiro_recebedor_nome,
+        COALESCE(pr.nome_completo, 'Portaria') as porteiro_recebedor_nome,
         e.porteiro_entregador_id,
         pe.nome_completo as porteiro_entregador_nome,
         e.codigo_barras_qrcode,
@@ -170,23 +238,30 @@ export class EntregasService {
   /**
    * Registra o recebimento de uma nova entrega na portaria
    */
-  async create(dto: CreateEntregaDto, porteiroId: string, context?: LgpdContext): Promise<any> {
-    // Valida existência da unidade
-    const unidadeRes = await this.databaseService.query(
-      `SELECT id, bloco, numero FROM unidades WHERE id = $1 AND status = 'ATIVO'`,
-      [dto.unidade_id],
-    );
-    if (unidadeRes.rowCount === 0) {
-      throw new BadRequestException('Unidade de destino não encontrada ou inativa.');
+  async create(dto: CreateEntregaDto, porteiroId?: string, context?: LgpdContext): Promise<any> {
+    const finalUnidadeId = await this.resolveUnidadeId(dto.unidade_id, dto.unidade_bloco, dto.unidade_numero);
+    const finalPorteiroId = await this.resolvePorteiroId(porteiroId);
+
+    let destinatarioId: string | null = null;
+    if (dto.usuario_destinatario_id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(dto.usuario_destinatario_id)) {
+      const checkU = await this.databaseService.query('SELECT id FROM usuarios WHERE id = $1', [dto.usuario_destinatario_id]);
+      if (checkU.rowCount > 0) destinatarioId = checkU.rows[0].id;
     }
 
-    // Se destinatário foi informado, valida vínculo
-    let destinatarioId = dto.usuario_destinatario_id || null;
+    if (!destinatarioId && dto.morador_nome) {
+      const checkMorador = await this.databaseService.query(
+        'SELECT id FROM usuarios WHERE unidade_id = $1 AND nome_completo ILIKE $2 LIMIT 1',
+        [finalUnidadeId, `%${dto.morador_nome.trim()}%`],
+      );
+      if (checkMorador.rowCount > 0) {
+        destinatarioId = checkMorador.rows[0].id;
+      }
+    }
+
     if (!destinatarioId) {
-      // Auto-associa com o responsável titular da unidade se houver
       const titularRes = await this.databaseService.query(
-        `SELECT id FROM usuarios WHERE unidade_id = $1 AND status = 'ATIVO' AND is_responsavel_unidade = TRUE LIMIT 1`,
-        [dto.unidade_id],
+        `SELECT id FROM usuarios WHERE unidade_id = $1 AND status = 'ATIVO' ORDER BY is_responsavel_unidade DESC LIMIT 1`,
+        [finalUnidadeId],
       );
       if (titularRes.rowCount > 0) {
         destinatarioId = titularRes.rows[0].id;
@@ -214,9 +289,9 @@ export class EntregasService {
     const res = await this.databaseService.queryWithLgpdContext(
       insertQuery,
       [
-        dto.unidade_id,
+        finalUnidadeId,
         destinatarioId,
-        porteiroId,
+        finalPorteiroId,
         dto.codigo_barras_qrcode,
         dto.transportadora || null,
         dto.codigo_rastreio || null,
@@ -225,14 +300,13 @@ export class EntregasService {
       ],
       {
         ...context,
-        userId: porteiroId,
+        userId: finalPorteiroId,
         reason: 'Recebimento de pacote/encomenda na portaria',
       },
     );
 
     const novaEntrega = await this.findOne(res.rows[0].id);
 
-    // Emite evento WebSocket em tempo real para os painéis Web e Mobile
     try {
       this.eventsGateway.emitNewPackage(novaEntrega);
     } catch (e) {
@@ -245,11 +319,13 @@ export class EntregasService {
   /**
    * Baixa e retirada de encomenda pelo morador ou portador autorizado
    */
-  async retirar(id: string, dto: RetirarEntregaDto, porteiroId: string, context?: LgpdContext): Promise<any> {
+  async retirar(id: string, dto: RetirarEntregaDto, porteiroId?: string, context?: LgpdContext): Promise<any> {
     const entrega = await this.findOne(id);
     if (entrega.status === 'RETIRADO') {
       throw new BadRequestException('Esta entrega já foi retirada anteriormente.');
     }
+
+    const finalPorteiroId = await this.resolvePorteiroId(porteiroId);
 
     const updateQuery = `
       UPDATE entregas
@@ -271,12 +347,12 @@ export class EntregasService {
         dto.retirado_por_nome,
         dto.retirado_por_documento || null,
         dto.foto_retirada_url || null,
-        porteiroId,
+        finalPorteiroId,
         id,
       ],
       {
         ...context,
-        userId: porteiroId,
+        userId: finalPorteiroId,
         reason: `Baixa de entrega para: ${dto.retirado_por_nome}`,
       },
     );

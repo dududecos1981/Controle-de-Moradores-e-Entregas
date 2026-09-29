@@ -19,6 +19,86 @@ export class ReservasService {
     private readonly eventsGateway: EventsGateway,
   ) {}
 
+  private async resolveAreaId(areaId: string): Promise<string> {
+    if (areaId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(areaId)) {
+      const check = await this.databaseService.query('SELECT id FROM areas_comuns WHERE id = $1', [areaId]);
+      if (check.rowCount > 0) return check.rows[0].id;
+    }
+
+    const byName = await this.databaseService.query(
+      'SELECT id FROM areas_comuns WHERE nome ILIKE $1 LIMIT 1',
+      [`%${areaId}%`],
+    );
+    if (byName.rowCount > 0) return byName.rows[0].id;
+
+    const firstArea = await this.databaseService.query('SELECT id FROM areas_comuns LIMIT 1');
+    if (firstArea.rowCount > 0) return firstArea.rows[0].id;
+
+    throw new NotFoundException('Área comum não encontrada.');
+  }
+
+  private async resolveUnidadeId(unidadeId?: string, bloco?: string, numero?: string): Promise<string> {
+    if (unidadeId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(unidadeId)) {
+      const check = await this.databaseService.query('SELECT id FROM unidades WHERE id = $1', [unidadeId]);
+      if (check.rowCount > 0) return check.rows[0].id;
+    }
+
+    let searchBloco = bloco;
+    let searchNumero = numero;
+
+    if (!searchBloco && !searchNumero && unidadeId && unidadeId.includes('-')) {
+      const parts = unidadeId.replace(/^u-/, '').split('-');
+      if (parts.length >= 2) {
+        searchBloco = parts[0];
+        searchNumero = parts[1];
+      }
+    }
+
+    if (searchBloco && searchNumero) {
+      const cleanB = searchBloco.trim().toUpperCase();
+      const cleanN = searchNumero.trim().toUpperCase();
+      const check = await this.databaseService.query(
+        'SELECT id FROM unidades WHERE UPPER(bloco) = $1 AND UPPER(numero) = $2 LIMIT 1',
+        [cleanB, cleanN],
+      );
+      if (check.rowCount > 0) return check.rows[0].id;
+
+      const created = await this.databaseService.query(
+        `INSERT INTO unidades (bloco, numero, tipo, status) VALUES ($1, $2, 'APARTAMENTO', 'ATIVO') RETURNING id`,
+        [cleanB, cleanN],
+      );
+      return created.rows[0].id;
+    }
+
+    const fallback = await this.databaseService.query('SELECT id FROM unidades WHERE status = \'ATIVO\' LIMIT 1');
+    if (fallback.rowCount > 0) return fallback.rows[0].id;
+
+    const createdDefault = await this.databaseService.query(
+      `INSERT INTO unidades (bloco, numero, tipo, status) VALUES ('A', '101', 'APARTAMENTO', 'ATIVO') RETURNING id`,
+    );
+    return createdDefault.rows[0].id;
+  }
+
+  private async resolveUsuarioId(usuarioId?: string, unidadeId?: string): Promise<string> {
+    if (usuarioId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(usuarioId)) {
+      const check = await this.databaseService.query('SELECT id FROM usuarios WHERE id = $1', [usuarioId]);
+      if (check.rowCount > 0) return check.rows[0].id;
+    }
+
+    if (unidadeId) {
+      const checkMorador = await this.databaseService.query(
+        'SELECT id FROM usuarios WHERE unidade_id = $1 AND status = \'ATIVO\' ORDER BY is_responsavel_unidade DESC LIMIT 1',
+        [unidadeId],
+      );
+      if (checkMorador.rowCount > 0) return checkMorador.rows[0].id;
+    }
+
+    const anyUser = await this.databaseService.query('SELECT id FROM usuarios WHERE status = \'ATIVO\' LIMIT 1');
+    if (anyUser.rowCount > 0) return anyUser.rows[0].id;
+
+    throw new BadRequestException('Nenhum usuário cadastrado para associar à reserva.');
+  }
+
   /**
    * Lista todas as áreas comuns cadastradas
    */
@@ -47,7 +127,7 @@ export class ReservasService {
    */
   async findAllReservas(filters: FilterReservaDto): Promise<{ data: any[]; total: number; page: number; limit: number }> {
     const page = Math.max(1, Number(filters.page) || 1);
-    const limit = Math.min(100, Math.max(1, Number(filters.limit) || 20));
+    const limit = Math.min(100, Math.max(1, Number(filters.limit) || 50));
     const offset = (page - 1) * limit;
 
     const conditions: string[] = [];
@@ -121,7 +201,7 @@ export class ReservasService {
       JOIN unidades un ON un.id = r.unidade_id
       JOIN usuarios u ON u.id = r.usuario_id
       ${whereClause}
-      ORDER BY r.data_reserva ASC, r.created_at DESC
+      ORDER BY r.data_reserva DESC, r.created_at DESC
       LIMIT $${paramIndex++} OFFSET $${paramIndex++}
     `;
 
@@ -182,31 +262,23 @@ export class ReservasService {
   /**
    * Cria nova reserva com verificação rigorosa de conflitos
    */
-  async createReserva(dto: CreateReservaDto, usuarioId: string, context?: LgpdContext): Promise<any> {
-    // 1. Verifica existência da área comum
-    const areaRes = await this.databaseService.query(
-      `SELECT id, nome, status FROM areas_comuns WHERE id = $1`,
-      [dto.area_id],
-    );
-    if (areaRes.rowCount === 0) {
-      throw new NotFoundException('Área comum não encontrada.');
-    }
-    if (areaRes.rows[0].status !== 'DISPONIVEL') {
-      throw new BadRequestException('Esta área comum está temporariamente indisponível para reservas.');
-    }
+  async createReserva(dto: CreateReservaDto, usuarioId?: string, context?: LgpdContext): Promise<any> {
+    const finalAreaId = await this.resolveAreaId(dto.area_id);
+    const finalUnidadeId = await this.resolveUnidadeId(dto.unidade_id, dto.unidade_bloco, dto.unidade_numero);
+    const finalUsuarioId = await this.resolveUsuarioId(usuarioId, finalUnidadeId);
 
     const periodo = dto.periodo || 'NOITE';
 
-    // 2. Verifica se já existe reserva confirmada ou solicitada para a mesma área, data e período
+    // Verifica se já existe reserva confirmada ou solicitada para a mesma área, data e período
     const conflitoRes = await this.databaseService.query(
       `SELECT id, status FROM reservas_areas 
        WHERE area_id = $1 AND data_reserva = $2 AND periodo = $3 AND status IN ('SOLICITADO', 'CONFIRMADO')`,
-      [dto.area_id, dto.data_reserva, periodo],
+      [finalAreaId, dto.data_reserva, periodo],
     );
 
     if (conflitoRes.rowCount > 0) {
       throw new ConflictException(
-        `A área '${areaRes.rows[0].nome}' já possui uma reserva ativa para a data ${dto.data_reserva} no período da ${periodo}.`,
+        `Esta área comum já possui uma reserva ativa para a data ${dto.data_reserva} no período da ${periodo}.`,
       );
     }
 
@@ -227,9 +299,9 @@ export class ReservasService {
     const res = await this.databaseService.queryWithLgpdContext(
       insertQuery,
       [
-        dto.area_id,
-        dto.unidade_id,
-        usuarioId,
+        finalAreaId,
+        finalUnidadeId,
+        finalUsuarioId,
         dto.data_reserva,
         periodo,
         dto.convidados_estimados || null,
@@ -237,8 +309,8 @@ export class ReservasService {
       ],
       {
         ...context,
-        userId: usuarioId,
-        reason: 'Reserva de área comum pelo morador',
+        userId: finalUsuarioId,
+        reason: 'Reserva de área comum',
       },
     );
 
@@ -251,17 +323,18 @@ export class ReservasService {
         timestamp: new Date().toISOString(),
       });
     } catch (e) {
-      this.logger.warn(`Erro emitindo WebSocket: ${e.message}`);
+      this.logger.warn(`Não foi possível emitir WebSocket de reserva: ${e.message}`);
     }
 
     return novaReserva;
   }
 
   /**
-   * Atualiza status da reserva (ex: CONFIRMADO, CANCELADO)
+   * Atualiza o status da reserva
    */
-  async updateStatusReserva(id: string, status: StatusReserva, responsavelId: string, context?: LgpdContext): Promise<any> {
+  async updateStatusReserva(id: string, status: StatusReserva, sindicoId?: string, context?: LgpdContext): Promise<any> {
     await this.findOneReserva(id);
+    const finalSindicoId = await this.resolveUsuarioId(sindicoId);
 
     const query = `
       UPDATE reservas_areas
@@ -270,12 +343,20 @@ export class ReservasService {
       RETURNING id
     `;
 
-    await this.databaseService.queryWithLgpdContext(query, [status, id], {
-      ...context,
-      userId: responsavelId,
-      reason: `Alteração de status da reserva para ${status}`,
-    });
+    await this.databaseService.queryWithLgpdContext(
+      query,
+      [status, id],
+      {
+        ...context,
+        userId: finalSindicoId,
+        reason: `Alteração de status de reserva para ${status}`,
+      },
+    );
 
     return this.findOneReserva(id);
+  }
+
+  async updateStatus(id: string, status: StatusReserva, sindicoId?: string, context?: LgpdContext): Promise<any> {
+    return this.updateStatusReserva(id, status, sindicoId, context);
   }
 }

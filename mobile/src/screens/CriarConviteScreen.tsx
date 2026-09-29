@@ -40,8 +40,14 @@ export default function CriarConviteScreen({
     e.preventDefault();
     if (!nomeConvidado.trim()) return;
 
+    let authUser: any = CURRENT_MORADOR;
+    try {
+      const saved = localStorage.getItem('morador_auth_user');
+      if (saved) authUser = JSON.parse(saved);
+    } catch (e) {}
+
     const tokenRandom = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const token = `QR-${tipoVisita}-${tokenRandom}-APT${CURRENT_MORADOR.apartamento}`;
+    const token = `QR-${tipoVisita}-${tokenRandom}-APT${authUser.apartamento || '101'}`;
 
     const novoConvite: ConviteVisitante = {
       id: `cnv-${Date.now()}`,
@@ -68,10 +74,16 @@ export default function CriarConviteScreen({
 
   // Gerador de mensagem formatada para o WhatsApp
   const generateWhatsAppUrl = (invite: ConviteVisitante) => {
+    let authUser: any = CURRENT_MORADOR;
+    try {
+      const saved = localStorage.getItem('morador_auth_user');
+      if (saved) authUser = JSON.parse(saved);
+    } catch (e) {}
+
     const formattedDate = new Date(invite.data_valida + 'T00:00:00').toLocaleDateString('pt-BR');
     const msg = `🎟️ *CONVITE DE ACESSO - CONDOMÍNIO RESIDENCIAL*\n\n` +
       `Olá *${invite.nome_convidado}*!\n` +
-      `Você recebeu uma autorização de entrada para a unidade *Bloco ${CURRENT_MORADOR.bloco} - Apto ${CURRENT_MORADOR.apartamento}* (Morador: ${CURRENT_MORADOR.nome}).\n\n` +
+      `Você recebeu uma autorização de entrada para a unidade *Bloco ${authUser.bloco || 'A'} - Apto ${authUser.apartamento || 'S/N'}* (Morador: ${authUser.nome || 'Morador'}).\n\n` +
       `📅 *Data de Validade:* ${formattedDate}\n` +
       `⏰ *Horário Permitido:* ${invite.hora_inicio} às ${invite.hora_fim}\n` +
       `🔐 *Token de Acesso Portaria:* \`${invite.qr_code_token}\`\n\n` +

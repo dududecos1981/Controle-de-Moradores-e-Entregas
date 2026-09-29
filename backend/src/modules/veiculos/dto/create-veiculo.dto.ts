@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsUUID, IsNotEmpty, IsString, IsOptional, IsEnum, IsBoolean, Matches } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional, IsBoolean, Matches } from 'class-validator';
 
 export enum TipoVeiculo {
   CARRO = 'CARRO',
@@ -11,14 +11,24 @@ export enum TipoVeiculo {
 }
 
 export class CreateVeiculoDto {
-  @ApiProperty({ description: 'ID da unidade/apartamento do veículo', example: 'a0000000-0000-0000-0000-000000000001' })
-  @IsUUID()
-  @IsNotEmpty()
-  unidade_id: string;
+  @ApiPropertyOptional({ description: 'ID da unidade/apartamento do veículo', example: 'a0000000-0000-0000-0000-000000000001' })
+  @IsOptional()
+  @IsString()
+  unidade_id?: string;
+
+  @ApiPropertyOptional({ description: 'Bloco da unidade', example: 'A' })
+  @IsOptional()
+  @IsString()
+  unidade_bloco?: string;
+
+  @ApiPropertyOptional({ description: 'Número do apartamento', example: '101' })
+  @IsOptional()
+  @IsString()
+  unidade_numero?: string;
 
   @ApiPropertyOptional({ description: 'ID do morador proprietário do veículo', example: 'b0000000-0000-0000-0000-000000000003' })
-  @IsUUID()
   @IsOptional()
+  @IsString()
   usuario_id?: string;
 
   @ApiProperty({ description: 'Placa do veículo (padrão Mercosul ou antigo)', example: 'BRA2E19' })
@@ -38,9 +48,9 @@ export class CreateVeiculoDto {
   cor?: string;
 
   @ApiPropertyOptional({ enum: TipoVeiculo, default: TipoVeiculo.CARRO })
-  @IsEnum(TipoVeiculo)
   @IsOptional()
-  tipo?: TipoVeiculo;
+  @IsString()
+  tipo?: any;
 
   @ApiPropertyOptional({ description: 'Identificação da vaga de garagem', example: 'Vaga G-12 (Térreo)' })
   @IsString()
@@ -60,48 +70,58 @@ export class CreateVeiculoDto {
 
 export class UpdateVeiculoDto {
   @ApiPropertyOptional({ description: 'ID da unidade/apartamento' })
-  @IsUUID()
   @IsOptional()
+  @IsString()
   unidade_id?: string;
 
-  @ApiPropertyOptional({ description: 'ID do morador proprietário' })
-  @IsUUID()
+  @ApiPropertyOptional({ description: 'Bloco da unidade' })
   @IsOptional()
+  @IsString()
+  unidade_bloco?: string;
+
+  @ApiPropertyOptional({ description: 'Número da unidade' })
+  @IsOptional()
+  @IsString()
+  unidade_numero?: string;
+
+  @ApiPropertyOptional({ description: 'ID do morador proprietário' })
+  @IsOptional()
+  @IsString()
   usuario_id?: string;
 
   @ApiPropertyOptional({ description: 'Placa do veículo' })
-  @IsString()
   @IsOptional()
+  @IsString()
   @Matches(/^[A-Z0-9-]{6,10}$/i, { message: 'Formato de placa inválido' })
   placa?: string;
 
   @ApiPropertyOptional({ description: 'Marca e modelo' })
-  @IsString()
   @IsOptional()
+  @IsString()
   marca_modelo?: string;
 
   @ApiPropertyOptional({ description: 'Cor' })
-  @IsString()
   @IsOptional()
+  @IsString()
   cor?: string;
 
   @ApiPropertyOptional({ enum: TipoVeiculo })
-  @IsEnum(TipoVeiculo)
   @IsOptional()
-  tipo?: TipoVeiculo;
+  @IsString()
+  tipo?: any;
 
   @ApiPropertyOptional({ description: 'Identificação da vaga de garagem' })
-  @IsString()
   @IsOptional()
+  @IsString()
   vaga_garagem?: string;
 
   @ApiPropertyOptional({ description: 'Status de atividade' })
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean()
   ativo?: boolean;
 
   @ApiPropertyOptional({ description: 'Observações adicionais' })
-  @IsString()
   @IsOptional()
+  @IsString()
   observacoes?: string;
 }

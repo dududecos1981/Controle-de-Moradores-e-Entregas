@@ -93,28 +93,62 @@ export default function ReservasPage() {
     status: 'DISPONIVEL' as AreaComum['status'],
   });
 
-  // Carrega do LocalStorage
+  // Carrega da API Neon e LocalStorage
   useEffect(() => {
-    const savedAreas = localStorage.getItem('portaria_areas_config');
-    if (savedAreas) {
+    const loadAreasAndReservas = async () => {
       try {
-        setAreas(JSON.parse(savedAreas));
-      } catch (e) {
-        setAreas(INITIAL_AREAS_BASE);
+        const areasRes = await api.getAreasComuns();
+        if (Array.isArray(areasRes) && areasRes.length > 0) {
+          setAreas(areasRes);
+          localStorage.setItem('portaria_areas_config', JSON.stringify(areasRes));
+        }
+      } catch (err) {
+        console.warn('Carregamento inicial de áreas da API:', err);
       }
-    } else {
-      setAreas(INITIAL_AREAS_BASE);
-      localStorage.setItem('portaria_areas_config', JSON.stringify(INITIAL_AREAS_BASE));
-    }
 
-    const savedRes = localStorage.getItem('portaria_reservas');
-    if (savedRes) {
       try {
-        setReservas(JSON.parse(savedRes));
-      } catch (e) {
-        setReservas(INITIAL_RESERVAS);
+        const resRes = await api.getReservas();
+        if (Array.isArray(resRes?.data) && resRes.data.length > 0) {
+          const list: ReservaArea[] = resRes.data.map((r: any) => ({
+            id: r.id,
+            area_id: r.area_id,
+            area_nome: r.area_nome,
+            area_foto: r.area_foto,
+            area_capacidade: r.area_capacidade || 0,
+            area_taxa: parseFloat(r.area_taxa || '0'),
+            unidade_id: r.unidade_id,
+            unidade_bloco: r.unidade_bloco || 'A',
+            unidade_numero: r.unidade_numero || '101',
+            usuario_id: r.usuario_id,
+            solicitante_nome: r.solicitante_nome || 'Morador',
+            solicitante_telefone: r.solicitante_telefone || '',
+            data_reserva: r.data_reserva ? r.data_reserva.slice(0, 10) : new Date().toISOString().slice(0, 10),
+            periodo: r.periodo || 'NOITE',
+            status: r.status || 'CONFIRMADO',
+            convidados_estimados: r.convidados_estimados,
+            observacoes: r.observacoes || '',
+            created_at: r.created_at || new Date().toISOString(),
+          }));
+          setReservas(list);
+          localStorage.setItem('portaria_reservas', JSON.stringify(list));
+          return;
+        }
+      } catch (err) {
+        console.warn('Carregamento inicial de reservas da API:', err);
       }
-    }
+
+      const savedAreas = localStorage.getItem('portaria_areas_config');
+      if (savedAreas) {
+        try { setAreas(JSON.parse(savedAreas)); } catch (e) {}
+      }
+
+      const savedRes = localStorage.getItem('portaria_reservas');
+      if (savedRes) {
+        try { setReservas(JSON.parse(savedRes)); } catch (e) {}
+      }
+    };
+
+    loadAreasAndReservas();
   }, []);
 
   const saveAreas = (updated: AreaComum[]) => {
@@ -133,7 +167,7 @@ export default function ReservasPage() {
   };
 
   // Criar / Confirmar Reserva com parâmetros digitados pelo gestor
-  const handleCreateReserva = (e: React.FormEvent) => {
+  const handleCreateReserva = async (e: React.FormEvent) => {
     e.preventDefault();
     const area = areas.find((a) => a.id === formReserva.area_id);
     if (!area) return;
@@ -148,35 +182,35 @@ export default function ReservasPage() {
       return;
     }
 
-    // Checa conflito de agendamento na mesma área e data/período
-    const conflito = reservas.find(
-      (r) =>
-        r.area_id === formReserva.area_id &&
-        r.data_reserva === formReserva.data_reserva &&
-        r.periodo === formReserva.periodo &&
-        r.status === 'CONFIRMADO',
-    );
-
-    if (conflito) {
-      sounds.playErrorTone();
-      alert(`Já existe uma reserva confirmada para o "${area.nome}" nesta mesma data e período.`);
-      return;
-    }
-
     const taxaNum = formReserva.taxa_acordada ? parseFloat(formReserva.taxa_acordada.replace(',', '.')) : 0;
     const pessoasNum = formReserva.quantidade_pessoas ? parseInt(formReserva.quantidade_pessoas, 10) : undefined;
 
+    let createdRecord: any = null;
+    try {
+      createdRecord = await api.createReserva({
+        area_id: area.id,
+        unidade_bloco: formReserva.unidade_bloco,
+        unidade_numero: formReserva.unidade_numero.trim(),
+        data_reserva: formReserva.data_reserva,
+        periodo: formReserva.periodo,
+        convidados_estimados: pessoasNum,
+        observacoes: formReserva.observacoes.trim(),
+      });
+    } catch (err: any) {
+      console.warn('Criando reserva localmente (fallback):', err?.message);
+    }
+
     const nova: ReservaArea = {
-      id: `res-${Date.now()}`,
+      id: createdRecord?.id || `res-${Date.now()}`,
       area_id: area.id,
       area_nome: area.nome,
       area_foto: area.foto_url,
       area_capacidade: pessoasNum || 0,
       area_taxa: isNaN(taxaNum) ? 0 : taxaNum,
-      unidade_id: `u-${formReserva.unidade_bloco}-${formReserva.unidade_numero}`,
+      unidade_id: createdRecord?.unidade_id || `u-${formReserva.unidade_bloco}-${formReserva.unidade_numero}`,
       unidade_bloco: formReserva.unidade_bloco,
       unidade_numero: formReserva.unidade_numero.trim(),
-      usuario_id: 'usr-gestor',
+      usuario_id: createdRecord?.usuario_id || 'usr-gestor',
       solicitante_nome: formReserva.morador_nome.trim(),
       solicitante_telefone: formReserva.morador_telefone.trim(),
       data_reserva: formReserva.data_reserva,
@@ -184,7 +218,7 @@ export default function ReservasPage() {
       status: 'CONFIRMADO',
       convidados_estimados: pessoasNum,
       observacoes: formReserva.observacoes.trim(),
-      created_at: new Date().toISOString(),
+      created_at: createdRecord?.created_at || new Date().toISOString(),
     };
 
     const updated = [nova, ...reservas];

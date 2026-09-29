@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Car,
   Plus,
@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { VeiculoMorador } from '@/lib/types';
 import { INITIAL_VEICULOS_MORADOR } from '@/lib/mobileStore';
+import { mobileApi } from '@/lib/api';
 
 export default function VeiculosMoradorScreen() {
   const [veiculos, setVeiculos] = useState<VeiculoMorador[]>(INITIAL_VEICULOS_MORADOR);
@@ -21,9 +22,47 @@ export default function VeiculosMoradorScreen() {
   const [tipo, setTipo] = useState<'CARRO' | 'MOTO' | 'BICICLETA' | 'OUTRO'>('CARRO');
   const [vaga, setVaga] = useState('Vaga G-12 (Térreo)');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    async function loadVeiculos() {
+      try {
+        const data = await mobileApi.getVeiculos();
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: VeiculoMorador[] = data.map((v: any) => ({
+            id: v.id,
+            placa: v.placa,
+            marca_modelo: `${v.marca || ''} ${v.modelo || ''}`.trim() || v.marca_modelo || 'Veículo',
+            cor: v.cor || '',
+            tipo: (v.tipo?.toUpperCase() || 'CARRO') as any,
+            vaga_garagem: v.vaga_garagem || v.vaga || 'Vaga Padrão',
+          }));
+          setVeiculos(mapped);
+          localStorage.setItem('morador_veiculos', JSON.stringify(mapped));
+        } else {
+          const saved = localStorage.getItem('morador_veiculos');
+          if (saved) setVeiculos(JSON.parse(saved));
+        }
+      } catch (err) {
+        console.warn('Erro ao buscar veículos via API:', err);
+        const saved = localStorage.getItem('morador_veiculos');
+        if (saved) {
+          try {
+            setVeiculos(JSON.parse(saved));
+          } catch (e) {}
+        }
+      }
+    }
+    loadVeiculos();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!placa.trim() || !modelo.trim()) return;
+
+    let authUser: any = null;
+    try {
+      const saved = localStorage.getItem('morador_auth_user');
+      if (saved) authUser = JSON.parse(saved);
+    } catch (e) {}
 
     const novo: VeiculoMorador = {
       id: `v-m-${Date.now()}`,
@@ -34,7 +73,26 @@ export default function VeiculosMoradorScreen() {
       vaga_garagem: vaga,
     };
 
-    setVeiculos([...veiculos, novo]);
+    // Atualização otimista
+    const updated = [...veiculos, novo];
+    setVeiculos(updated);
+    localStorage.setItem('morador_veiculos', JSON.stringify(updated));
+
+    // Persistência Neon
+    try {
+      await mobileApi.createVeiculo({
+        placa: novo.placa,
+        marca_modelo: novo.marca_modelo,
+        cor: novo.cor,
+        tipo: novo.tipo,
+        vaga_garagem: novo.vaga_garagem,
+        unidade_bloco: authUser?.bloco || 'A',
+        unidade_numero: authUser?.apartamento || '101',
+      });
+    } catch (err) {
+      console.warn('Erro ao salvar veículo no backend:', err);
+    }
+
     setPlaca('');
     setModelo('');
     setCor('');

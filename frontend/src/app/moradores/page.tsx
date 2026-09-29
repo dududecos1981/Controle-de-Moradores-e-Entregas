@@ -807,7 +807,7 @@ export default function MoradoresPage() {
                     <input
                       type="text"
                       required
-                      placeholder="Ex: Mariana Fernandes"
+                      placeholder="Ex: Nome do Morador"
                       value={formData.nome_completo}
                       onChange={(e) => setFormData({ ...formData, nome_completo: e.target.value })}
                       className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"

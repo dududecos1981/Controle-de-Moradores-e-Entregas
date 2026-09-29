@@ -37,6 +37,7 @@ import { PrestadorServico, RegistroAcesso } from '@/lib/types';
 import { INITIAL_PRESTADORES, INITIAL_UNIDADES, INITIAL_MORADORES } from '@/lib/store';
 import WebcamCapture from '@/components/WebcamCapture';
 import SoundEffects from '@/lib/SoundEffects';
+import { api } from '@/lib/api';
 
 const ESPECIALIDADES_COMUNS = [
   'Eletricista',
@@ -87,19 +88,52 @@ export default function PrestadoresPage() {
     observacoes: '',
   });
 
-  // Inicialização com LocalStorage
+  // Inicialização com Backend & LocalStorage
   useEffect(() => {
-    const saved = localStorage.getItem('portaria_prestadores');
-    if (saved) {
+    async function loadData() {
       try {
-        setPrestadores(JSON.parse(saved));
-      } catch (e) {
-        setPrestadores(INITIAL_PRESTADORES);
+        const remote = await api.getVisitantes();
+        if (Array.isArray(remote)) {
+          const prestadoresRemote = remote.filter((v: any) => v.tipo === 'PRESTADOR_SERVICO' || v.tipo === 'PRESTADOR');
+          if (prestadoresRemote.length > 0) {
+            const mapped: PrestadorServico[] = prestadoresRemote.map((p: any) => ({
+              id: p.id,
+              nome_completo: p.nome_completo || p.nome,
+              cpf: p.cpf || '',
+              rg: p.documento || '',
+              telefone: p.telefone || '(11) 99999-9999',
+              empresa: p.empresa || 'Empresa Prestadora',
+              especialidade: p.observacoes || 'Serviços Gerais',
+              foto_url: p.foto_url,
+              placa_veiculo: p.placa_veiculo,
+              unidade_destino_bloco: p.unidade_destino_bloco || 'A',
+              unidade_destino_numero: p.unidade_destino_numero || '101',
+              status_acesso: p.ativo ? 'DENTRO' : 'CONCLUIDO',
+              hora_entrada: '08:00',
+              data_cadastro: p.created_at || new Date().toISOString(),
+            }));
+            setPrestadores(mapped);
+            localStorage.setItem('portaria_prestadores', JSON.stringify(mapped));
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Erro ao carregar prestadores do backend:', err);
       }
-    } else {
-      setPrestadores(INITIAL_PRESTADORES);
-      localStorage.setItem('portaria_prestadores', JSON.stringify(INITIAL_PRESTADORES));
+
+      const saved = localStorage.getItem('portaria_prestadores');
+      if (saved) {
+        try {
+          setPrestadores(JSON.parse(saved));
+        } catch (e) {
+          setPrestadores(INITIAL_PRESTADORES);
+        }
+      } else {
+        setPrestadores(INITIAL_PRESTADORES);
+        localStorage.setItem('portaria_prestadores', JSON.stringify(INITIAL_PRESTADORES));
+      }
     }
+    loadData();
   }, []);
 
   const showToast = (text: string, type: 'success' | 'alert' | 'info' = 'success') => {
@@ -266,7 +300,7 @@ export default function PrestadoresPage() {
   };
 
   // Salvar Prestador (Novo ou Edição)
-  const handleSavePrestador = (e: React.FormEvent) => {
+  const handleSavePrestador = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nome_completo || !formData.empresa || !formData.unidade_destino_numero) {
       alert('Por favor, preencha Nome Completo, Empresa e Número da Unidade.');
@@ -322,6 +356,23 @@ export default function PrestadoresPage() {
       const savedAcessos = localStorage.getItem('portaria_acessos');
       const acessosList: RegistroAcesso[] = savedAcessos ? JSON.parse(savedAcessos) : [];
       localStorage.setItem('portaria_acessos', JSON.stringify([novoAcesso, ...acessosList]));
+
+      // Persistência no Neon DB
+      try {
+        await api.createVisitante({
+          nome_completo: novo.nome_completo,
+          cpf: novo.cpf,
+          telefone: novo.telefone,
+          tipo: 'PRESTADOR_SERVICO',
+          empresa: novo.empresa,
+          placa_veiculo: novo.placa_veiculo,
+          unidade_destino_bloco: novo.unidade_destino_bloco,
+          unidade_destino_numero: novo.unidade_destino_numero,
+          observacoes: `${novo.especialidade} - Crachá: ${novo.cracha_numero || 'N/A'}`,
+        });
+      } catch (err) {
+        console.warn('Erro ao salvar prestador no Neon:', err);
+      }
 
       SoundEffects.playSuccess();
       showToast(`Prestador "${novo.nome_completo}" cadastrado e liberado para entrada!`, 'success');
@@ -923,7 +974,7 @@ export default function PrestadoresPage() {
                     <label className="text-xs font-semibold text-slate-300">Morador Responsável / Autorizador</label>
                     <input
                       type="text"
-                      placeholder="Ex: Roberto Albuquerque (Síndico) ou Mariana Fernandes"
+                      placeholder="Ex: Nome do morador ou síndico autorizador"
                       value={formData.morador_responsavel}
                       onChange={(e) => setFormData({ ...formData, morador_responsavel: e.target.value })}
                       className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"

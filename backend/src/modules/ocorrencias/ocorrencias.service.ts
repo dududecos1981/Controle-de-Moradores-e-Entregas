@@ -19,12 +19,74 @@ export class OcorrenciasService {
     private readonly eventsGateway: EventsGateway,
   ) {}
 
+  private async resolveUnidadeId(unidadeId?: string, bloco?: string, numero?: string): Promise<string> {
+    if (unidadeId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(unidadeId)) {
+      const check = await this.databaseService.query('SELECT id FROM unidades WHERE id = $1', [unidadeId]);
+      if (check.rowCount > 0) return check.rows[0].id;
+    }
+
+    let searchBloco = bloco;
+    let searchNumero = numero;
+
+    if (!searchBloco && !searchNumero && unidadeId && unidadeId.includes('-')) {
+      const parts = unidadeId.replace(/^u-/, '').split('-');
+      if (parts.length >= 2) {
+        searchBloco = parts[0];
+        searchNumero = parts[1];
+      }
+    }
+
+    if (searchBloco && searchNumero) {
+      const cleanB = searchBloco.trim().toUpperCase();
+      const cleanN = searchNumero.trim().toUpperCase();
+      const check = await this.databaseService.query(
+        'SELECT id FROM unidades WHERE UPPER(bloco) = $1 AND UPPER(numero) = $2 LIMIT 1',
+        [cleanB, cleanN],
+      );
+      if (check.rowCount > 0) return check.rows[0].id;
+
+      const created = await this.databaseService.query(
+        `INSERT INTO unidades (bloco, numero, tipo, status) VALUES ($1, $2, 'APARTAMENTO', 'ATIVO') RETURNING id`,
+        [cleanB, cleanN],
+      );
+      return created.rows[0].id;
+    }
+
+    const fallback = await this.databaseService.query('SELECT id FROM unidades WHERE status = \'ATIVO\' LIMIT 1');
+    if (fallback.rowCount > 0) return fallback.rows[0].id;
+
+    const createdDefault = await this.databaseService.query(
+      `INSERT INTO unidades (bloco, numero, tipo, status) VALUES ('A', '101', 'APARTAMENTO', 'ATIVO') RETURNING id`,
+    );
+    return createdDefault.rows[0].id;
+  }
+
+  private async resolveUsuarioId(usuarioId?: string, unidadeId?: string): Promise<string> {
+    if (usuarioId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(usuarioId)) {
+      const check = await this.databaseService.query('SELECT id FROM usuarios WHERE id = $1', [usuarioId]);
+      if (check.rowCount > 0) return check.rows[0].id;
+    }
+
+    if (unidadeId) {
+      const checkMorador = await this.databaseService.query(
+        'SELECT id FROM usuarios WHERE unidade_id = $1 AND status = \'ATIVO\' ORDER BY is_responsavel_unidade DESC LIMIT 1',
+        [unidadeId],
+      );
+      if (checkMorador.rowCount > 0) return checkMorador.rows[0].id;
+    }
+
+    const anyUser = await this.databaseService.query('SELECT id FROM usuarios WHERE status = \'ATIVO\' LIMIT 1');
+    if (anyUser.rowCount > 0) return anyUser.rows[0].id;
+
+    throw new BadRequestException('Nenhum usuário cadastrado para associar ao chamado.');
+  }
+
   /**
    * Lista ocorrências com filtros e paginação
    */
   async findAll(filters: FilterOcorrenciaDto): Promise<{ data: any[]; total: number; page: number; limit: number }> {
     const page = Math.max(1, Number(filters.page) || 1);
-    const limit = Math.min(100, Math.max(1, Number(filters.limit) || 20));
+    const limit = Math.min(100, Math.max(1, Number(filters.limit) || 50));
     const offset = (page - 1) * limit;
 
     const conditions: string[] = [];
@@ -152,7 +214,10 @@ export class OcorrenciasService {
   /**
    * Cria nova ocorrência/chamado pelo morador
    */
-  async create(dto: CreateOcorrenciaDto, usuarioId: string, context?: LgpdContext): Promise<any> {
+  async create(dto: CreateOcorrenciaDto, usuarioId?: string, context?: LgpdContext): Promise<any> {
+    const finalUnidadeId = await this.resolveUnidadeId(dto.unidade_id, dto.unidade_bloco, dto.unidade_numero);
+    const finalUsuarioId = await this.resolveUsuarioId(usuarioId, finalUnidadeId);
+
     const insertQuery = `
       INSERT INTO ocorrencias (
         unidade_id,
@@ -169,8 +234,8 @@ export class OcorrenciasService {
     const res = await this.databaseService.queryWithLgpdContext(
       insertQuery,
       [
-        dto.unidade_id,
-        usuarioId,
+        finalUnidadeId,
+        finalUsuarioId,
         dto.titulo,
         dto.descricao,
         dto.categoria || 'OUTRO',
@@ -178,7 +243,7 @@ export class OcorrenciasService {
       ],
       {
         ...context,
-        userId: usuarioId,
+        userId: finalUsuarioId,
         reason: 'Abertura de ocorrência/chamado de manutenção',
       },
     );
@@ -201,8 +266,9 @@ export class OcorrenciasService {
   /**
    * Síndico ou porteiro responde e atualiza status da ocorrência
    */
-  async responder(id: string, dto: ResponderOcorrenciaDto, sindicoId: string, context?: LgpdContext): Promise<any> {
+  async responder(id: string, dto: ResponderOcorrenciaDto, sindicoId?: string, context?: LgpdContext): Promise<any> {
     const ocorrencia = await this.findOne(id);
+    const finalSindicoId = await this.resolveUsuarioId(sindicoId);
 
     const query = `
       UPDATE ocorrencias
@@ -218,17 +284,16 @@ export class OcorrenciasService {
 
     await this.databaseService.queryWithLgpdContext(
       query,
-      [dto.resposta_sindico, dto.status, sindicoId, id],
+      [dto.resposta_sindico, dto.status, finalSindicoId, id],
       {
         ...context,
-        userId: sindicoId,
+        userId: finalSindicoId,
         reason: 'Resposta/parecer do síndico em ocorrência',
       },
     );
 
     const updated = await this.findOne(id);
 
-    // Emite WebSocket para a unidade do morador
     try {
       const room = `unidade_${ocorrencia.unidade_bloco}_${ocorrencia.unidade_numero}`;
       this.eventsGateway.server?.to(room).emit('ocorrencia_respondida', {

@@ -28,16 +28,17 @@ import { Encomenda, StatusEntrega } from '@/lib/types';
 import { INITIAL_ENCOMENDAS, INITIAL_UNIDADES } from '@/lib/store';
 import { sounds } from '@/lib/SoundEffects';
 import { WhatsAppNotification, NotificationLog } from '@/lib/WhatsAppNotification';
+import { api } from '@/lib/api';
 
 export default function EncomendasPage() {
   const [encomendas, setEncomendas] = useState<Encomenda[]>([]);
   const [codigoLido, setCodigoLido] = useState('');
   const [bloco, setBloco] = useState('A');
-  const [apartamento, setApartamento] = useState('101');
-  const [moradorNome, setMoradorNome] = useState('Mariana Fernandes');
-  const [moradorTelefone, setMoradorTelefone] = useState('11965432109');
-  const [transportadora, setTransportadora] = useState('Mercado Livre Express');
-  const [descricaoPacote, setDescricaoPacote] = useState('Caixa Padrão');
+  const [apartamento, setApartamento] = useState('');
+  const [moradorNome, setMoradorNome] = useState('');
+  const [moradorTelefone, setMoradorTelefone] = useState('');
+  const [transportadora, setTransportadora] = useState('Mercado Livre');
+  const [descricaoPacote, setDescricaoPacote] = useState('');
   const [autoSendNotification, setAutoSendNotification] = useState(true);
 
   // Estados de feedback de envio automático
@@ -51,17 +52,47 @@ export default function EncomendasPage() {
   const [isSending, setIsSending] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem('portaria_encomendas');
-    if (saved) {
+    const loadEncomendas = async () => {
       try {
-        setEncomendas(JSON.parse(saved));
-      } catch (e) {
+        const res = await api.getEntregas();
+        if (Array.isArray(res?.data) && res.data.length > 0) {
+          const list: Encomenda[] = res.data.map((e: any) => ({
+            id: e.id,
+            unidade_id: e.unidade_id,
+            unidade_bloco: e.unidade_bloco || 'A',
+            unidade_numero: e.unidade_numero || '101',
+            morador_nome: e.destinatario_nome || e.morador_nome || 'Morador',
+            morador_telefone: e.destinatario_telefone || e.morador_telefone || '',
+            codigo_barras_qrcode: e.codigo_barras_qrcode,
+            transportadora: e.transportadora || 'Transportadora',
+            codigo_rastreio: e.codigo_rastreio,
+            descricao_pacote: e.descricao_pacote,
+            foto_comprovante_url: e.foto_comprovante_url,
+            status: e.status || 'AGUARDANDO_RETIRADA',
+            data_recebimento: e.data_recebimento || e.created_at,
+            porteiro_recebedor_nome: e.porteiro_recebedor_nome || 'Portaria',
+          }));
+          setEncomendas(list);
+          localStorage.setItem('portaria_encomendas', JSON.stringify(list));
+          return;
+        }
+      } catch (err) {
+        console.warn('Carregamento inicial de entregas da API:', err);
+      }
+
+      const saved = localStorage.getItem('portaria_encomendas');
+      if (saved) {
+        try {
+          setEncomendas(JSON.parse(saved));
+        } catch (e) {
+          setEncomendas(INITIAL_ENCOMENDAS);
+        }
+      } else {
         setEncomendas(INITIAL_ENCOMENDAS);
       }
-    } else {
-      setEncomendas(INITIAL_ENCOMENDAS);
-      localStorage.setItem('portaria_encomendas', JSON.stringify(INITIAL_ENCOMENDAS));
-    }
+    };
+
+    loadEncomendas();
   }, []);
 
   // Atualiza morador e telefone sugeridos ao trocar unidade
@@ -111,9 +142,24 @@ export default function EncomendasPage() {
 
     setIsSending(true);
 
+    let createdRecord: any = null;
+    try {
+      createdRecord = await api.createEntrega({
+        unidade_bloco: bloco,
+        unidade_numero: apartamento,
+        morador_nome: moradorNome,
+        morador_telefone: moradorTelefone,
+        codigo_barras_qrcode: codigoLido.trim(),
+        transportadora,
+        descricao_pacote: descricaoPacote,
+      });
+    } catch (apiErr) {
+      console.warn('Persistindo encomenda localmente (fallback):', apiErr);
+    }
+
     const novaEncomenda: Encomenda = {
-      id: `enc-${Date.now()}`,
-      unidade_id: `u-${bloco}-${apartamento}`,
+      id: createdRecord?.id || `enc-${Date.now()}`,
+      unidade_id: createdRecord?.unidade_id || `u-${bloco}-${apartamento}`,
       unidade_bloco: bloco,
       unidade_numero: apartamento,
       morador_nome: moradorNome,
@@ -122,8 +168,8 @@ export default function EncomendasPage() {
       transportadora,
       descricao_pacote: descricaoPacote,
       status: 'AGUARDANDO_RETIRADA',
-      data_recebimento: new Date().toISOString(),
-      porteiro_recebedor_nome: 'João Portaria',
+      data_recebimento: createdRecord?.data_recebimento || new Date().toISOString(),
+      porteiro_recebedor_nome: createdRecord?.porteiro_recebedor_nome || 'Portaria',
     };
 
     const updated = [novaEncomenda, ...encomendas];

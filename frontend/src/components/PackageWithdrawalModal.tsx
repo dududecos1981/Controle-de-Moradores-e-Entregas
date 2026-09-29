@@ -98,7 +98,7 @@ export default function PackageWithdrawalModal({
                 required
                 value={retiradoPor}
                 onChange={(e) => setRetiradoPor(e.target.value)}
-                placeholder="Ex: Mariana Fernandes (própria moradora)"
+                placeholder="Ex: Nome do morador ou autorizado"
                 className="w-full bg-slate-950 text-white text-sm px-3.5 py-2.5 rounded-xl border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
               />
             </div>
@@ -111,7 +111,7 @@ export default function PackageWithdrawalModal({
                 type="text"
                 value={documento}
                 onChange={(e) => setDocumento(e.target.value)}
-                placeholder="Ex: 111.222.333-44"
+                placeholder="Ex: 000.000.000-00"
                 className="w-full bg-slate-950 text-white text-sm px-3.5 py-2.5 rounded-xl border border-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none"
               />
             </div>

@@ -38,17 +38,50 @@ export default function OcorrenciasPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('portaria_ocorrencias');
-    if (saved) {
+    const loadOcorrencias = async () => {
       try {
-        setOcorrencias(JSON.parse(saved));
-      } catch (e) {
+        const res = await api.getOcorrencias();
+        if (Array.isArray(res?.data) && res.data.length > 0) {
+          const list: Ocorrencia[] = res.data.map((oc: any) => ({
+            id: oc.id,
+            unidade_id: oc.unidade_id,
+            unidade_bloco: oc.unidade_bloco || 'A',
+            unidade_numero: oc.unidade_numero || '101',
+            usuario_id: oc.usuario_id,
+            solicitante_nome: oc.solicitante_nome || 'Morador',
+            solicitante_telefone: oc.solicitante_telefone || '',
+            titulo: oc.titulo,
+            descricao: oc.descricao,
+            categoria: oc.categoria || 'OUTRO',
+            foto_url: oc.foto_url,
+            status: oc.status || 'ABERTO',
+            resposta_sindico: oc.resposta_sindico,
+            respondido_por_nome: oc.respondido_por_nome,
+            respondido_em: oc.respondido_em,
+            created_at: oc.created_at || new Date().toISOString(),
+            updated_at: oc.updated_at || new Date().toISOString(),
+          }));
+          setOcorrencias(list);
+          localStorage.setItem('portaria_ocorrencias', JSON.stringify(list));
+          return;
+        }
+      } catch (err) {
+        console.warn('Carregamento inicial de ocorrências da API:', err);
+      }
+
+      const saved = localStorage.getItem('portaria_ocorrencias');
+      if (saved) {
+        try {
+          setOcorrencias(JSON.parse(saved));
+        } catch (e) {
+          setOcorrencias(INITIAL_OCORRENCIAS);
+        }
+      } else {
         setOcorrencias(INITIAL_OCORRENCIAS);
       }
-    } else {
-      setOcorrencias(INITIAL_OCORRENCIAS);
-      localStorage.setItem('portaria_ocorrencias', JSON.stringify(INITIAL_OCORRENCIAS));
-    }
+    };
+
+    loadOcorrencias();
   }, []);
 
   const saveOcorrencias = (updated: Ocorrencia[]) => {
@@ -71,6 +104,15 @@ export default function OcorrenciasPage() {
   const handleSaveResposta = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOcorrencia || !respostaText.trim()) return;
+
+    try {
+      await api.responderOcorrencia(selectedOcorrencia.id, {
+        resposta_sindico: respostaText.trim(),
+        status: novoStatus,
+      });
+    } catch (err) {
+      console.warn('Respondendo ocorrência localmente (fallback):', err);
+    }
 
     const updated = ocorrencias.map((oc) => {
       if (oc.id === selectedOcorrencia.id) {

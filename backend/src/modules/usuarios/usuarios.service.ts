@@ -20,12 +20,52 @@ export class UsuariosService {
     private readonly configService: ConfigService,
   ) {}
 
+  private normalizePerfil(perfil?: string): string {
+    if (!perfil) return 'MORADOR';
+    const p = perfil.toUpperCase().trim();
+    if (p === 'GERENTE') return 'ADMINISTRADOR';
+    if (p === 'ZELADOR') return 'PORTEIRO';
+    if (['ADMINISTRADOR', 'SINDICO', 'PORTEIRO', 'MORADOR', 'PRESTADOR_SERVICO'].includes(p)) {
+      return p;
+    }
+    return 'MORADOR';
+  }
+
+  /**
+   * Resolve ou cria a unidade baseada em ID ou bloco + número
+   */
+  private async resolveUnidadeId(unidadeId?: string, bloco?: string, numero?: string): Promise<string | null> {
+    if (unidadeId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(unidadeId)) {
+      const check = await this.databaseService.query('SELECT id FROM unidades WHERE id = $1', [unidadeId]);
+      if (check.rowCount > 0) return check.rows[0].id;
+    }
+
+    if (bloco && numero) {
+      const cleanBloco = bloco.trim().toUpperCase();
+      const cleanNumero = numero.trim().toUpperCase();
+      const check = await this.databaseService.query(
+        'SELECT id FROM unidades WHERE UPPER(bloco) = $1 AND UPPER(numero) = $2 LIMIT 1',
+        [cleanBloco, cleanNumero],
+      );
+      if (check.rowCount > 0) {
+        return check.rows[0].id;
+      }
+      const created = await this.databaseService.query(
+        `INSERT INTO unidades (bloco, numero, tipo, status) VALUES ($1, $2, 'APARTAMENTO', 'ATIVO') RETURNING id`,
+        [cleanBloco, cleanNumero],
+      );
+      return created.rows[0].id;
+    }
+
+    return null;
+  }
+
   /**
    * Lista usuários com paginação, filtros e informações de unidade vinculada
    */
   async findAll(filters: FilterUsuarioDto): Promise<{ data: UsuarioResponseDto[]; total: number; page: number; limit: number }> {
     const page = Math.max(1, Number(filters.page) || 1);
-    const limit = Math.min(100, Math.max(1, Number(filters.limit) || 20));
+    const limit = Math.min(100, Math.max(1, Number(filters.limit) || 50));
     const offset = (page - 1) * limit;
 
     const conditions: string[] = ['u.lgpd_anonimizado = FALSE'];
@@ -33,7 +73,7 @@ export class UsuariosService {
     let paramIndex = 1;
 
     if (filters.busca) {
-      conditions.push(`(u.nome_completo ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex} OR u.cpf ILIKE $${paramIndex})`);
+      conditions.push(`(u.nome_completo ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex} OR u.cpf ILIKE $${paramIndex} OR un.bloco ILIKE $${paramIndex} OR un.numero ILIKE $${paramIndex})`);
       params.push(`%${filters.busca}%`);
       paramIndex++;
     }
@@ -43,7 +83,7 @@ export class UsuariosService {
     }
     if (filters.perfil) {
       conditions.push(`u.perfil = $${paramIndex++}`);
-      params.push(filters.perfil);
+      params.push(this.normalizePerfil(filters.perfil));
     }
     if (filters.status) {
       conditions.push(`u.status = $${paramIndex++}`);
@@ -56,7 +96,12 @@ export class UsuariosService {
 
     const whereClause = `WHERE ${conditions.join(' AND ')}`;
 
-    const countQuery = `SELECT COUNT(*) as total FROM usuarios u ${whereClause}`;
+    const countQuery = `
+      SELECT COUNT(*) as total 
+      FROM usuarios u 
+      LEFT JOIN unidades un ON un.id = u.unidade_id
+      ${whereClause}
+    `;
     const countRes = await this.databaseService.query(countQuery, params);
     const total = parseInt(countRes.rows[0]?.total || '0', 10);
 
@@ -132,26 +177,26 @@ export class UsuariosService {
   }
 
   /**
-   * Criação de usuário por gestor/administrador
+   * Criação de usuário por gestor/administrador/porteiro
    */
   async create(dto: CreateUsuarioDto, context?: LgpdContext): Promise<UsuarioResponseDto> {
-    const checkQuery = `SELECT id, cpf, email FROM usuarios WHERE cpf = $1 OR email = $2`;
-    const checkRes = await this.databaseService.query(checkQuery, [dto.cpf, dto.email]);
+    const cleanCpf = (dto.cpf || '').trim();
+    const cleanEmail = (dto.email || '').trim().toLowerCase();
+
+    const checkQuery = `SELECT id, cpf, email FROM usuarios WHERE cpf = $1 OR LOWER(email) = $2`;
+    const checkRes = await this.databaseService.query(checkQuery, [cleanCpf, cleanEmail]);
     if (checkRes.rowCount > 0) {
       const existing = checkRes.rows[0];
-      if (existing.cpf === dto.cpf) throw new ConflictException('CPF já cadastrado no sistema.');
-      if (existing.email === dto.email) throw new ConflictException('E-mail já cadastrado no sistema.');
+      if (existing.cpf === cleanCpf) throw new ConflictException('CPF já cadastrado no sistema.');
+      if (existing.email.toLowerCase() === cleanEmail) throw new ConflictException('E-mail já cadastrado no sistema.');
     }
 
-    if (dto.unidade_id) {
-      const checkUnidade = await this.databaseService.query(`SELECT id FROM unidades WHERE id = $1`, [dto.unidade_id]);
-      if (checkUnidade.rowCount === 0) {
-        throw new BadRequestException('Unidade informada não existe.');
-      }
-    }
+    const resolvedUnidadeId = await this.resolveUnidadeId(dto.unidade_id, dto.unidade_bloco, dto.unidade_numero);
 
+    const rawPassword = dto.senha || cleanCpf.replace(/\D/g, '') || 'Mudar@123456';
     const saltRounds = this.configService.get<number>('jwt.bcryptSaltRounds', 10);
-    const senhaHash = await bcrypt.hash(dto.senha, saltRounds);
+    const senhaHash = await bcrypt.hash(rawPassword, saltRounds);
+    const perfilFinal = this.normalizePerfil(dto.perfil);
 
     const insertQuery = `
       INSERT INTO usuarios (
@@ -168,26 +213,26 @@ export class UsuariosService {
         lgpd_termo_aceito,
         lgpd_data_aceite
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, TRUE, clock_timestamp())
-      RETURNING *
+      RETURNING id
     `;
 
     const res = await this.databaseService.queryWithLgpdContext(
       insertQuery,
       [
-        dto.nome_completo,
-        dto.cpf,
-        dto.email,
+        dto.nome_completo.trim(),
+        cleanCpf,
+        cleanEmail,
         senhaHash,
         dto.telefone || null,
-        dto.perfil || 'MORADOR',
+        perfilFinal,
         dto.status || 'ATIVO',
-        dto.is_responsavel_unidade || false,
-        dto.unidade_id || null,
+        dto.is_responsavel_unidade !== undefined ? dto.is_responsavel_unidade : true,
+        resolvedUnidadeId,
         dto.avatar_url || null,
       ],
       {
         ...context,
-        reason: 'Criação de usuário via painel administrativo',
+        reason: 'Criação de usuário via sistema',
       },
     );
 
@@ -200,15 +245,17 @@ export class UsuariosService {
   async update(id: string, dto: UpdateUsuarioDto, context?: LgpdContext): Promise<UsuarioResponseDto> {
     const existing = await this.findOne(id);
 
-    if (dto.email && dto.email !== existing.email) {
+    if (dto.email && dto.email.toLowerCase() !== existing.email.toLowerCase()) {
       const checkEmail = await this.databaseService.query(
-        `SELECT id FROM usuarios WHERE email = $1 AND id != $2`,
-        [dto.email, id],
+        `SELECT id FROM usuarios WHERE LOWER(email) = LOWER($1) AND id != $2`,
+        [dto.email.trim(), id],
       );
       if (checkEmail.rowCount > 0) {
         throw new ConflictException('E-mail já utilizado por outro usuário.');
       }
     }
+
+    const resolvedUnidadeId = await this.resolveUnidadeId(dto.unidade_id, dto.unidade_bloco, dto.unidade_numero);
 
     const updates: string[] = [];
     const params: any[] = [id];
@@ -216,11 +263,11 @@ export class UsuariosService {
 
     if (dto.nome_completo !== undefined) {
       updates.push(`nome_completo = $${paramIndex++}`);
-      params.push(dto.nome_completo);
+      params.push(dto.nome_completo.trim());
     }
     if (dto.email !== undefined) {
       updates.push(`email = $${paramIndex++}`);
-      params.push(dto.email);
+      params.push(dto.email.trim().toLowerCase());
     }
     if (dto.senha) {
       const saltRounds = this.configService.get<number>('jwt.bcryptSaltRounds', 10);
@@ -234,7 +281,7 @@ export class UsuariosService {
     }
     if (dto.perfil !== undefined) {
       updates.push(`perfil = $${paramIndex++}`);
-      params.push(dto.perfil);
+      params.push(this.normalizePerfil(dto.perfil));
     }
     if (dto.status !== undefined) {
       updates.push(`status = $${paramIndex++}`);
@@ -244,26 +291,26 @@ export class UsuariosService {
       updates.push(`is_responsavel_unidade = $${paramIndex++}`);
       params.push(dto.is_responsavel_unidade);
     }
-    if (dto.unidade_id !== undefined) {
+    if (resolvedUnidadeId !== null || dto.unidade_id !== undefined) {
       updates.push(`unidade_id = $${paramIndex++}`);
-      params.push(dto.unidade_id);
+      params.push(resolvedUnidadeId);
     }
     if (dto.avatar_url !== undefined) {
       updates.push(`avatar_url = $${paramIndex++}`);
       params.push(dto.avatar_url);
     }
 
-    if (updates.length > 0) {
-      const query = `
-        UPDATE usuarios
-        SET ${updates.join(', ')}
-        WHERE id = $1
-      `;
-      await this.databaseService.queryWithLgpdContext(query, params, {
-        ...context,
-        reason: 'Atualização cadastral de usuário',
-      });
-    }
+    updates.push(`updated_at = clock_timestamp()`);
+
+    const query = `
+      UPDATE usuarios
+      SET ${updates.join(', ')}
+      WHERE id = $1
+    `;
+    await this.databaseService.queryWithLgpdContext(query, params, {
+      ...context,
+      reason: 'Atualização cadastral de usuário',
+    });
 
     return this.findOne(id);
   }
@@ -274,7 +321,6 @@ export class UsuariosService {
   async anonimizarLgpd(id: string, motivo: string, context?: LgpdContext): Promise<{ success: boolean; message: string }> {
     await this.findOne(id);
 
-    // Executa a procedure criada na modelagem do banco (Passo 1)
     await this.databaseService.queryWithLgpdContext(
       `SELECT fn_anonimizar_usuario_lgpd($1, $2)`,
       [id, motivo],

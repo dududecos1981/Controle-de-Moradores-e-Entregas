@@ -2,27 +2,58 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsNotEmpty,
-  IsUUID,
   IsOptional,
   MaxLength,
 } from 'class-validator';
 
 export class CreateEntregaDto {
-  @ApiProperty({
+  @ApiPropertyOptional({
     description: 'ID da unidade de destino da encomenda',
     example: 'a0000000-0000-0000-0000-000000000001',
   })
-  @IsUUID('4', { message: 'ID da unidade deve ser um UUID v4 válido.' })
-  @IsNotEmpty({ message: 'Unidade de destino é obrigatória.' })
-  unidade_id: string;
+  @IsOptional()
+  @IsString()
+  unidade_id?: string;
 
   @ApiPropertyOptional({
-    description: 'ID do morador destinatário (opcional caso pertença à unidade)',
+    description: 'Bloco da unidade de destino',
+    example: 'A',
+  })
+  @IsOptional()
+  @IsString()
+  unidade_bloco?: string;
+
+  @ApiPropertyOptional({
+    description: 'Número do apartamento/unidade',
+    example: '101',
+  })
+  @IsOptional()
+  @IsString()
+  unidade_numero?: string;
+
+  @ApiPropertyOptional({
+    description: 'ID do morador destinatário (opcional)',
     example: 'b0000000-0000-0000-0000-000000000003',
   })
-  @IsUUID('4', { message: 'ID do destinatário deve ser um UUID v4 válido.' })
   @IsOptional()
+  @IsString()
   usuario_destinatario_id?: string;
+
+  @ApiPropertyOptional({
+    description: 'Nome do morador destinatário',
+    example: 'Nome do Destinatário',
+  })
+  @IsOptional()
+  @IsString()
+  morador_nome?: string;
+
+  @ApiPropertyOptional({
+    description: 'Telefone do morador destinatário',
+    example: '11965432109',
+  })
+  @IsOptional()
+  @IsString()
+  morador_telefone?: string;
 
   @ApiProperty({
     description: 'Código de barras lido ou QR Code da encomenda',

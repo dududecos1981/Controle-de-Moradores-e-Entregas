@@ -36,6 +36,7 @@ import { INITIAL_ENCOMENDAS, INITIAL_VISITANTES, INITIAL_PRESTADORES, INITIAL_AC
 import PackageWithdrawalModal from '@/components/PackageWithdrawalModal';
 import WebcamCapture from '@/components/WebcamCapture';
 import SoundEffects from '@/lib/SoundEffects';
+import { api } from '@/lib/api';
 
 export default function DashboardPage() {
   const [encomendas, setEncomendas] = useState<Encomenda[]>([]);
@@ -61,43 +62,55 @@ export default function DashboardPage() {
     observacoes: '',
   });
 
-  // Inicializa dados com persistência local
+  // Inicializa dados com API Neon e persistência local
   useEffect(() => {
-    // Limpeza automática de dados fictícios legados
-    const isCleaned = localStorage.getItem('portaria_data_cleaned_v2');
-    if (!isCleaned) {
-      localStorage.removeItem('portaria_encomendas');
-      localStorage.removeItem('portaria_acessos');
-      localStorage.removeItem('portaria_visitantes');
-      localStorage.removeItem('portaria_prestadores');
-      localStorage.removeItem('portaria_moradores');
-      localStorage.removeItem('portaria_comunicados');
-      localStorage.setItem('portaria_data_cleaned_v2', 'true');
-    }
-
-    // Encomendas
-    const savedEnc = localStorage.getItem('portaria_encomendas');
-    if (savedEnc) {
+    const loadDashboardData = async () => {
       try {
-        setEncomendas(JSON.parse(savedEnc));
-      } catch (e) {
-        setEncomendas([]);
+        const res = await api.getEntregas();
+        if (Array.isArray(res?.data) && res.data.length > 0) {
+          const list: Encomenda[] = res.data.map((e: any) => ({
+            id: e.id,
+            unidade_id: e.unidade_id,
+            unidade_bloco: e.unidade_bloco || 'A',
+            unidade_numero: e.unidade_numero || '101',
+            morador_nome: e.destinatario_nome || e.morador_nome || 'Morador',
+            morador_telefone: e.destinatario_telefone || e.morador_telefone || '',
+            codigo_barras_qrcode: e.codigo_barras_qrcode,
+            transportadora: e.transportadora || 'Transportadora',
+            codigo_rastreio: e.codigo_rastreio,
+            descricao_pacote: e.descricao_pacote,
+            foto_comprovante_url: e.foto_comprovante_url,
+            foto_retirada_url: e.foto_retirada_url,
+            status: e.status || 'AGUARDANDO_RETIRADA',
+            data_recebimento: e.data_recebimento || e.created_at,
+            data_retirada: e.data_retirada,
+            retirado_por_nome: e.retirado_por_nome,
+            retirado_por_documento: e.retirado_por_documento,
+            porteiro_recebedor_nome: e.porteiro_recebedor_nome || 'Portaria',
+          }));
+          setEncomendas(list);
+          localStorage.setItem('portaria_encomendas', JSON.stringify(list));
+        } else {
+          const savedEnc = localStorage.getItem('portaria_encomendas');
+          if (savedEnc) {
+            try { setEncomendas(JSON.parse(savedEnc)); } catch (e) { setEncomendas([]); }
+          }
+        }
+      } catch (err) {
+        console.warn('Carregamento inicial do dashboard via API:', err);
+        const savedEnc = localStorage.getItem('portaria_encomendas');
+        if (savedEnc) {
+          try { setEncomendas(JSON.parse(savedEnc)); } catch (e) { setEncomendas([]); }
+        }
       }
-    } else {
-      setEncomendas([]);
-    }
 
-    // Acessos
-    const savedAcessos = localStorage.getItem('portaria_acessos');
-    if (savedAcessos) {
-      try {
-        setAcessos(JSON.parse(savedAcessos));
-      } catch (e) {
-        setAcessos([]);
+      const savedAcessos = localStorage.getItem('portaria_acessos');
+      if (savedAcessos) {
+        try { setAcessos(JSON.parse(savedAcessos)); } catch (e) { setAcessos([]); }
       }
-    } else {
-      setAcessos([]);
-    }
+    };
+
+    loadDashboardData();
   }, []);
 
   const saveEncomendas = (updated: Encomenda[]) => {
@@ -145,8 +158,17 @@ export default function DashboardPage() {
     return ac.tipo_pessoa === acessoFilter;
   });
 
-  // Confirmação de baixa de pacote
-  const handleConfirmWithdrawal = (id: string, retiradoPorNome: string, retiradoPorDoc: string) => {
+  // Confirmação de baixa de pacote sincronizada com a API Neon
+  const handleConfirmWithdrawal = async (id: string, retiradoPorNome: string, retiradoPorDoc: string) => {
+    try {
+      await api.retirarEntrega(id, {
+        retirado_por_nome: retiradoPorNome,
+        retirado_por_documento: retiradoPorDoc,
+      });
+    } catch (err) {
+      console.warn('Dando baixa em encomenda localmente (fallback):', err);
+    }
+
     const updated = encomendas.map((item) => {
       if (item.id === id) {
         return {
@@ -776,7 +798,7 @@ export default function DashboardPage() {
                 <input
                   type="text"
                   required
-                  placeholder="Ex: Carlos Eduardo / Mariana Fernandes"
+                  placeholder="Ex: Nome da Pessoa / Visitante"
                   value={quickAccessData.nome}
                   onChange={(e) => setQuickAccessData({ ...quickAccessData, nome: e.target.value })}
                   className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"

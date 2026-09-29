@@ -1,7 +1,7 @@
 -- ==============================================================================
 -- PROJETO: Sistema de Gestão de Portaria, Pessoas e Entregas
 -- BANCO DE DADOS: PostgreSQL (Neon Serverless)
--- ARQUIVO: seed.sql (Dados Base Iniciais Limpos para Testes e Produção)
+-- ARQUIVO: seed.sql (Dados Base Iniciais para Produção e Testes)
 -- ==============================================================================
 
 -- ------------------------------------------------------------------------------
@@ -13,13 +13,74 @@ INSERT INTO unidades (id, bloco, numero, tipo, status, andar, observacoes) VALUE
 ('a0000000-0000-0000-0000-000000000003', 'A', '201', 'APARTAMENTO', 'ATIVO', 2, 'Apartamento 2º andar'),
 ('a0000000-0000-0000-0000-000000000004', 'B', '101', 'APARTAMENTO', 'ATIVO', 1, 'Torre B'),
 ('a0000000-0000-0000-0000-000000000005', 'B', 'PH01', 'COBERTURA', 'ATIVO', 12, 'Cobertura duplex')
-ON CONFLICT (bloco, numero) DO NOTHING;
+ON CONFLICT (bloco, numero) DO UPDATE SET status = 'ATIVO';
 
 -- ------------------------------------------------------------------------------
--- 2. USUÁRIOS (Inserção manual pelo administrador/usuários)
+-- 2. USUÁRIOS PADRÃO DO SISTEMA
 -- ------------------------------------------------------------------------------
--- Base de usuários inicial limpa para cadastro manual dos administradores,
--- porteiros, síndicos e moradores.
+INSERT INTO usuarios (
+    id,
+    nome_completo,
+    cpf,
+    email,
+    senha_hash,
+    telefone,
+    perfil,
+    status,
+    is_responsavel_unidade,
+    unidade_id,
+    lgpd_termo_aceito,
+    lgpd_data_aceite
+) VALUES
+(
+    'b0000000-0000-0000-0000-000000000001',
+    'Administrador Geral',
+    '000.000.000-01',
+    'admin@portaria.com',
+    '$2a$10$SmMJl/ueV3cWFOu1h9G1RuLCkGo3Ol/wMiiGsvQfltgAiwe8iUG1y', -- Admin@123456
+    '11999990001',
+    'ADMINISTRADOR',
+    'ATIVO',
+    FALSE,
+    NULL,
+    TRUE,
+    clock_timestamp()
+),
+(
+    'b0000000-0000-0000-0000-000000000002',
+    'Porteiro de Plantão',
+    '000.000.000-03',
+    'porteiro@portaria.com',
+    '$2a$10$eYxH6VYJATi3DKzPyqqXkO485tpgm1ipMqjMYQqetjplG53mnse6O', -- Porteiro@123456
+    '11999990002',
+    'PORTEIRO',
+    'ATIVO',
+    FALSE,
+    NULL,
+    TRUE,
+    clock_timestamp()
+),
+(
+    'b0000000-0000-0000-0000-000000000003',
+    'Síndico Condominial',
+    '000.000.000-02',
+    'sindico@portaria.com',
+    '$2a$10$jqkbYF2RueJF1MkIhZuQh.OjNEnWrKc9Sh52App.Sf2U/ObbIa1wC', -- Sindico@123456
+    '11999990003',
+    'SINDICO',
+    'ATIVO',
+    FALSE,
+    NULL,
+    TRUE,
+    clock_timestamp()
+)
+ON CONFLICT (cpf) DO UPDATE SET
+    nome_completo = EXCLUDED.nome_completo,
+    email = EXCLUDED.email,
+    senha_hash = EXCLUDED.senha_hash,
+    perfil = EXCLUDED.perfil,
+    status = EXCLUDED.status,
+    unidade_id = EXCLUDED.unidade_id;
 
 -- ------------------------------------------------------------------------------
 -- 3. ÁREAS COMUNS (LAZER & EVENTOS)
@@ -64,4 +125,9 @@ INSERT INTO areas_comuns (
     'Uso máximo de 2 horas consecutivas por unidade. Uso obrigatório de calçado apropriado.',
     'DISPONIVEL'
 )
-ON CONFLICT (id) DO NOTHING;
+ON CONFLICT (id) DO UPDATE SET
+    nome = EXCLUDED.nome,
+    descricao = EXCLUDED.descricao,
+    capacidade_maxima = EXCLUDED.capacidade_maxima,
+    taxa_reserva = EXCLUDED.taxa_reserva,
+    status = EXCLUDED.status;

@@ -56,8 +56,39 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Base de usuários padrão limpa para inserção e cadastro manual
-const DEFAULT_SYSTEM_USERS: (UsuarioAuth & { senha_hash: string })[] = [];
+// Base de usuários padrão institucionais para acesso rápido e fallback
+const DEFAULT_SYSTEM_USERS: (UsuarioAuth & { senha_hash: string })[] = [
+  {
+    id: 'b0000000-0000-0000-0000-000000000001',
+    nome_completo: 'Administrador Geral',
+    email: 'admin@portaria.com',
+    cpf: '000.000.000-01',
+    telefone: '11999990001',
+    perfil: 'ADMINISTRADOR',
+    senha_hash: 'Admin@123456',
+    lgpd_termo_aceito: true,
+  },
+  {
+    id: 'b0000000-0000-0000-0000-000000000002',
+    nome_completo: 'Porteiro de Plantão',
+    email: 'porteiro@portaria.com',
+    cpf: '000.000.000-03',
+    telefone: '11999990002',
+    perfil: 'PORTEIRO',
+    senha_hash: 'Porteiro@123456',
+    lgpd_termo_aceito: true,
+  },
+  {
+    id: 'b0000000-0000-0000-0000-000000000003',
+    nome_completo: 'Síndico Condominial',
+    email: 'sindico@portaria.com',
+    cpf: '000.000.000-02',
+    telefone: '11999990003',
+    perfil: 'SINDICO',
+    senha_hash: 'Sindico@123456',
+    lgpd_termo_aceito: true,
+  },
+];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<UsuarioAuth | null>(null);

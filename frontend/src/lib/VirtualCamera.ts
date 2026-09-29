@@ -185,7 +185,7 @@ export class VirtualCameraService {
   /**
    * Cria um MediaStream contínuo de Biometria Facial para Visitantes e Moradores
    */
-  static createFaceStream(nome = 'Mariana Fernandes'): { stream: MediaStream; stop: () => void } {
+  static createFaceStream(nome = 'Identificação Facial'): { stream: MediaStream; stop: () => void } {
     if (typeof window === 'undefined') {
       return { stream: new MediaStream(), stop: () => {} };
     }

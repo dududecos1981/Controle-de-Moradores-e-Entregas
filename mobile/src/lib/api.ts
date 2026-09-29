@@ -58,6 +58,113 @@ class MobileApiService {
     return response.json();
   }
 
+  // Encomendas do Morador
+  async getEntregas(params?: Record<string, any>) {
+    const query = new URLSearchParams(params).toString();
+    return this.request<any>(`/entregas${query ? `?${query}` : ''}`);
+  }
+
+  async retirarEntrega(id: string, data: { retirado_por_nome: string; retirado_por_documento?: string; assinatura_digital_url?: string }) {
+    return this.request<any>(`/entregas/${id}/retirar`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Visitantes & Convites
+  async getVisitantes(params?: Record<string, any>) {
+    const query = new URLSearchParams(params).toString();
+    return this.request<any>(`/visitantes${query ? `?${query}` : ''}`);
+  }
+
+  async createConvite(data: {
+    nome_completo: string;
+    cpf?: string;
+    telefone?: string;
+    tipo?: string;
+    placa_veiculo?: string;
+    unidade_destino_bloco?: string;
+    unidade_destino_numero?: string;
+    observacoes?: string;
+  }) {
+    return this.request<any>('/visitantes', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...data,
+        tipo: data.tipo || 'VISITANTE',
+        ativo: true,
+      }),
+    });
+  }
+
+  // Ocorrências
+  async getOcorrencias(params?: Record<string, any>) {
+    const query = new URLSearchParams(params).toString();
+    return this.request<any>(`/ocorrencias${query ? `?${query}` : ''}`);
+  }
+
+  async createOcorrencia(data: {
+    titulo: string;
+    descricao: string;
+    categoria?: string;
+    unidade_bloco?: string;
+    unidade_numero?: string;
+    foto_url?: string;
+  }) {
+    return this.request<any>('/ocorrencias', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Reservas & Áreas Comuns
+  async getAreasComuns() {
+    return this.request<any>('/reservas/areas');
+  }
+
+  async getReservas(params?: Record<string, any>) {
+    const query = new URLSearchParams(params).toString();
+    return this.request<any>(`/reservas${query ? `?${query}` : ''}`);
+  }
+
+  async createReserva(data: {
+    area_id: string;
+    data_reserva: string;
+    periodo?: string;
+    unidade_bloco?: string;
+    unidade_numero?: string;
+    convidados_estimados?: number;
+    observacoes?: string;
+  }) {
+    return this.request<any>('/reservas', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Veículos
+  async getVeiculos(params?: Record<string, any>) {
+    const query = new URLSearchParams(params).toString();
+    return this.request<any>(`/veiculos${query ? `?${query}` : ''}`);
+  }
+
+  async createVeiculo(data: {
+    placa: string;
+    marca_modelo: string;
+    cor?: string;
+    tipo?: string;
+    unidade_bloco?: string;
+    unidade_numero?: string;
+    vaga_garagem?: string;
+    observacoes?: string;
+  }) {
+    return this.request<any>('/veiculos', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  // Autenticação
   async login(email: string, senha: string) {
     const res = await this.request<any>('/auth/login', {
       method: 'POST',

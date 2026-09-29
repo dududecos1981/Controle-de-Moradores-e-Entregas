@@ -12,12 +12,12 @@ import {
 import { UserRole } from '../../../common/decorators/roles.decorator';
 
 export class RegisterDto {
-  @ApiProperty({ example: 'Mariana Fernandes', description: 'Nome completo do usuário' })
+  @ApiProperty({ example: 'Nome do Morador', description: 'Nome completo do usuário' })
   @IsString()
   @IsNotEmpty({ message: 'O nome completo é obrigatório.' })
   nome_completo: string;
 
-  @ApiProperty({ example: '111.222.333-44', description: 'CPF válido formatado' })
+  @ApiProperty({ example: '000.000.000-00', description: 'CPF válido formatado' })
   @IsString()
   @IsNotEmpty({ message: 'O CPF é obrigatório.' })
   @Matches(/^[0-9]{3}\.?[0-9]{3}\.?[0-9]{3}\-?[0-9]{2}$/, {
@@ -25,7 +25,7 @@ export class RegisterDto {
   })
   cpf: string;
 
-  @ApiProperty({ example: 'mariana.fernandes@email.com', description: 'E-mail para login' })
+  @ApiProperty({ example: 'morador@dominio.com', description: 'E-mail para login' })
   @IsEmail({}, { message: 'Formato de e-mail inválido.' })
   @IsNotEmpty({ message: 'O e-mail é obrigatório.' })
   email: string;

@@ -4,7 +4,7 @@ import { UserRole } from '../../../common/decorators/roles.decorator';
 import { StatusUsuario } from './create-usuario.dto';
 
 export class FilterUsuarioDto {
-  @ApiPropertyOptional({ example: 'Mariana' })
+  @ApiPropertyOptional({ example: 'Morador' })
   @IsOptional()
   @IsString()
   busca?: string;

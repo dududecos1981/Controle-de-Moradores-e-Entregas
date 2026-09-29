@@ -9,12 +9,12 @@ import {
 } from './types';
 
 export const CURRENT_MORADOR: MoradorPerfil = {
-  id: 'usr-morador-01',
+  id: '',
   nome: 'Morador',
   email: '',
   telefone: '',
   bloco: 'A',
-  apartamento: '101',
+  apartamento: '',
   condominio_nome: 'Condomínio Residencial',
 };
 

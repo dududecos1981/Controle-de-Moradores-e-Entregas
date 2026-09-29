@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsUUID, IsNotEmpty, IsString, IsOptional, IsEnum } from 'class-validator';
+import { IsNotEmpty, IsString, IsOptional } from 'class-validator';
 
 export enum CategoriaOcorrencia {
   BARULHO = 'BARULHO',
@@ -20,10 +20,20 @@ export enum StatusOcorrencia {
 }
 
 export class CreateOcorrenciaDto {
-  @ApiProperty({ description: 'ID da unidade/apartamento do solicitante' })
-  @IsUUID()
-  @IsNotEmpty()
-  unidade_id: string;
+  @ApiPropertyOptional({ description: 'ID da unidade/apartamento do solicitante' })
+  @IsOptional()
+  @IsString()
+  unidade_id?: string;
+
+  @ApiPropertyOptional({ description: 'Bloco da unidade' })
+  @IsOptional()
+  @IsString()
+  unidade_bloco?: string;
+
+  @ApiPropertyOptional({ description: 'Número do apartamento' })
+  @IsOptional()
+  @IsString()
+  unidade_numero?: string;
 
   @ApiProperty({ description: 'Título resumido do chamado/ocorrência', example: 'Lâmpada do hall queimada' })
   @IsString()
@@ -36,9 +46,9 @@ export class CreateOcorrenciaDto {
   descricao: string;
 
   @ApiPropertyOptional({ enum: CategoriaOcorrencia, default: CategoriaOcorrencia.OUTRO })
-  @IsEnum(CategoriaOcorrencia)
   @IsOptional()
-  categoria?: CategoriaOcorrencia;
+  @IsString()
+  categoria?: any;
 
   @ApiPropertyOptional({ description: 'URL da foto/evidência anexada', example: 'https://storage.neon.tech/ocorrencias/foto1.jpg' })
   @IsString()

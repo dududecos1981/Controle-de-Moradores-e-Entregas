@@ -36,6 +36,7 @@ import { Colaborador, CargoColaborador, TurnoTrabalho } from '@/lib/types';
 import { useAuth } from '@/contexts/AuthContext';
 import WebcamCapture from '@/components/WebcamCapture';
 import SoundEffects from '@/lib/SoundEffects';
+import { api } from '@/lib/api';
 
 export default function ColaboradoresPage() {
   const { currentUser } = useAuth();
@@ -68,16 +69,49 @@ export default function ColaboradoresPage() {
 
   // Carrega lista de colaboradores
   useEffect(() => {
-    const saved = localStorage.getItem('portaria_colaboradores');
-    if (saved) {
+    async function loadColaboradores() {
       try {
-        setColaboradores(JSON.parse(saved));
+        const users = await api.getMoradores();
+        if (Array.isArray(users)) {
+          const staffUsers = users.filter((u: any) =>
+            ['PORTEIRO', 'SINDICO', 'ADMINISTRADOR', 'ZELADOR', 'GERENTE'].includes(u.perfil?.toUpperCase()),
+          );
+          if (staffUsers.length > 0) {
+            const mapped: Colaborador[] = staffUsers.map((u: any) => ({
+              id: u.id,
+              nome_completo: u.nome_completo || u.nome,
+              cpf: u.cpf || '000.000.000-00',
+              email: u.email,
+              telefone: u.telefone || '(11) 99999-9999',
+              cargo: (u.perfil?.toUpperCase() || 'PORTEIRO') as CargoColaborador,
+              turno: 'COMERCIAL',
+              matricula: `MAT-${u.id.slice(0, 4)}`,
+              foto_url: u.foto_url,
+              status: u.ativo !== false ? 'ATIVO' : 'INATIVO',
+              data_admissao: u.created_at || new Date().toISOString(),
+              lgpd_termo_aceito: true,
+            }));
+            setColaboradores(mapped);
+            localStorage.setItem('portaria_colaboradores', JSON.stringify(mapped));
+            return;
+          }
+        }
       } catch (e) {
+        console.warn('Erro ao carregar colaboradores do backend:', e);
+      }
+
+      const saved = localStorage.getItem('portaria_colaboradores');
+      if (saved) {
+        try {
+          setColaboradores(JSON.parse(saved));
+        } catch (e) {
+          setColaboradores([]);
+        }
+      } else {
         setColaboradores([]);
       }
-    } else {
-      setColaboradores([]);
     }
+    loadColaboradores();
   }, []);
 
   const saveColaboradores = (list: Colaborador[]) => {
@@ -143,7 +177,7 @@ export default function ColaboradoresPage() {
   };
 
   // Salvar Colaborador (Criar ou Atualizar)
-  const handleSaveColaborador = (e: React.FormEvent) => {
+  const handleSaveColaborador = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nome_completo || !formData.cpf || !formData.email) {
       SoundEffects.playError();
@@ -174,6 +208,20 @@ export default function ColaboradoresPage() {
       });
       saveColaboradores(updated);
       SoundEffects.playSuccess();
+
+      // Atualiza Neon DB se for UUID
+      try {
+        if (!editingId.startsWith('usr-colab-')) {
+          await api.updateMorador(editingId, {
+            nome_completo: formData.nome_completo.trim(),
+            email: formData.email.trim().toLowerCase(),
+            telefone: formData.telefone,
+            perfil: formData.cargo,
+          });
+        }
+      } catch (err) {
+        console.warn('Erro ao atualizar usuário no backend:', err);
+      }
     } else {
       // Criar novo
       const cleanCpf = formData.cpf.replace(/\D/g, '');
@@ -208,6 +256,20 @@ export default function ColaboradoresPage() {
 
       saveColaboradores([novo, ...colaboradores]);
       SoundEffects.playSuccess();
+
+      // Salva no backend Neon DB
+      try {
+        await api.createMorador({
+          nome_completo: novo.nome_completo,
+          cpf: novo.cpf,
+          email: novo.email,
+          telefone: novo.telefone,
+          perfil: novo.cargo,
+          senha: formData.senha || 'Porteiro@123456',
+        });
+      } catch (err) {
+        console.warn('Erro ao persistir colaborador no Neon:', err);
+      }
     }
 
     setIsModalOpen(false);
