@@ -181,7 +181,6 @@ export default function RelatoriosPage() {
         break;
 
       case 'MORADORES':
-      case 'USUARIOS':
         headers = ['ID', 'Nome Completo', 'CPF', 'E-mail', 'Telefone', 'Perfil', 'Unidade', 'Status', 'Termo LGPD'];
         rows = relatorioData.map((m) => [
           m.id || '',
