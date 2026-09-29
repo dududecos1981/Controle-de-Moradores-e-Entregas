@@ -79,6 +79,14 @@ Cadastro de Pessoas e Entregas/
 
 ## 🚀 Como Executar o Projeto Localmente
 
+Você pode iniciar todos os serviços simultaneamente na raiz do projeto:
+
+```bash
+npm run dev
+```
+
+Ou executar cada serviço individualmente:
+
 ### 1. Banco de Dados (Neon PostgreSQL)
 1. Crie um banco de dados gratuito no [Neon Console](https://console.neon.tech).
 2. Execute os scripts `database/schema.sql` e opcionalmente `database/seed.sql` na aba **SQL Editor**.
@@ -89,24 +97,28 @@ cd backend
 npm install
 npm run start:dev
 ```
-- **API Base:** `http://localhost:3000/api`
+- **API Base:** `http://localhost:3000/api` (ou `http://[IP_DO_PC]:3000/api`)
 - **Swagger / OpenAPI Interativo:** `http://localhost:3000/api/docs`
 
-### 3. Painel da Portaria (Frontend - Next.js)
-```bash
-cd frontend
-npm install
-npm run dev
-```
-- **Acesso da Portaria:** `http://localhost:3000`
-
-### 4. Aplicativo do Morador (Mobile - Next.js)
+### 3. Aplicativo do Morador (Mobile - Next.js)
 ```bash
 cd mobile
 npm install
 npm run dev
 ```
-- **Acesso do Morador:** `http://localhost:3001`
+- **Acesso do Morador no Computador:** `http://localhost:3001`
+- **Acesso pelo Celular (Mesmo Wi-Fi):** `http://[SEU_IP_LOCAL]:3001` (exemplo: `http://192.168.0.178:3001`)
+
+### 4. Painel da Portaria (Frontend - Next.js)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+- **Acesso da Portaria no Computador:** `http://localhost:3002`
+- **Acesso pelo Celular/Tablet (Mesmo Wi-Fi):** `http://[SEU_IP_LOCAL]:3002` (exemplo: `http://192.168.0.178:3002`)
+
+> **💡 Dica para Testes no Celular:** Certifique-se de que o celular está conectado na mesma rede Wi-Fi que o computador. O sistema detecta automaticamente o IP e conecta à API e aos WebSockets em tempo real sem necessidade de configurações manuais.
 
 ---
 

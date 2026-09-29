@@ -1,4 +1,15 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+export function getApiBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    // Se o morador estiver acessando via celular na rede Wi-Fi / IP local
+    if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
+      const protocol = window.location.protocol;
+      return `${protocol}//${host}:3000/api`;
+    }
+  }
+  return envUrl || 'http://localhost:3000/api';
+}
 
 export interface MobileUserSession {
   id: string;
@@ -45,7 +56,8 @@ class MobileApiService {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const baseUrl = getApiBaseUrl();
+    const response = await fetch(`${baseUrl}${endpoint}`, {
       ...options,
       headers,
     });

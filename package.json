@@ -8,8 +8,9 @@
     "mobile"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=frontend",
-    "build": "npm run build --workspace=frontend",
+    "dev": "npm run dev:all",
+    "dev:all": "concurrently -n \"BACKEND,PORTARIA,MORADOR\" -c \"bgBlue.bold,bgGreen.bold,bgMagenta.bold\" \"npm run dev:backend\" \"npm run dev:frontend\" \"npm run dev:mobile\"",
+    "build": "npm run build --workspace=frontend && npm run build --workspace=mobile",
     "start": "npm run start --workspace=frontend",
     "dev:frontend": "npm run dev --workspace=frontend",
     "build:frontend": "npm run build --workspace=frontend",
@@ -19,5 +20,8 @@
     "start:mobile": "npm run start --workspace=mobile",
     "dev:backend": "npm run start:dev --prefix backend",
     "build:backend": "npm run build --prefix backend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }

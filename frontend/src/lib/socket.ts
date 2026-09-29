@@ -1,7 +1,17 @@
 import { io, Socket } from 'socket.io-client';
 import { sounds } from './SoundEffects';
 
-const SOCKET_SERVER_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3000';
+export function getSocketUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
+      const protocol = window.location.protocol;
+      return `${protocol}//${host}:3000`;
+    }
+  }
+  return envUrl || 'http://localhost:3000';
+}
 
 class SocketService {
   private socket: Socket | null = null;
@@ -12,7 +22,8 @@ class SocketService {
     if (typeof window === 'undefined') return;
     if (this.socket && this.socket.connected) return;
 
-    this.socket = io(`${SOCKET_SERVER_URL}/events`, {
+    const socketUrl = getSocketUrl();
+    this.socket = io(`${socketUrl}/events`, {
       query: {
         perfil: params.perfil || 'PORTEIRO',
         bloco: params.bloco || '',

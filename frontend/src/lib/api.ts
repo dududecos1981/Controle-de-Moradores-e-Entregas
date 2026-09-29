@@ -1,4 +1,15 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+export function getApiBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname;
+    // Se o cliente estiver acessando via IP da rede local ou localhost e a URL de ambiente não for de produção/domínio externo
+    if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
+      const protocol = window.location.protocol;
+      return `${protocol}//${host}:3000/api`;
+    }
+  }
+  return envUrl || 'http://localhost:3000/api';
+}
 
 export interface ApiResponse<T> {
   data: T;
@@ -95,7 +106,8 @@ class ApiService {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const baseUrl = getApiBaseUrl();
+    const response = await fetch(`${baseUrl}${endpoint}`, {
       ...options,
       headers,
     });
@@ -329,7 +341,8 @@ class ApiService {
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
-    const response = await fetch(`${API_BASE_URL}/admin/backup/export-json`, {
+    const baseUrl = getApiBaseUrl();
+    const response = await fetch(`${baseUrl}/admin/backup/export-json`, {
       method: 'GET',
       headers,
     });
@@ -347,7 +360,8 @@ class ApiService {
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
     }
-    const response = await fetch(`${API_BASE_URL}/admin/backup/export-sql`, {
+    const baseUrl = getApiBaseUrl();
+    const response = await fetch(`${baseUrl}/admin/backup/export-sql`, {
       method: 'GET',
       headers,
     });

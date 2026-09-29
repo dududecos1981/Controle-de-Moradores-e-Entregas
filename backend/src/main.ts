@@ -36,13 +36,10 @@ async function bootstrap() {
     }),
   );
 
-  // Configuração segura de CORS para clientes Web/Mobile
+  // Configuração segura e permissiva de CORS para clientes Web, Mobile e Rede Local (Wi-Fi)
   app.enableCors({
     origin: (origin, callback) => {
-      // Permite requisições sem origin (como mobile apps, Postman ou curl) e localhost
-      if (!origin || /^https?:\/\/localhost(:\d+)?$/.test(origin) || /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) {
-        return callback(null, true);
-      }
+      // Permite requisições de localhost, rede local (ex: 192.168.x.x, 10.x.x.x) e apps sem origin
       callback(null, true);
     },
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
@@ -92,8 +89,8 @@ async function bootstrap() {
     },
   });
 
-  await app.listen(port);
-  logger.log(`🚀 Servidor HTTP rodando em: http://localhost:${port}/${prefix}`);
+  await app.listen(port, '0.0.0.0');
+  logger.log(`🚀 Servidor HTTP rodando em: http://0.0.0.0:${port}/${prefix} (Local e Rede Local)`);
   logger.log(`📚 Documentação Swagger interativa em: http://localhost:${port}/${prefix}/docs`);
 }
 
