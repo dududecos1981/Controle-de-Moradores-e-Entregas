@@ -88,6 +88,19 @@ const DEFAULT_SYSTEM_USERS: (UsuarioAuth & { senha_hash: string })[] = [
     senha_hash: 'Sindico@123456',
     lgpd_termo_aceito: true,
   },
+  {
+    id: 'b0000000-0000-0000-0000-000000000004',
+    nome_completo: 'Carlos Eduardo (Morador)',
+    email: 'morador@portaria.com',
+    cpf: '000.000.000-04',
+    telefone: '11999990004',
+    perfil: 'MORADOR',
+    unidade_bloco: 'A',
+    unidade_numero: '101',
+    is_responsavel_unidade: true,
+    senha_hash: 'Morador@123456',
+    lgpd_termo_aceito: true,
+  },
 ];
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {

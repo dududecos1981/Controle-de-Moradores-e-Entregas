@@ -21,6 +21,53 @@ import {
 } from 'lucide-react';
 import { mobileApi } from '@/lib/api';
 
+const DEFAULT_SYSTEM_USERS = [
+  {
+    id: 'b0000000-0000-0000-0000-000000000004',
+    nome: 'Carlos Eduardo (Morador)',
+    email: 'morador@portaria.com',
+    cpf: '000.000.000-04',
+    telefone: '11999990004',
+    bloco: 'A',
+    apartamento: '101',
+    perfil: 'MORADOR',
+    senha: 'Morador@123456',
+  },
+  {
+    id: 'b0000000-0000-0000-0000-000000000002',
+    nome: 'Porteiro de Plantão',
+    email: 'porteiro@portaria.com',
+    cpf: '000.000.000-03',
+    telefone: '11999990002',
+    bloco: 'A',
+    apartamento: '101',
+    perfil: 'PORTEIRO',
+    senha: 'Porteiro@123456',
+  },
+  {
+    id: 'b0000000-0000-0000-0000-000000000001',
+    nome: 'Administrador Geral',
+    email: 'admin@portaria.com',
+    cpf: '000.000.000-01',
+    telefone: '11999990001',
+    bloco: 'A',
+    apartamento: '101',
+    perfil: 'ADMINISTRADOR',
+    senha: 'Admin@123456',
+  },
+  {
+    id: 'b0000000-0000-0000-0000-000000000003',
+    nome: 'Síndico Condominial',
+    email: 'sindico@portaria.com',
+    cpf: '000.000.000-02',
+    telefone: '11999990003',
+    bloco: 'B',
+    apartamento: 'PH01',
+    perfil: 'SINDICO',
+    senha: 'Sindico@123456',
+  },
+];
+
 export default function MobileLoginPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'login' | 'primeiro_acesso' | 'esqueci_senha'>('login');
@@ -76,19 +123,23 @@ export default function MobileLoginPage() {
     setIsLoading(true);
     setErrorMessage(null);
 
+    const cleanEmail = loginEmail.trim().toLowerCase();
+    const cleanDigits = loginEmail.replace(/\D/g, '');
+
     // 1. Tenta login direto via API / Neon DB
     try {
       const res = await mobileApi.login(loginEmail.trim(), loginPassword);
       if (res?.user) {
         const user = {
           id: res.user.id,
-          nome: res.user.nome_completo,
+          nome: res.user.nome_completo || res.user.nome,
           email: res.user.email,
           cpf: res.user.cpf,
           telefone: res.user.telefone || '',
           bloco: res.user.unidade_bloco || 'A',
           apartamento: res.user.unidade_numero || '101',
         };
+        localStorage.setItem('morador_auth_token', res.accessToken || ('jwt-' + Date.now()));
         localStorage.setItem('morador_auth_user', JSON.stringify(user));
         router.push('/');
         return;
@@ -97,11 +148,27 @@ export default function MobileLoginPage() {
       console.warn('Tentando fallback local no mobile:', err?.message);
     }
 
-    // 2. Fallback local para contas salvas ou conta padrão
+    // 2. Busca nas contas padrão institucionais
+    const defaultUser = DEFAULT_SYSTEM_USERS.find(
+      (u) =>
+        (u.email.toLowerCase() === cleanEmail || (u.cpf && u.cpf.replace(/\D/g, '') === cleanDigits)) &&
+        u.senha === loginPassword,
+    );
+
+    if (defaultUser) {
+      localStorage.setItem('morador_auth_token', 'jwt-' + Date.now());
+      localStorage.setItem('morador_auth_user', JSON.stringify(defaultUser));
+      router.push('/');
+      return;
+    }
+
+    // 3. Fallback local para contas registradas
     const registeredUsersStr = localStorage.getItem('morador_registered_users');
     const registeredUsers = registeredUsersStr ? JSON.parse(registeredUsersStr) : [];
     const matched = registeredUsers.find(
-      (u: any) => u.email.toLowerCase() === loginEmail.trim().toLowerCase() && u.senha === loginPassword,
+      (u: any) =>
+        (u.email.toLowerCase() === cleanEmail || (u.cpf && u.cpf.replace(/\D/g, '') === cleanDigits)) &&
+        u.senha === loginPassword,
     );
 
     if (matched) {
@@ -109,10 +176,11 @@ export default function MobileLoginPage() {
       localStorage.setItem('morador_auth_token', 'jwt-' + Date.now());
       localStorage.setItem('morador_auth_user', JSON.stringify(user));
       router.push('/');
-    } else {
-      setErrorMessage('E-mail ou senha incorretos. Verifique seus dados ou cadastre-se no 1º Acesso.');
-      setIsLoading(false);
+      return;
     }
+
+    setErrorMessage('E-mail ou senha incorretos. Verifique seus dados ou cadastre-se no 1º Acesso.');
+    setIsLoading(false);
   };
 
   const handlePrimeiroAcesso = async (e: React.FormEvent) => {
@@ -424,6 +492,59 @@ export default function MobileLoginPage() {
                 </>
               )}
             </button>
+
+            {/* Acesso Rápido de Demonstração / Teste no Celular */}
+            <div className="pt-2 border-t border-slate-800/80">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center mb-2">
+                ⚡ Acesso Rápido de Teste (1-Toque):
+              </p>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginEmail('morador@portaria.com');
+                    setLoginPassword('Morador@123456');
+                    setErrorMessage(null);
+                  }}
+                  className="py-1.5 px-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-lg text-[10px] font-bold text-cyan-300 text-left flex items-center gap-1.5 transition-colors"
+                >
+                  <span>👤 Morador</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginEmail('porteiro@portaria.com');
+                    setLoginPassword('Porteiro@123456');
+                    setErrorMessage(null);
+                  }}
+                  className="py-1.5 px-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-lg text-[10px] font-bold text-emerald-300 text-left flex items-center gap-1.5 transition-colors"
+                >
+                  <span>👮 Porteiro</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginEmail('admin@portaria.com');
+                    setLoginPassword('Admin@123456');
+                    setErrorMessage(null);
+                  }}
+                  className="py-1.5 px-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-lg text-[10px] font-bold text-indigo-300 text-left flex items-center gap-1.5 transition-colors"
+                >
+                  <span>⚙️ Admin</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginEmail('sindico@portaria.com');
+                    setLoginPassword('Sindico@123456');
+                    setErrorMessage(null);
+                  }}
+                  className="py-1.5 px-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-lg text-[10px] font-bold text-amber-300 text-left flex items-center gap-1.5 transition-colors"
+                >
+                  <span>👔 Síndico</span>
+                </button>
+              </div>
+            </div>
 
             <div className="text-center pt-1">
               <button

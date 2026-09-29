@@ -467,6 +467,59 @@ export default function LoginPage() {
                 )}
               </button>
 
+              {/* Acesso Rápido com Contas de Demonstração */}
+              <div className="pt-2.5 border-t border-slate-800/80">
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center mb-2">
+                  ⚡ Acesso Rápido de Teste (1-Toque):
+                </p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginEmail('porteiro@portaria.com');
+                      setLoginPassword('Porteiro@123456');
+                      setErrorMessage(null);
+                    }}
+                    className="py-2 px-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-xl text-xs font-bold text-emerald-300 text-center transition-colors"
+                  >
+                    👮 Porteiro
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginEmail('admin@portaria.com');
+                      setLoginPassword('Admin@123456');
+                      setErrorMessage(null);
+                    }}
+                    className="py-2 px-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-xl text-xs font-bold text-indigo-300 text-center transition-colors"
+                  >
+                    ⚙️ Admin
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginEmail('sindico@portaria.com');
+                      setLoginPassword('Sindico@123456');
+                      setErrorMessage(null);
+                    }}
+                    className="py-2 px-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-xl text-xs font-bold text-amber-300 text-center transition-colors"
+                  >
+                    👔 Síndico
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLoginEmail('morador@portaria.com');
+                      setLoginPassword('Morador@123456');
+                      setErrorMessage(null);
+                    }}
+                    className="py-2 px-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-xl text-xs font-bold text-cyan-300 text-center transition-colors"
+                  >
+                    👤 Morador
+                  </button>
+                </div>
+              </div>
+
               <div className="text-center pt-2">
                 <button
                   type="button"
