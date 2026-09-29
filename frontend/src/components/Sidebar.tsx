@@ -89,10 +89,10 @@ const GOVERNANCA_ITEMS = [
     badge: 'Art. 18',
   },
   {
-    name: 'Central de Relatórios',
+    name: 'Relatórios & Backups',
     href: '/relatorios',
     icon: FileText,
-    badge: 'CSV/PDF',
+    badge: 'ADMIN',
   },
   {
     name: 'Assistente IA & Avisos',

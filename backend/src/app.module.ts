@@ -20,6 +20,7 @@ import { AgendamentosModule } from './modules/agendamentos/agendamentos.module';
 import { VeiculosModule } from './modules/veiculos/veiculos.module';
 import { OcorrenciasModule } from './modules/ocorrencias/ocorrencias.module';
 import { ReservasModule } from './modules/reservas/reservas.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { LgpdSessionInterceptor } from './common/interceptors/lgpd-session.interceptor';
@@ -53,6 +54,7 @@ import { LgpdSessionInterceptor } from './common/interceptors/lgpd-session.inter
     EventsModule,
     NotificationsModule,
     LgpdModule,
+    AdminModule,
   ],
   providers: [
     {

@@ -307,6 +307,63 @@ class ApiService {
     return response.json();
   }
 
+  // Administração, Relatórios & Backup
+  async getAdminMetricas() {
+    return this.request<any>('/admin/relatorios/metricas-gerais');
+  }
+
+  async getAdminRelatorio(tipo: string, filters?: { dataInicio?: string; dataFim?: string; status?: string }) {
+    const params = new URLSearchParams({
+      tipo,
+      ...(filters?.dataInicio ? { dataInicio: filters.dataInicio } : {}),
+      ...(filters?.dataFim ? { dataFim: filters.dataFim } : {}),
+      ...(filters?.status ? { status: filters.status } : {}),
+    });
+    return this.request<any>(`/admin/relatorios/detalhado?${params.toString()}`);
+  }
+
+  async downloadAdminBackupJson(): Promise<any> {
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+    };
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+    const response = await fetch(`${API_BASE_URL}/admin/backup/export-json`, {
+      method: 'GET',
+      headers,
+    });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.message || 'Falha ao exportar backup JSON');
+    }
+    return response.json();
+  }
+
+  async downloadAdminBackupSql(): Promise<string> {
+    const headers: Record<string, string> = {
+      Accept: 'text/plain',
+    };
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+    const response = await fetch(`${API_BASE_URL}/admin/backup/export-sql`, {
+      method: 'GET',
+      headers,
+    });
+    if (!response.ok) {
+      throw new Error('Falha ao exportar backup SQL');
+    }
+    return response.text();
+  }
+
+  async restoreAdminBackup(payload: any) {
+    return this.request<any>('/admin/backup/restore-json', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+
   // Autenticação
   async login(email: string, senha: string) {
     const res = await this.request<any>('/auth/login', {
