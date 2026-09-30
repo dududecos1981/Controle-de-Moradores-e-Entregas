@@ -17,7 +17,7 @@ class MobileSocketService {
   private listeners: Map<string, Set<(data: any) => void>> = new Map();
 
   connect(bloco = 'A', unidade = '101') {
-    if (typeof window !== 'undefined') return;
+    if (typeof window === 'undefined') return;
     if (this.socket && this.socket.connected) return;
 
     const socketUrl = getSocketUrl();
@@ -40,8 +40,20 @@ class MobileSocketService {
       this.emitLocal('encomenda_chegou', data);
     });
 
+    this.socket.on('encomenda_retirada', (data) => {
+      this.emitLocal('encomenda_retirada', data);
+    });
+
+    this.socket.on('visitante_chegou', (data) => {
+      this.emitLocal('visitante_chegou', data);
+    });
+
     this.socket.on('ocorrencia_respondida', (data) => {
       this.emitLocal('ocorrencia_respondida', data);
+    });
+
+    this.socket.on('reserva_atualizada', (data) => {
+      this.emitLocal('reserva_atualizada', data);
     });
   }
 

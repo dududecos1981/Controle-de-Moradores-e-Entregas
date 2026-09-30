@@ -346,27 +346,26 @@ export default function MobileLoginPage() {
         className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-30 mix-blend-luminosity pointer-events-none"
         style={{ backgroundImage: "url('/images/building_bg.jpg')" }}
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-[#0a0f1d]/85 via-[#101726]/90 to-[#070A11]/95 pointer-events-none" />
-
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0a0f1d]/85 via-[#101726]/90 to-[#070A11]" />
       {/* Luz de Fundo */}
       <div className="absolute -top-20 -left-20 w-60 h-60 bg-indigo-600/25 rounded-full blur-[90px] pointer-events-none" />
       <div className="absolute -bottom-20 -right-20 w-60 h-60 bg-emerald-600/20 rounded-full blur-[90px] pointer-events-none" />
 
-      {/* Topo */}
-      <div className="pt-4 text-center space-y-2 z-10">
-        <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-xl shadow-indigo-500/30">
-          <Building className="w-7 h-7" />
+      {/* Topo Amplo */}
+      <div className="pt-2 sm:pt-4 text-center space-y-2 z-10">
+        <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center text-white shadow-xl shadow-indigo-500/30">
+          <Building className="w-8 h-8" />
         </div>
         <div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white">App do Morador</h1>
-          <p className="text-[11px] text-slate-400">Controle de Encomendas & Convites</p>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">App do Morador</h1>
+          <p className="text-xs sm:text-sm text-slate-300 mt-0.5">Controle de Encomendas, Convites & Portaria</p>
         </div>
       </div>
 
-      {/* Card do Formulário */}
-      <div className="bg-[#182238]/95 backdrop-blur-md border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-xl space-y-4 my-4 z-10">
-        {/* Abas: Login vs Primeiro Acesso (Recuperação fica somente no link Esqueci a Senha) */}
-        <div className="grid grid-cols-2 bg-slate-900/90 p-1 rounded-xl border border-slate-800 gap-1">
+      {/* Card do Formulário Amplo */}
+      <div className="bg-[#182238]/95 backdrop-blur-md border-2 border-slate-800 rounded-3xl p-5 sm:p-7 shadow-2xl space-y-5 my-4 z-10">
+        {/* Abas: Login vs Primeiro Acesso */}
+        <div className="grid grid-cols-2 bg-slate-950 p-1.5 rounded-2xl border border-slate-800 gap-1.5">
           <button
             type="button"
             onClick={() => {
@@ -374,13 +373,13 @@ export default function MobileLoginPage() {
               setErrorMessage(null);
               setSuccessMessage(null);
             }}
-            className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-3 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 ${
               activeTab === 'login'
-                ? 'bg-indigo-600 text-white shadow-md'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <KeyRound className="w-3.5 h-3.5" />
+            <KeyRound className="w-4 h-4" />
             <span>Entrar</span>
           </button>
 
@@ -391,28 +390,28 @@ export default function MobileLoginPage() {
               setErrorMessage(null);
               setSuccessMessage(null);
             }}
-            className={`py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-3 rounded-xl text-xs sm:text-sm font-black transition-all flex items-center justify-center gap-2 ${
               activeTab === 'primeiro_acesso'
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md'
+                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30'
                 : 'text-slate-400 hover:text-white'
             }`}
           >
-            <UserPlus className="w-3.5 h-3.5" />
+            <UserPlus className="w-4 h-4" />
             <span>1º Acesso</span>
           </button>
         </div>
 
         {/* Mensagens de Alerta */}
         {errorMessage && (
-          <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-center gap-2 text-rose-300 text-xs">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+          <div className="p-3.5 bg-rose-500/10 border border-rose-500/30 rounded-2xl flex items-center gap-2.5 text-rose-300 text-xs sm:text-sm">
+            <AlertCircle className="w-5 h-5 shrink-0 text-rose-400" />
             <span>{errorMessage}</span>
           </div>
         )}
 
         {successMessage && (
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center gap-2 text-emerald-300 text-xs">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+          <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center gap-2.5 text-emerald-300 text-xs sm:text-sm">
+            <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-400" />
             <span>{successMessage}</span>
           </div>
         )}
@@ -421,28 +420,28 @@ export default function MobileLoginPage() {
         {/* ABA 1: LOGIN */}
         {/* ========================================================================= */}
         {activeTab === 'login' && (
-          <form onSubmit={handleLogin} className="space-y-3">
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                E-mail Cadastrado
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
+                E-mail Cadastrado *
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Mail className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="email"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   required
                   placeholder="seuemail@exemplo.com"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+                  className="w-full min-h-[52px] bg-slate-950 border border-slate-700 rounded-2xl pl-12 pr-4 py-3.5 text-sm sm:text-base text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all"
                 />
               </div>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1">
-                <label className="text-[10px] font-bold text-slate-400 uppercase">
-                  Senha
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
+                  Senha *
                 </label>
                 <button
                   type="button"
@@ -452,28 +451,28 @@ export default function MobileLoginPage() {
                     setSuccessMessage(null);
                     setRecEmail(loginEmail);
                   }}
-                  className="text-[11px] text-amber-400 hover:text-amber-300 font-bold underline underline-offset-2 flex items-center gap-1"
+                  className="text-xs text-amber-400 hover:text-amber-300 font-bold underline underline-offset-2 flex items-center gap-1"
                 >
-                  <RotateCcw className="w-3 h-3" />
+                  <RotateCcw className="w-3.5 h-3.5" />
                   Esqueci minha senha
                 </button>
               </div>
               <div className="relative">
-                <Lock className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Lock className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type={showLoginPassword ? 'text' : 'password'}
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   required
                   placeholder="••••••••••••"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-9 py-2.5 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 font-mono"
+                  className="w-full min-h-[52px] bg-slate-950 border border-slate-700 rounded-2xl pl-12 pr-12 py-3.5 text-sm sm:text-base text-white placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/30 transition-all font-mono"
                 />
                 <button
                   type="button"
                   onClick={() => setShowLoginPassword(!showLoginPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1"
                 >
-                  {showLoginPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
@@ -481,24 +480,24 @@ export default function MobileLoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 text-xs transition-all active:scale-[0.98] disabled:opacity-50"
+              className="w-full min-h-[54px] bg-gradient-to-r from-indigo-600 via-indigo-500 to-cyan-500 hover:from-indigo-500 text-white font-black py-3.5 rounded-2xl shadow-xl shadow-indigo-500/30 flex items-center justify-center gap-2.5 text-sm sm:text-base transition-all active:scale-[0.98] disabled:opacity-50 mt-2"
             >
               {isLoading ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   <span>Entrar no App</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <ArrowRight className="w-5 h-5" />
                 </>
               )}
             </button>
 
-            {/* Acesso Rápido de Demonstração / Teste no Celular */}
-            <div className="pt-2 border-t border-slate-800/80">
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center mb-2">
-                ⚡ Acesso Rápido de Teste (1-Toque):
+            {/* Acesso Rápido de Demonstração */}
+            <div className="pt-3 border-t border-slate-800">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center mb-2.5">
+                ⚡ Acesso Rápido de Demonstração:
               </p>
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -506,7 +505,7 @@ export default function MobileLoginPage() {
                     setLoginPassword('Morador@123456');
                     setErrorMessage(null);
                   }}
-                  className="py-1.5 px-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-lg text-[10px] font-bold text-cyan-300 text-left flex items-center gap-1.5 transition-colors"
+                  className="py-2.5 px-3 bg-slate-950/80 hover:bg-slate-900 border border-slate-700/80 rounded-xl text-xs font-bold text-cyan-300 text-left flex items-center gap-2 transition-colors shadow-sm"
                 >
                   <span>👤 Morador</span>
                 </button>
@@ -517,7 +516,7 @@ export default function MobileLoginPage() {
                     setLoginPassword('Porteiro@123456');
                     setErrorMessage(null);
                   }}
-                  className="py-1.5 px-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-lg text-[10px] font-bold text-emerald-300 text-left flex items-center gap-1.5 transition-colors"
+                  className="py-2.5 px-3 bg-slate-950/80 hover:bg-slate-900 border border-slate-700/80 rounded-xl text-xs font-bold text-emerald-300 text-left flex items-center gap-2 transition-colors shadow-sm"
                 >
                   <span>👮 Porteiro</span>
                 </button>
@@ -528,7 +527,7 @@ export default function MobileLoginPage() {
                     setLoginPassword('Admin@123456');
                     setErrorMessage(null);
                   }}
-                  className="py-1.5 px-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-lg text-[10px] font-bold text-indigo-300 text-left flex items-center gap-1.5 transition-colors"
+                  className="py-2.5 px-3 bg-slate-950/80 hover:bg-slate-900 border border-slate-700/80 rounded-xl text-xs font-bold text-indigo-300 text-left flex items-center gap-2 transition-colors shadow-sm"
                 >
                   <span>⚙️ Admin</span>
                 </button>
@@ -539,18 +538,18 @@ export default function MobileLoginPage() {
                     setLoginPassword('Sindico@123456');
                     setErrorMessage(null);
                   }}
-                  className="py-1.5 px-2 bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 rounded-lg text-[10px] font-bold text-amber-300 text-left flex items-center gap-1.5 transition-colors"
+                  className="py-2.5 px-3 bg-slate-950/80 hover:bg-slate-900 border border-slate-700/80 rounded-xl text-xs font-bold text-amber-300 text-left flex items-center gap-2 transition-colors shadow-sm"
                 >
                   <span>👔 Síndico</span>
                 </button>
               </div>
             </div>
 
-            <div className="text-center pt-1">
+            <div className="text-center pt-2">
               <button
                 type="button"
                 onClick={() => setActiveTab('primeiro_acesso')}
-                className="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold"
+                className="text-xs sm:text-sm text-indigo-400 hover:text-indigo-300 font-bold"
               >
                 Primeiro acesso? Cadastre seu apartamento
               </button>
@@ -562,28 +561,28 @@ export default function MobileLoginPage() {
         {/* ABA 2: PRIMEIRO ACESSO */}
         {/* ========================================================================= */}
         {activeTab === 'primeiro_acesso' && (
-          <form onSubmit={handlePrimeiroAcesso} className="space-y-3">
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                Nome do Morador Titular
+          <form onSubmit={handlePrimeiroAcesso} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
+                Nome do Morador Titular *
               </label>
               <div className="relative">
-                <User className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <User className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   value={nome}
                   onChange={(e) => setNome(e.target.value)}
                   required
                   placeholder="Nome e Sobrenome"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                  className="w-full min-h-[52px] bg-slate-950 border border-slate-700 rounded-2xl pl-12 pr-4 py-3.5 text-sm sm:text-base text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                  CPF
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
+                  CPF *
                 </label>
                 <input
                   type="text"
@@ -591,13 +590,13 @@ export default function MobileLoginPage() {
                   onChange={(e) => setCpf(formatCPF(e.target.value))}
                   required
                   placeholder="000.000.000-00"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
+                  className="w-full min-h-[52px] bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3.5 text-sm sm:text-base text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all font-mono"
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                  WhatsApp
+              <div className="space-y-1.5">
+                <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
+                  WhatsApp *
                 </label>
                 <input
                   type="text"
@@ -605,15 +604,15 @@ export default function MobileLoginPage() {
                   onChange={(e) => setTelefone(formatPhone(e.target.value))}
                   required
                   placeholder="(11) 99999-9999"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
+                  className="w-full min-h-[52px] bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3.5 text-sm sm:text-base text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all font-mono"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                  Bloco / Torre
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
+                  Bloco / Torre *
                 </label>
                 <input
                   type="text"
@@ -621,7 +620,7 @@ export default function MobileLoginPage() {
                   value={bloco}
                   onChange={(e) => setBloco(e.target.value)}
                   placeholder="Ex: Bloco A, Torre 1"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                  className="w-full min-h-[52px] bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3.5 text-sm sm:text-base text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
                 <datalist id="mobile-login-blocos-list">
                   <option value="Bloco A" />
@@ -634,9 +633,9 @@ export default function MobileLoginPage() {
                 </datalist>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                  Apartamento
+              <div className="space-y-1.5">
+                <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
+                  Apartamento *
                 </label>
                 <input
                   type="text"
@@ -644,32 +643,32 @@ export default function MobileLoginPage() {
                   onChange={(e) => setApartamento(e.target.value)}
                   required
                   placeholder="Ex: 101, PH01"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                  className="w-full min-h-[52px] bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3.5 text-sm sm:text-base text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                E-mail para Login
+            <div className="space-y-1.5">
+              <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
+                E-mail para Login *
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Mail className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="email"
                   value={emailCadastro}
                   onChange={(e) => setEmailCadastro(e.target.value)}
                   required
                   placeholder="seuemail@exemplo.com"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                  className="w-full min-h-[52px] bg-slate-950 border border-slate-700 rounded-2xl pl-12 pr-4 py-3.5 text-sm sm:text-base text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                  Senha
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
+                  Senha *
                 </label>
                 <input
                   type={showCadastroPassword ? 'text' : 'password'}
@@ -677,13 +676,13 @@ export default function MobileLoginPage() {
                   onChange={(e) => setSenhaCadastro(e.target.value)}
                   required
                   placeholder="Mín. 6 dígitos"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
+                  className="w-full min-h-[52px] bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3.5 text-sm sm:text-base text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all font-mono"
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                  Confirmar
+              <div className="space-y-1.5">
+                <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
+                  Confirmar Senha *
                 </label>
                 <input
                   type={showCadastroPassword ? 'text' : 'password'}
@@ -691,19 +690,19 @@ export default function MobileLoginPage() {
                   onChange={(e) => setConfirmaSenha(e.target.value)}
                   required
                   placeholder="Repita a senha"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 font-mono"
+                  className="w-full min-h-[52px] bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3.5 text-sm sm:text-base text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 transition-all font-mono"
                 />
               </div>
             </div>
 
-            <label className="flex items-start gap-2 pt-1 cursor-pointer">
+            <label className="flex items-start gap-2.5 pt-1 cursor-pointer">
               <input
                 type="checkbox"
                 checked={aceiteLGPD}
                 onChange={(e) => setAceiteLGPD(e.target.checked)}
-                className="mt-0.5 rounded border-slate-700 text-emerald-500 focus:ring-emerald-500 bg-slate-900"
+                className="mt-1 w-4 h-4 rounded border-slate-700 text-emerald-500 focus:ring-emerald-500 bg-slate-900"
               />
-              <span className="text-[10px] text-slate-400 leading-tight">
+              <span className="text-xs text-slate-300 leading-snug">
                 Aceito o tratamento dos meus dados para controle de encomendas e segurança conforme a LGPD.
               </span>
             </label>
@@ -711,14 +710,14 @@ export default function MobileLoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 text-xs transition-all active:scale-[0.98] disabled:opacity-50"
+              className="w-full min-h-[54px] bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black py-3.5 rounded-2xl shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2.5 text-sm sm:text-base transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {isLoading ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   <span>Criar Cadastro & Entrar</span>
-                  <CheckCircle2 className="w-4 h-4" />
+                  <CheckCircle2 className="w-5 h-5" />
                 </>
               )}
             </button>
@@ -729,53 +728,53 @@ export default function MobileLoginPage() {
         {/* ABA 3: ESQUECI A SENHA (RECUPERAÇÃO) */}
         {/* ========================================================================= */}
         {activeTab === 'esqueci_senha' && (
-          <form onSubmit={handleRecuperarSenha} className="space-y-3">
-            <div className="p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl text-[11px] text-amber-200">
-              <p className="font-bold flex items-center gap-1 mb-0.5">
-                <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+          <form onSubmit={handleRecuperarSenha} className="space-y-4">
+            <div className="p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-xs sm:text-sm text-amber-200">
+              <p className="font-bold flex items-center gap-1.5 mb-1">
+                <RotateCcw className="w-4 h-4 text-amber-400" />
                 Recuperação de Senha
               </p>
               Digite seu E-mail e CPF cadastrados para definir uma nova senha.
             </div>
 
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                E-mail Cadastrado
+            <div className="space-y-1.5">
+              <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
+                E-mail Cadastrado *
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Mail className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="email"
                   value={recEmail}
                   onChange={(e) => setRecEmail(e.target.value)}
                   required
                   placeholder="seuemail@exemplo.com"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500"
+                  className="w-full min-h-[52px] bg-slate-950 border border-slate-700 rounded-2xl pl-12 pr-4 py-3.5 text-sm sm:text-base text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 transition-all"
                 />
               </div>
             </div>
 
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                CPF do Morador
+            <div className="space-y-1.5">
+              <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
+                CPF do Morador *
               </label>
               <div className="relative">
-                <CreditCard className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <CreditCard className="w-5 h-5 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
                 <input
                   type="text"
                   value={recCpf}
                   onChange={(e) => setRecCpf(formatCPF(e.target.value))}
                   required
                   placeholder="000.000.000-00"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500 font-mono"
+                  className="w-full min-h-[52px] bg-slate-950 border border-slate-700 rounded-2xl pl-12 pr-4 py-3.5 text-sm sm:text-base text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 transition-all font-mono"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                  Nova Senha
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
+                  Nova Senha *
                 </label>
                 <div className="relative">
                   <input
@@ -784,21 +783,21 @@ export default function MobileLoginPage() {
                     onChange={(e) => setNovaSenha(e.target.value)}
                     required
                     placeholder="Mín. 6 dígitos"
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-3 pr-7 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500 font-mono"
+                    className="w-full min-h-[52px] bg-slate-950 border border-slate-700 rounded-2xl pl-4 pr-10 py-3.5 text-sm sm:text-base text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 transition-all font-mono"
                   />
                   <button
                     type="button"
                     onClick={() => setShowNovaSenha(!showNovaSenha)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 p-1"
                   >
-                    {showNovaSenha ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                    {showNovaSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
-                  Confirmar
+              <div className="space-y-1.5">
+                <label className="block text-xs sm:text-sm font-bold text-slate-300 uppercase tracking-wider">
+                  Confirmar Nova Senha *
                 </label>
                 <input
                   type={showNovaSenha ? 'text' : 'password'}
@@ -806,7 +805,7 @@ export default function MobileLoginPage() {
                   onChange={(e) => setConfirmaNovaSenha(e.target.value)}
                   required
                   placeholder="Repita a senha"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500 font-mono"
+                  className="w-full min-h-[52px] bg-slate-950 border border-slate-700 rounded-2xl px-4 py-3.5 text-sm sm:text-base text-white placeholder:text-slate-600 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/30 transition-all font-mono"
                 />
               </div>
             </div>
@@ -814,25 +813,25 @@ export default function MobileLoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold py-3 rounded-xl shadow-lg shadow-amber-500/25 flex items-center justify-center gap-2 text-xs transition-all active:scale-[0.98] disabled:opacity-50"
+              className="w-full min-h-[54px] bg-gradient-to-r from-amber-500 to-orange-600 text-white font-black py-3.5 rounded-2xl shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2 text-sm sm:text-base transition-all active:scale-[0.98] disabled:opacity-50"
             >
               {isLoading ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   <span>Redefinir Senha e Salvar</span>
-                  <CheckCircle2 className="w-4 h-4" />
+                  <CheckCircle2 className="w-5 h-5" />
                 </>
               )}
             </button>
 
-            <div className="text-center pt-1">
+            <div className="text-center pt-2">
               <button
                 type="button"
                 onClick={() => setActiveTab('login')}
-                className="text-[11px] text-slate-400 hover:text-white"
+                className="text-xs sm:text-sm text-slate-400 hover:text-white"
               >
-                Lembrou sua senha? <span className="text-indigo-400 font-semibold">Voltar ao Login</span>
+                Lembrou sua senha? <span className="text-indigo-400 font-bold">Voltar ao Login</span>
               </button>
             </div>
           </form>
@@ -840,8 +839,8 @@ export default function MobileLoginPage() {
       </div>
 
       {/* Rodapé LGPD */}
-      <div className="text-center text-[10px] text-slate-500 flex items-center justify-center gap-1.5 z-10 pb-1">
-        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+      <div className="text-center text-xs text-slate-400 flex items-center justify-center gap-2 z-10 pb-2">
+        <ShieldCheck className="w-4 h-4 text-emerald-400" />
         <span>Conformidade com a LGPD (Lei nº 13.709/2018)</span>
       </div>
     </div>

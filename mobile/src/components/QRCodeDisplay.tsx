@@ -110,25 +110,36 @@ export default function QRCodeDisplay({
         </svg>
       </div>
 
-      {/* Token e Botão Copiar */}
-      <div className="mt-4 w-full flex items-center justify-between gap-2 p-2 bg-slate-100 rounded-xl">
-        <span className="font-mono text-[10px] text-slate-700 font-bold truncate max-w-[170px]">
+      {/* Token e Botão Copiar Amplo */}
+      <div className="mt-4 w-full flex items-center justify-between gap-2 p-2.5 bg-slate-100 rounded-xl border border-slate-200">
+        <span className="font-mono text-xs text-slate-800 font-bold tracking-wider truncate">
           {token}
         </span>
         <button
           type="button"
           onClick={handleCopy}
-          className="p-1 text-slate-500 hover:text-indigo-600 rounded hover:bg-slate-200 transition-colors"
+          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold text-indigo-700 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition-colors shrink-0"
           title="Copiar token"
         >
-          {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+          {copied ? (
+            <>
+              <Check className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="text-emerald-700">Copiado</span>
+            </>
+          ) : (
+            <>
+              <Copy className="w-3.5 h-3.5" />
+              <span>Copiar</span>
+            </>
+          )}
         </button>
       </div>
 
-      <div className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-indigo-600">
-        <ShieldCheck className="w-3.5 h-3.5" />
+      <div className="mt-2.5 flex items-center gap-1.5 text-xs font-semibold text-indigo-700">
+        <ShieldCheck className="w-4 h-4 text-emerald-600" />
         Válido para leitura na portaria
       </div>
     </div>
   );
 }
+

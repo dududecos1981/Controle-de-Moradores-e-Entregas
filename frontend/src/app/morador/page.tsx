@@ -21,6 +21,10 @@ import {
   MessageSquare,
   Copy,
   ExternalLink,
+  Maximize2,
+  Minimize2,
+  Eye,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Encomenda, StatusEntrega } from '@/lib/types';
@@ -50,6 +54,17 @@ interface VeiculoMorador {
 export default function MoradorDashboardPage() {
   const { currentUser, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<'encomendas' | 'convites' | 'veiculos' | 'lgpd'>('encomendas');
+  const [viewMode, setViewMode] = useState<'amplo' | 'compacto'>('amplo');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('morador_web_view_mode') as 'amplo' | 'compacto' | null;
+    if (saved) setViewMode(saved);
+  }, []);
+
+  const toggleViewMode = (mode: 'amplo' | 'compacto') => {
+    setViewMode(mode);
+    localStorage.setItem('morador_web_view_mode', mode);
+  };
 
   // Encomendas da unidade
   const [encomendas, setEncomendas] = useState<Encomenda[]>([]);
@@ -287,7 +302,37 @@ export default function MoradorDashboardPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {/* Alternador de Modo Amplo / Compacto no Celular e Desktop */}
+          <div className="flex items-center bg-slate-900 border border-slate-700/80 rounded-xl p-1 gap-1">
+            <button
+              type="button"
+              onClick={() => toggleViewMode('amplo')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'amplo'
+                  ? 'bg-gradient-to-r from-cyan-600 to-blue-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Modo Amplo: campos maiores e botões expandidos para celular"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Modo Amplo</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleViewMode('compacto')}
+              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                viewMode === 'compacto'
+                  ? 'bg-slate-700 text-white shadow-md'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+              title="Modo Compacto: visualização em lista densa"
+            >
+              <Minimize2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Compacto</span>
+            </button>
+          </div>
+
           <div className="hidden sm:flex items-center gap-2 text-right">
             <div>
               <p className="text-xs font-bold text-white">{currentUser?.nome_completo}</p>
@@ -725,62 +770,76 @@ export default function MoradorDashboardPage() {
               </button>
             </div>
 
-            <form onSubmit={handleCriarConvite} className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-300">Nome do Convidado / Prestador</label>
+            <form onSubmit={handleCriarConvite} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                  Nome do Convidado / Prestador *
+                </label>
                 <input
                   type="text"
                   required
                   value={novoConvite.nome_convidado}
                   onChange={(e) => setNovoConvite({ ...novoConvite, nome_convidado: e.target.value })}
-                  placeholder="Ex: Carlos Mendes"
-                  className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-500"
+                  placeholder="Ex: Carlos Eduardo de Oliveira"
+                  className="w-full min-h-[50px] bg-slate-950 text-white text-sm sm:text-base px-4 py-3 rounded-2xl border border-slate-700 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-300">Tipo de Acesso</label>
-                <select
-                  value={novoConvite.tipo}
-                  onChange={(e) => setNovoConvite({ ...novoConvite, tipo: e.target.value as any })}
-                  className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-500 cursor-pointer"
-                >
-                  <option value="VISITA">Visita Comum / Familiar</option>
-                  <option value="PRESTADOR">Prestador de Serviço / Manutenção</option>
-                  <option value="FESTA">Festa / Evento Social</option>
-                </select>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Tipo de Acesso</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { id: 'VISITA', label: '👋 Visita', desc: 'Amigo/Familiar' },
+                    { id: 'PRESTADOR', label: '🛠️ Prestador', desc: 'Serviços' },
+                    { id: 'FESTA', label: '🎉 Festa', desc: 'Evento' },
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setNovoConvite({ ...novoConvite, tipo: t.id as any })}
+                      className={`p-2.5 rounded-xl border text-center transition-all ${
+                        novoConvite.tipo === t.id
+                          ? 'bg-cyan-600/30 border-cyan-400 text-cyan-200 ring-2 ring-cyan-500/30 font-bold'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <p className="text-xs">{t.label}</p>
+                      <p className="text-[10px] opacity-70">{t.desc}</p>
+                    </button>
+                  ))}
+                </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-300">Data da Visita</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Data da Visita *</label>
                 <input
                   type="date"
                   required
                   value={novoConvite.data}
                   onChange={(e) => setNovoConvite({ ...novoConvite, data: e.target.value })}
-                  className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-500"
+                  className="w-full min-h-[50px] bg-slate-950 text-white text-sm sm:text-base px-4 py-3 rounded-2xl border border-slate-700 outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-300">Horário Início</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Horário Início</label>
                   <input
                     type="time"
                     required
                     value={novoConvite.hora_inicio}
                     onChange={(e) => setNovoConvite({ ...novoConvite, hora_inicio: e.target.value })}
-                    className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-500"
+                    className="w-full min-h-[50px] bg-slate-950 text-white text-sm sm:text-base px-4 py-3 rounded-2xl border border-slate-700 outline-none focus:border-cyan-500"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-300">Horário Término</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Horário Término</label>
                   <input
                     type="time"
                     required
                     value={novoConvite.hora_fim}
                     onChange={(e) => setNovoConvite({ ...novoConvite, hora_fim: e.target.value })}
-                    className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-cyan-500"
+                    className="w-full min-h-[50px] bg-slate-950 text-white text-sm sm:text-base px-4 py-3 rounded-2xl border border-slate-700 outline-none focus:border-cyan-500"
                   />
                 </div>
               </div>
@@ -788,9 +847,9 @@ export default function MoradorDashboardPage() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-cyan-600/20 transition-all flex items-center justify-center gap-2"
+                  className="w-full min-h-[52px] bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white text-sm font-black rounded-2xl shadow-xl shadow-cyan-600/25 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
                 >
-                  <QrCode className="w-4 h-4" />
+                  <QrCode className="w-5 h-5" />
                   Gerar Convite com QR Code
                 </button>
               </div>
@@ -802,9 +861,9 @@ export default function MoradorDashboardPage() {
       {/* Modal Adicionar Veículo */}
       {isNovoVeiculoModalOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#0F172A] border border-slate-800 rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+          <div className="bg-[#0F172A] border border-slate-800 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-white">Cadastrar Veículo</h3>
+              <h3 className="text-sm font-bold text-white">Cadastrar Veículo na Unidade</h3>
               <button
                 type="button"
                 onClick={() => setIsNovoVeiculoModalOpen(false)}
@@ -814,61 +873,78 @@ export default function MoradorDashboardPage() {
               </button>
             </div>
 
-            <form onSubmit={handleSalvarVeiculo} className="space-y-3">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-300">Placa do Veículo</label>
+            <form onSubmit={handleSalvarVeiculo} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Placa do Veículo *</label>
                 <input
                   type="text"
                   required
                   value={novoVeiculo.placa}
                   onChange={(e) => setNovoVeiculo({ ...novoVeiculo, placa: e.target.value.toUpperCase() })}
                   placeholder="Ex: ABC1E23"
-                  className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-indigo-500 font-mono"
+                  className="w-full min-h-[50px] bg-slate-950 text-white text-base px-4 py-3 rounded-2xl border border-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 font-mono font-bold tracking-wider"
                 />
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-300">Modelo</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Marca / Modelo *</label>
                 <input
                   type="text"
                   required
                   value={novoVeiculo.modelo}
                   onChange={(e) => setNovoVeiculo({ ...novoVeiculo, modelo: e.target.value })}
-                  placeholder="Ex: Jeep Compass"
-                  className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-indigo-500"
+                  placeholder="Ex: Jeep Compass Longitude"
+                  className="w-full min-h-[50px] bg-slate-950 text-white text-sm sm:text-base px-4 py-3 rounded-2xl border border-slate-700 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-300">Cor</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Cor Predominante</label>
                   <input
                     type="text"
                     value={novoVeiculo.cor}
                     onChange={(e) => setNovoVeiculo({ ...novoVeiculo, cor: e.target.value })}
-                    placeholder="Ex: Prata"
-                    className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-indigo-500"
+                    placeholder="Ex: Prata, Preto"
+                    className="w-full min-h-[50px] bg-slate-950 text-white text-sm sm:text-base px-4 py-3 rounded-2xl border border-slate-700 outline-none focus:border-indigo-500"
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-300">Tipo</label>
-                  <select
-                    value={novoVeiculo.tipo}
-                    onChange={(e) => setNovoVeiculo({ ...novoVeiculo, tipo: e.target.value as any })}
-                    className="w-full bg-slate-950 text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-700 outline-none focus:border-indigo-500 cursor-pointer"
-                  >
-                    <option value="CARRO">Carro</option>
-                    <option value="MOTO">Moto</option>
-                  </select>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Tipo</label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setNovoVeiculo({ ...novoVeiculo, tipo: 'CARRO' })}
+                      className={`min-h-[50px] rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                        novoVeiculo.tipo === 'CARRO'
+                          ? 'bg-indigo-600/30 border-indigo-400 text-indigo-200 ring-2 ring-indigo-500/30'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <Car className="w-4 h-4" />
+                      Carro
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNovoVeiculo({ ...novoVeiculo, tipo: 'MOTO' })}
+                      className={`min-h-[50px] rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                        novoVeiculo.tipo === 'MOTO'
+                          ? 'bg-indigo-600/30 border-indigo-400 text-indigo-200 ring-2 ring-indigo-500/30'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      🏍️ Moto
+                    </button>
+                  </div>
                 </div>
               </div>
 
               <div className="pt-2">
                 <button
                   type="submit"
-                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2"
+                  className="w-full min-h-[52px] bg-gradient-to-r from-indigo-600 to-cyan-600 hover:from-indigo-500 hover:to-cyan-500 text-white text-sm font-black rounded-2xl shadow-xl shadow-indigo-600/25 transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
                 >
-                  <Car className="w-4 h-4" />
+                  <Car className="w-5 h-5" />
                   Salvar Veículo
                 </button>
               </div>

@@ -25,6 +25,7 @@ import {
   ConviteVisitante,
   OcorrenciaMorador,
   ReservaMorador,
+  ViewMode,
 } from '@/lib/types';
 import {
   INITIAL_MORADOR_ENCOMENDAS,
@@ -347,6 +348,20 @@ export default function MobileAppPage() {
     }
   };
 
+  const [viewMode, setViewMode] = useState<ViewMode>('amplo');
+
+  useEffect(() => {
+    const savedMode = localStorage.getItem('mobile_view_mode');
+    if (savedMode === 'compacto' || savedMode === 'amplo') {
+      setViewMode(savedMode);
+    }
+  }, []);
+
+  const handleToggleViewMode = (mode: ViewMode) => {
+    setViewMode(mode);
+    localStorage.setItem('mobile_view_mode', mode);
+  };
+
   const pendingCount = encomendas.filter((e) => e.status === 'AGUARDANDO_RETIRADA').length;
   const initials = (currentUser.nome || 'MF')
     .split(' ')
@@ -356,9 +371,15 @@ export default function MobileAppPage() {
     .join('');
 
   return (
-    <div className="w-full max-w-sm sm:max-w-md h-[100dvh] sm:h-[840px] bg-[#101726] sm:rounded-[44px] sm:border-[8px] sm:border-slate-800 shadow-2xl flex flex-col overflow-hidden relative sm:ring-1 sm:ring-slate-700/50">
+    <div
+      className={`w-full h-[100dvh] bg-[#0c1322] flex flex-col overflow-hidden relative shadow-2xl transition-all duration-300 ${
+        viewMode === 'amplo'
+          ? 'max-w-2xl sm:rounded-[36px] sm:border-2 sm:border-slate-800/90 sm:h-[880px]'
+          : 'max-w-md sm:rounded-[44px] sm:border-[8px] sm:border-slate-800 sm:h-[840px]'
+      }`}
+    >
       {/* Dynamic Island / Top Notch */}
-      <div className="h-10 bg-[#101726] shrink-0 px-6 flex items-center justify-between z-40 border-b border-slate-900">
+      <div className="h-10 bg-[#0c1322] shrink-0 px-6 flex items-center justify-between z-40 border-b border-slate-900/90">
         <span className="text-xs font-bold font-mono text-slate-200">
           {currentTime || '12:00'}
         </span>
@@ -373,78 +394,118 @@ export default function MobileAppPage() {
 
       {/* Push Alert Popup em Tempo Real */}
       {liveAlert && (
-        <div className="absolute top-12 left-4 right-4 z-50 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-3.5 rounded-2xl shadow-2xl border border-indigo-400/40 flex items-start justify-between gap-3 animate-in slide-in-from-top-4">
-          <div className="flex items-start gap-2.5">
-            <PackageCheck className="w-5 h-5 text-indigo-200 shrink-0 mt-0.5" />
+        <div className="absolute top-12 left-4 right-4 z-50 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white p-4 rounded-3xl shadow-2xl border border-indigo-400/40 flex items-start justify-between gap-3 animate-in slide-in-from-top-4">
+          <div className="flex items-start gap-3">
+            <PackageCheck className="w-6 h-6 text-indigo-200 shrink-0 mt-0.5" />
             <div>
-              <p className="text-xs font-black text-white">{liveAlert.title}</p>
-              <p className="text-[11px] text-indigo-100 mt-0.5 leading-snug">{liveAlert.desc}</p>
+              <p className="text-xs sm:text-sm font-black text-white">{liveAlert.title}</p>
+              <p className="text-xs text-indigo-100 mt-0.5 leading-snug">{liveAlert.desc}</p>
             </div>
           </div>
-          <button onClick={() => setLiveAlert(null)} className="text-indigo-200 hover:text-white">
+          <button onClick={() => setLiveAlert(null)} className="text-indigo-200 hover:text-white p-1">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Header do Morador */}
-      <header className="px-5 py-3.5 bg-[#101726]/80 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between z-20 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white font-bold text-xs shadow-md shadow-indigo-500/20">
+      {/* Header do Morador Amplo */}
+      <header className="px-5 py-3.5 bg-[#0c1322]/90 backdrop-blur-md border-b border-slate-800/80 flex items-center justify-between z-20 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white font-black text-xs sm:text-sm shadow-md shadow-indigo-500/20">
             {initials || 'MO'}
           </div>
           <div>
-            <h2 className="text-xs font-bold text-white flex items-center gap-1.5">
-              {currentUser.nome || 'Morador'}
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <h2 className="text-xs sm:text-sm font-black text-white flex items-center gap-1.5">
+              <span>{currentUser.nome || 'Morador'}</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             </h2>
-            <p className="text-[10px] text-slate-400 font-medium">
+            <p className="text-[11px] text-slate-400 font-medium">
               Bloco {currentUser.bloco || 'A'} • Apto {currentUser.apartamento || 'S/N'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        {/* Controles do Topo: Alternador de Modo de Visualização e Notificações */}
+        <div className="flex items-center gap-2">
+          {/* Seletor Rápido de Visualização Ampla vs Compacta */}
+          <div className="flex items-center p-1 bg-slate-950/80 rounded-xl border border-slate-800">
+            <button
+              type="button"
+              onClick={() => handleToggleViewMode('amplo')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black transition-all ${
+                viewMode === 'amplo'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="Visualização Ampla (Campos Amplos)"
+            >
+              <span>📱</span>
+              <span className="hidden sm:inline">Amplo</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleToggleViewMode('compacto')}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-black transition-all ${
+                viewMode === 'compacto'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="Visualização Compacta"
+            >
+              <span>📋</span>
+              <span className="hidden sm:inline">Compacto</span>
+            </button>
+          </div>
+
           <button
             type="button"
-            className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors relative"
+            className="p-2 text-slate-400 hover:text-white rounded-xl bg-slate-900/60 border border-slate-800 hover:bg-slate-800 transition-colors relative"
           >
             <Bell className="w-4 h-4" />
             {pendingCount > 0 && (
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-amber-500" />
+              <span className="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
             )}
           </button>
         </div>
       </header>
 
       {/* Conteúdo da Tela Selecionada */}
-      <main className="flex-1 overflow-y-auto p-4 z-10">
+      <main className="flex-1 overflow-y-auto p-4 sm:p-5 z-10">
         {activeTab === 'encomendas' && (
           <FeedEncomendasScreen
             encomendas={encomendas}
             onConfirmWithdrawal={handleConfirmWithdrawal}
+            viewMode={viewMode}
           />
         )}
         {activeTab === 'convites' && (
           <CriarConviteScreen
             convites={convites}
             onAddConvite={handleAddConvite}
+            viewMode={viewMode}
           />
         )}
         {activeTab === 'ocorrencias' && (
           <OcorrenciasMoradorScreen
             ocorrencias={ocorrencias}
             onAddOcorrencia={handleAddOcorrencia}
+            viewMode={viewMode}
           />
         )}
         {activeTab === 'reservas' && (
           <ReservasMoradorScreen
             reservas={reservas}
             onAddReserva={handleAddReserva}
+            viewMode={viewMode}
           />
         )}
-        {activeTab === 'veiculos' && <VeiculosMoradorScreen />}
-        {activeTab === 'perfil' && <PerfilMoradorScreen />}
+        {activeTab === 'veiculos' && <VeiculosMoradorScreen viewMode={viewMode} />}
+        {activeTab === 'perfil' && (
+          <PerfilMoradorScreen
+            viewMode={viewMode}
+            onViewModeChange={handleToggleViewMode}
+          />
+        )}
       </main>
 
       {/* Barra de Navegação Inferior */}
@@ -456,3 +517,4 @@ export default function MobileAppPage() {
     </div>
   );
 }
+

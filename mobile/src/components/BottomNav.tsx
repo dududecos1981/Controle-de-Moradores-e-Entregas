@@ -51,7 +51,7 @@ export default function BottomNav({
   ];
 
   return (
-    <nav className="h-16 bg-[#101726]/95 backdrop-blur-lg border-t border-slate-800/80 flex items-center justify-around px-1 z-30 shrink-0">
+    <nav className="h-[68px] sm:h-20 bg-[#0c1220]/95 backdrop-blur-xl border-t-2 border-slate-800/90 flex items-center justify-around px-2 z-30 shrink-0 select-none pb-safe">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
@@ -61,22 +61,42 @@ export default function BottomNav({
             key={tab.id}
             type="button"
             onClick={() => onTabChange(tab.id)}
-            className={`flex flex-col items-center justify-center flex-1 py-1 transition-all relative ${
-              isActive ? 'text-indigo-400 font-bold' : 'text-slate-400 hover:text-slate-200'
+            className={`flex flex-col items-center justify-center flex-1 py-1.5 transition-all relative rounded-2xl ${
+              isActive
+                ? 'text-cyan-400 font-black'
+                : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <div className="relative">
-              <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${isActive ? 'scale-110' : ''} transition-transform`} />
+            {/* Active Pill Glow */}
+            <div
+              className={`relative px-3 py-1 rounded-2xl transition-all ${
+                isActive
+                  ? 'bg-gradient-to-r from-indigo-500/20 to-cyan-500/20 border border-indigo-500/40 shadow-md shadow-indigo-500/10'
+                  : ''
+              }`}
+            >
+              <Icon
+                className={`w-5 h-5 sm:w-6 sm:h-6 transition-transform ${
+                  isActive ? 'scale-110 text-cyan-400' : 'text-slate-400'
+                }`}
+              />
               {tab.badge !== undefined && (
-                <span className="absolute -top-1.5 -right-2.5 w-4 h-4 rounded-full bg-amber-500 text-slate-950 font-black text-[9px] flex items-center justify-center animate-bounce">
+                <span className="absolute -top-1 -right-2 min-w-[18px] h-[18px] px-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 font-black text-[10px] flex items-center justify-center shadow-md animate-bounce border border-slate-950">
                   {tab.badge}
                 </span>
               )}
             </div>
-            <span className="text-[9px] sm:text-[10px] mt-1 tracking-tight">{tab.label}</span>
+            <span
+              className={`text-[10px] sm:text-xs mt-0.5 tracking-tight transition-all ${
+                isActive ? 'text-white font-bold' : 'text-slate-400'
+              }`}
+            >
+              {tab.label}
+            </span>
           </button>
         );
       })}
     </nav>
   );
 }
+

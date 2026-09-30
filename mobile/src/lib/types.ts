@@ -80,3 +80,6 @@ export interface VeiculoMorador {
   tipo: 'CARRO' | 'MOTO' | 'BICICLETA' | 'OUTRO';
   vaga_garagem?: string;
 }
+
+export type ViewMode = 'amplo' | 'compacto';
+

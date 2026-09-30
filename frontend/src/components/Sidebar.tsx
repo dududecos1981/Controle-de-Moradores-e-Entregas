@@ -23,6 +23,7 @@ import {
   LogOut,
   Sliders,
   ChevronRight,
+  Presentation,
 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -99,6 +100,12 @@ const GOVERNANCA_ITEMS = [
     href: '/comunicados-ia',
     icon: Sparkles,
     badge: 'Gemini',
+  },
+  {
+    name: 'Apresentação Executiva',
+    href: '/apresentacao',
+    icon: Presentation,
+    badge: 'Slides',
   },
 ];
 

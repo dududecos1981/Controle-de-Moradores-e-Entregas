@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Apresentação: Sistema de Gestão de Portaria & Moradores</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #070A11;
+      color: #F1F5F9;
+      overflow-x: hidden;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .slide {
+      display: none;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .slide.active {
+      display: flex;
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .glow-cyan {
+      box-shadow: 0 0 50px -10px rgba(6, 182, 212, 0.25);
+    }
+    .glow-indigo {
+      box-shadow: 0 0 50px -10px rgba(99, 102, 241, 0.25);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-slate-950">
+
+  <!-- Top Bar -->
+  <header class="h-16 border-b border-slate-800/80 bg-[#0F172A]/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-50">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white font-black text-base shadow-lg shadow-cyan-500/20">
+        🏢
+      </div>
+      <div>
+        <h1 class="text-sm font-black text-white tracking-wide">Portaria & Moradores Pro</h1>
+        <p class="text-[10px] text-slate-400">Apresentação Executiva do Projeto</p>
+      </div>
+    </div>
+
+    <!-- Indicador de Slide & Ações -->
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-full border border-slate-800 text-xs font-bold font-mono text-cyan-400">
+        <span id="currentSlideNum">1</span> / <span id="totalSlidesNum">8</span>
+      </div>
+      <button onclick="toggleFullScreen()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all">
+        ⛶ Tela Cheia
+      </button>
+    </div>
+  </header>
+
+  <!-- Container dos Slides -->
+  <main class="flex-1 flex items-center justify-center p-4 sm:p-8 max-w-6xl mx-auto w-full">
+
+    <!-- ========================================== -->
+    <!-- SLIDE 1: CAPA -->
+    <!-- ========================================== -->
+    <div class="slide active flex-col items-center text-center space-y-6 max-w-3xl" data-slide="1">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 text-xs font-bold">
+        ✨ Projeto Full-Stack Moderno
+      </div>
+      <h2 class="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
+        Sistema Inteligente de <span class="bg-gradient-to-r from-cyan-400 via-indigo-400 to-emerald-400 bg-clip-text text-transparent">Portaria, Encomendas & Moradores</span>
+      </h2>
+      <p class="text-base sm:text-lg text-slate-400 max-w-2xl">
+        A plataforma definitiva que digitaliza a rotina condominial: bipagem de pacotes com câmera, controle de acessos via QR Code, Inteligência Artificial e App Mobile com Modo Amplo.
+      </p>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full pt-4">
+        <div class="p-3.5 bg-slate-900/90 border border-slate-800 rounded-2xl">
+          <p class="text-2xl font-black text-cyan-400">100%</p>
+          <p class="text-xs text-slate-400 mt-0.5">Sem Papel</p>
+        </div>
+        <div class="p-3.5 bg-slate-900/90 border border-slate-800 rounded-2xl">
+          <p class="text-2xl font-black text-indigo-400">&lt; 5s</p>
+          <p class="text-xs text-slate-400 mt-0.5">Liberação QR</p>
+        </div>
+        <div class="p-3.5 bg-slate-900/90 border border-slate-800 rounded-2xl">
+          <p class="text-2xl font-black text-emerald-400">LGPD</p>
+          <p class="text-xs text-slate-400 mt-0.5">Auditado</p>
+        </div>
+        <div class="p-3.5 bg-slate-900/90 border border-slate-800 rounded-2xl">
+          <p class="text-2xl font-black text-amber-400">USB / Nuvem</p>
+          <p class="text-xs text-slate-400 mt-0.5">Portabilidade</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 2: O PROBLEMA VS A SOLUÇÃO -->
+    <!-- ========================================== -->
+    <div class="slide flex-col space-y-6 w-full max-w-4xl" data-slide="2">
+      <div class="text-center space-y-1">
+        <p class="text-xs font-bold uppercase tracking-wider text-cyan-400">Transformação Digital</p>
+        <h2 class="text-3xl sm:text-4xl font-black text-white">O Fim dos Livros de Papel</h2>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <!-- O Problema -->
+        <div class="p-6 bg-rose-950/20 border border-rose-800/40 rounded-3xl space-y-4">
+          <div class="flex items-center gap-2.5 text-rose-400 font-bold text-sm">
+            <span class="text-lg">❌</span> O Modelo Tradicional (Caos)
+          </div>
+          <ul class="space-y-3 text-xs sm:text-sm text-slate-300">
+            <li class="flex items-start gap-2">⚠️ <strong>Extravios de pacotes</strong> e caligrafia ilegível nos cadernos da portaria.</li>
+            <li class="flex items-start gap-2">⚠️ <strong>Filas e demora</strong> para cadastrar visitantes por interfone.</li>
+            <li class="flex items-start gap-2">⚠️ <strong>Sem comprovante digital</strong> de quem realmente retirou a entrega.</li>
+            <li class="flex items-start gap-2">⚠️ <strong>Risco jurídico</strong> por não conformidade com a LGPD.</li>
+          </ul>
+        </div>
+
+        <!-- A Solução -->
+        <div class="p-6 bg-emerald-950/20 border border-emerald-800/40 rounded-3xl space-y-4 glow-cyan">
+          <div class="flex items-center gap-2.5 text-emerald-400 font-bold text-sm">
+            <span class="text-lg">✅</span> A Nossa Solução Inteligente
+          </div>
+          <ul class="space-y-3 text-xs sm:text-sm text-slate-300">
+            <li class="flex items-start gap-2">🚀 <strong>Bipagem com câmera</strong> e aviso instantâneo no WhatsApp/App do morador.</li>
+            <li class="flex items-start gap-2">🚀 <strong>Convite pré-autorizado com QR Code</strong> para entrada sem filas.</li>
+            <li class="flex items-start gap-2">🚀 <strong>Assinatura digital em tela</strong> e foto do pacote anexada.</li>
+            <li class="flex items-start gap-2">🚀 <strong>100% em conformidade LGPD</strong> com dados criptografados.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 3: STACK TECNOLÓGICA -->
+    <!-- ========================================== -->
+    <div class="slide flex-col space-y-6 w-full max-w-4xl" data-slide="3">
+      <div class="text-center space-y-1">
+        <p class="text-xs font-bold uppercase tracking-wider text-indigo-400">Engenharia de Software</p>
+        <h2 class="text-3xl sm:text-4xl font-black text-white">Stack Tecnológica Full-Stack</h2>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="p-5 bg-slate-900 border border-slate-800 rounded-2xl space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-blue-950/80 border border-blue-800 flex items-center justify-center text-blue-400 font-bold">💻</div>
+          <h3 class="text-sm font-bold text-white">Frontend & Web</h3>
+          <ul class="text-xs text-slate-400 space-y-1.5 font-mono">
+            <li>• Next.js 14 (App Router)</li>
+            <li>• React 18 & TypeScript</li>
+            <li>• Tailwind CSS Dark Theme</li>
+            <li>• html5-qrcode (Scanner)</li>
+            <li>• Web Audio API</li>
+          </ul>
+        </div>
+
+        <div class="p-5 bg-slate-900 border border-slate-800 rounded-2xl space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-950/80 border border-indigo-800 flex items-center justify-center text-indigo-400 font-bold">⚡</div>
+          <h3 class="text-sm font-bold text-white">Backend & Realtime</h3>
+          <ul class="text-xs text-slate-400 space-y-1.5 font-mono">
+            <li>• NestJS 10 (Arquitetura Modular)</li>
+            <li>• Node.js 20 LTS</li>
+            <li>• Socket.io (WebSockets)</li>
+            <li>• JWT & Passport.js Auth</li>
+            <li>• Multer & Sharp (Fotos)</li>
+          </ul>
+        </div>
+
+        <div class="p-5 bg-slate-900 border border-slate-800 rounded-2xl space-y-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-950/80 border border-emerald-800 flex items-center justify-center text-emerald-400 font-bold">🐘</div>
+          <h3 class="text-sm font-bold text-white">Banco & Nuvem</h3>
+          <ul class="text-xs text-slate-400 space-y-1.5 font-mono">
+            <li>• Neon Serverless PostgreSQL</li>
+            <li>• Row Level Security (RLS)</li>
+            <li>• Fallback LocalStorage</li>
+            <li>• Suporte a Pen Drive 100%</li>
+            <li>• Deploy Pronto no Render/Vercel</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 4: MÓDULO DE ENCOMENDAS -->
+    <!-- ========================================== -->
+    <div class="slide flex-col space-y-6 w-full max-w-4xl" data-slide="4">
+      <div class="text-center space-y-1">
+        <p class="text-xs font-bold uppercase tracking-wider text-amber-400">Logística Interna</p>
+        <h2 class="text-3xl sm:text-4xl font-black text-white">Fluxo Completo de Encomendas</h2>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+        <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-center space-y-2">
+          <div class="text-2xl">📦</div>
+          <p class="text-xs font-bold text-cyan-400">1. Recebimento</p>
+          <p class="text-[11px] text-slate-400">Transportadora entrega. O porteiro bipa o código de barras com a câmera.</p>
+        </div>
+        <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-center space-y-2">
+          <div class="text-2xl">📸</div>
+          <p class="text-xs font-bold text-indigo-400">2. Registro & Foto</p>
+          <p class="text-[11px] text-slate-400">Foto do pacote anexada e vinculação ao Bloco e Apartamento.</p>
+        </div>
+        <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-center space-y-2">
+          <div class="text-2xl">💬</div>
+          <p class="text-xs font-bold text-emerald-400">3. Aviso Imediato</p>
+          <p class="text-[11px] text-slate-400">Morador recebe aviso no WhatsApp e no App com QR Code de retirada.</p>
+        </div>
+        <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-center space-y-2">
+          <div class="text-2xl">✍️</div>
+          <p class="text-xs font-bold text-amber-400">4. Baixa com Assinatura</p>
+          <p class="text-[11px] text-slate-400">Porteiro valida o QR Code e o morador assina na tela do celular/tablet.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 5: APP MOBILE & MODO AMPLO -->
+    <!-- ========================================== -->
+    <div class="slide flex-col space-y-6 w-full max-w-4xl" data-slide="5">
+      <div class="text-center space-y-1">
+        <p class="text-xs font-bold uppercase tracking-wider text-cyan-400">Experiência do Usuário</p>
+        <h2 class="text-3xl sm:text-4xl font-black text-white">App do Morador: Inovador Modo Amplo</h2>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="p-5 bg-slate-900/90 border border-cyan-500/30 rounded-2xl space-y-2.5">
+          <div class="text-2xl">📱</div>
+          <h3 class="text-sm font-bold text-white">Campos Amplo-Espaçados</h3>
+          <p class="text-xs text-slate-300">
+            Inputs e botões com altura ergonômica de <strong>52px a 56px</strong>, ideais para navegação com o polegar e sem zoom automático no iOS.
+          </p>
+        </div>
+
+        <div class="p-5 bg-slate-900/90 border border-slate-800 rounded-2xl space-y-2.5">
+          <div class="text-2xl">🔑</div>
+          <h3 class="text-sm font-bold text-white">Convites com 1 Toque</h3>
+          <p class="text-xs text-slate-300">
+            Geração de passes rápidos para amigos, familiares e prestadores com compartilhamento direto no <strong>WhatsApp</strong>.
+          </p>
+        </div>
+
+        <div class="p-5 bg-slate-900/90 border border-slate-800 rounded-2xl space-y-2.5">
+          <div class="text-2xl">📅</div>
+          <h3 class="text-sm font-bold text-white">Reservas & Ocorrências</h3>
+          <p class="text-xs text-slate-300">
+            Reserva de áreas comuns (churrasqueira, salão) e abertura de chamados com fotos e acompanhamento do status.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 6: INTELIGÊNCIA ARTIFICIAL -->
+    <!-- ========================================== -->
+    <div class="slide flex-col space-y-6 w-full max-w-4xl" data-slide="6">
+      <div class="text-center space-y-1">
+        <p class="text-xs font-bold uppercase tracking-wider text-purple-400">Inovação com IA</p>
+        <h2 class="text-3xl sm:text-4xl font-black text-white">Assistente de IA para a Gestão</h2>
+      </div>
+
+      <div class="p-6 bg-gradient-to-br from-purple-950/40 via-slate-900 to-slate-950 border border-purple-500/30 rounded-3xl space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-purple-600/30 border border-purple-500/50 flex items-center justify-center text-purple-300 text-xl font-black">
+            🤖
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Gerador Inteligente de Comunicados</h3>
+            <p class="text-xs text-slate-400">Redação automática em segundos com adequação de tom (Jurídico, Formal ou Amigável)</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+          <div class="p-3.5 bg-slate-950/80 rounded-xl border border-slate-800 text-xs text-slate-300">
+            <strong class="text-purple-300 block mb-1">📢 Avisos de Manutenção</strong>
+            Falta de água, limpeza de caixa d'água, manutenção de elevadores.
+          </div>
+          <div class="p-3.5 bg-slate-950/80 rounded-xl border border-slate-800 text-xs text-slate-300">
+            <strong class="text-purple-300 block mb-1">⚖️ Notificações de Regras</strong>
+            Horário de silêncio, reformas, uso da piscina e áreas sociais.
+          </div>
+          <div class="p-3.5 bg-slate-950/80 rounded-xl border border-slate-800 text-xs text-slate-300">
+            <strong class="text-purple-300 block mb-1">🗳️ Convocação de Assembleia</strong>
+            Pautas formais, datas e diretrizes condominiais padronizadas.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 7: SEGURANÇA & PORTABILIDADE PEN DRIVE -->
+    <!-- ========================================== -->
+    <div class="slide flex-col space-y-6 w-full max-w-4xl" data-slide="7">
+      <div class="text-center space-y-1">
+        <p class="text-xs font-bold uppercase tracking-wider text-emerald-400">Segurança & Portabilidade</p>
+        <h2 class="text-3xl sm:text-4xl font-black text-white">Execução em Pen Drive & LGPD</h2>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div class="p-6 bg-slate-900 border border-slate-800 rounded-3xl space-y-3">
+          <div class="text-2xl">💾</div>
+          <h3 class="text-sm font-bold text-white">100% Portátil via Pen Drive</h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            O projeto pode ser gravado em qualquer Pen Drive e executado com <strong>2 cliques</strong> no arquivo <code class="text-cyan-400">INICIAR_VIA_PENDRIVE.bat</code>. Suporta Node.js portátil sem precisar instalar nada no Windows da portaria.
+          </p>
+        </div>
+
+        <div class="p-6 bg-slate-900 border border-slate-800 rounded-3xl space-y-3">
+          <div class="text-2xl">🛡️</div>
+          <h3 class="text-sm font-bold text-white">Conformidade LGPD Auditada</h3>
+          <p class="text-xs text-slate-300 leading-relaxed">
+            Consentimento explícito registrado digitalmente, criptografia de senhas, Row Level Security e trilha de auditoria para anonimização ou exclusão de dados.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SLIDE 8: DEMONSTRAÇÃO AO VIVO -->
+    <!-- ========================================== -->
+    <div class="slide flex-col items-center text-center space-y-6 max-w-3xl" data-slide="8">
+      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
+        🚀 Demonstração Prática ao Vivo
+      </div>
+      <h2 class="text-3xl sm:text-5xl font-black text-white">Ambientes & Credenciais</h2>
+      <p class="text-sm text-slate-400 max-w-xl">
+        Utilize os botões abaixo para abrir os módulos e realizar a demonstração prática:
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
+        <a href="http://localhost:3000" target="_blank" class="p-4 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/50 rounded-2xl text-left transition-all">
+          <p class="text-xs font-black text-blue-400 uppercase">Portaria Web</p>
+          <p class="text-sm font-bold text-white mt-1">Painel da Guarita</p>
+          <p class="text-[11px] font-mono text-slate-400 mt-2">localhost:3000</p>
+        </a>
+
+        <a href="http://localhost:3002" target="_blank" class="p-4 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/50 rounded-2xl text-left transition-all">
+          <p class="text-xs font-black text-emerald-400 uppercase">App Morador</p>
+          <p class="text-sm font-bold text-white mt-1">App no Celular</p>
+          <p class="text-[11px] font-mono text-slate-400 mt-2">localhost:3002</p>
+        </a>
+
+        <a href="http://localhost:3001/api/docs" target="_blank" class="p-4 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/50 rounded-2xl text-left transition-all">
+          <p class="text-xs font-black text-indigo-400 uppercase">API & Backend</p>
+          <p class="text-sm font-bold text-white mt-1">Swagger Docs</p>
+          <p class="text-[11px] font-mono text-slate-400 mt-2">localhost:3001/api/docs</p>
+        </a>
+      </div>
+
+      <div class="p-4 bg-slate-900/90 border border-slate-800 rounded-2xl text-xs text-slate-300 w-full font-mono text-left">
+        <p class="font-bold text-white mb-1">🔑 Contas de Demonstração (Senha padrão: Nome@123456):</p>
+        <p>• Morador: <span class="text-cyan-300">morador@portaria.com</span></p>
+        <p>• Porteiro: <span class="text-emerald-300">porteiro@portaria.com</span></p>
+        <p>• Síndico: <span class="text-amber-300">sindico@portaria.com</span></p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom Navigation Controls -->
+  <footer class="h-20 border-t border-slate-800/80 bg-[#0F172A]/90 backdrop-blur-md px-6 flex items-center justify-between">
+    <button id="prevBtn" onclick="prevSlide()" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white transition-all disabled:opacity-30 disabled:pointer-events-none flex items-center gap-2">
+      <span>← Anterior</span>
+    </button>
+
+    <div class="flex items-center gap-2" id="dotsContainer">
+      <!-- Dots gerados via JS -->
+    </div>
+
+    <button id="nextBtn" onclick="nextSlide()" class="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-xs font-bold text-white transition-all shadow-lg shadow-cyan-600/20 flex items-center gap-2">
+      <span>Próximo →</span>
+    </button>
+  </footer>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 8;
+
+    function renderSlide() {
+      document.querySelectorAll('.slide').forEach((slide) => {
+        slide.classList.remove('active');
+        if (parseInt(slide.getAttribute('data-slide')) === currentSlide) {
+          slide.classList.add('active');
+        }
+      });
+
+      document.getElementById('currentSlideNum').innerText = currentSlide;
+      document.getElementById('prevBtn').disabled = currentSlide === 1;
+      document.getElementById('nextBtn').innerText = currentSlide === totalSlides ? 'Concluir ✓' : 'Próximo →';
+
+      // Atualiza dots
+      const dotsContainer = document.getElementById('dotsContainer');
+      dotsContainer.innerHTML = '';
+      for (let i = 1; i <= totalSlides; i++) {
+        const dot = document.createElement('button');
+        dot.className = `w-2.5 h-2.5 rounded-full transition-all ${i === currentSlide ? 'bg-cyan-400 w-8' : 'bg-slate-700 hover:bg-slate-500'}`;
+        dot.onclick = () => goToSlide(i);
+        dotsContainer.appendChild(dot);
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        renderSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        renderSlide();
+      }
+    }
+
+    function goToSlide(num) {
+      currentSlide = num;
+      renderSlide();
+    }
+
+    function toggleFullScreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    // Teclado
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      }
+    });
+
+    renderSlide();
+  </script>
+</body>
+</html>
