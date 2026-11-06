@@ -353,12 +353,17 @@ export default function MobileLoginPage() {
 
       {/* Topo Amplo */}
       <div className="pt-2 sm:pt-4 text-center space-y-2 z-10">
-        <div className="w-16 h-16 mx-auto rounded-3xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center text-white shadow-xl shadow-indigo-500/30">
-          <Building className="w-8 h-8" />
+        <div className="flex justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-ecb.png"
+            alt="ECB Soluções Avançadas"
+            className="h-14 w-auto object-contain rounded-xl shadow-lg shadow-cyan-950/40"
+          />
         </div>
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">App do Morador</h1>
-          <p className="text-xs sm:text-sm text-slate-300 mt-0.5">Controle de Encomendas, Convites & Portaria</p>
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">ECB Morador</h1>
+          <p className="text-xs sm:text-sm text-cyan-400 mt-0.5">Sistemas Inteligentes • Gestão & Portaria</p>
         </div>
       </div>
 
@@ -491,59 +496,6 @@ export default function MobileLoginPage() {
                 </>
               )}
             </button>
-
-            {/* Acesso Rápido de Demonstração */}
-            <div className="pt-3 border-t border-slate-800">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider text-center mb-2.5">
-                ⚡ Acesso Rápido de Demonstração:
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLoginEmail('morador@portaria.com');
-                    setLoginPassword('Morador@123456');
-                    setErrorMessage(null);
-                  }}
-                  className="py-2.5 px-3 bg-slate-950/80 hover:bg-slate-900 border border-slate-700/80 rounded-xl text-xs font-bold text-cyan-300 text-left flex items-center gap-2 transition-colors shadow-sm"
-                >
-                  <span>👤 Morador</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLoginEmail('porteiro@portaria.com');
-                    setLoginPassword('Porteiro@123456');
-                    setErrorMessage(null);
-                  }}
-                  className="py-2.5 px-3 bg-slate-950/80 hover:bg-slate-900 border border-slate-700/80 rounded-xl text-xs font-bold text-emerald-300 text-left flex items-center gap-2 transition-colors shadow-sm"
-                >
-                  <span>👮 Porteiro</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLoginEmail('admin@portaria.com');
-                    setLoginPassword('Admin@123456');
-                    setErrorMessage(null);
-                  }}
-                  className="py-2.5 px-3 bg-slate-950/80 hover:bg-slate-900 border border-slate-700/80 rounded-xl text-xs font-bold text-indigo-300 text-left flex items-center gap-2 transition-colors shadow-sm"
-                >
-                  <span>⚙️ Admin</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLoginEmail('sindico@portaria.com');
-                    setLoginPassword('Sindico@123456');
-                    setErrorMessage(null);
-                  }}
-                  className="py-2.5 px-3 bg-slate-950/80 hover:bg-slate-900 border border-slate-700/80 rounded-xl text-xs font-bold text-amber-300 text-left flex items-center gap-2 transition-colors shadow-sm"
-                >
-                  <span>👔 Síndico</span>
-                </button>
-              </div>
-            </div>
 
             <div className="text-center pt-2">
               <button
