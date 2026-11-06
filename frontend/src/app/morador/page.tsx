@@ -104,8 +104,9 @@ export default function MoradorDashboardPage() {
           api.getVeiculos(),
         ]);
 
-        if (encs.status === 'fulfilled' && Array.isArray(encs.value)) {
-          const minhasEnc = encs.value.filter(
+        const rawEncs = encs.status === 'fulfilled' ? (Array.isArray(encs.value) ? encs.value : (Array.isArray(encs.value?.data) ? encs.value.data : [])) : [];
+        if (rawEncs.length > 0) {
+          const minhasEnc = rawEncs.filter(
             (e: any) =>
               (e.unidade_bloco === currentUser?.unidade_bloco || !currentUser?.unidade_bloco) &&
               (e.unidade_numero === currentUser?.unidade_numero || !currentUser?.unidade_numero),
@@ -115,8 +116,9 @@ export default function MoradorDashboardPage() {
           }
         }
 
-        if (vsts.status === 'fulfilled' && Array.isArray(vsts.value)) {
-          const mapped: Convite[] = vsts.value.map((v: any) => ({
+        const rawVsts = vsts.status === 'fulfilled' ? (Array.isArray(vsts.value) ? vsts.value : (Array.isArray(vsts.value?.data) ? vsts.value.data : [])) : [];
+        if (rawVsts.length > 0) {
+          const mapped: Convite[] = rawVsts.map((v: any) => ({
             id: v.id,
             nome_convidado: v.nome_completo || v.nome,
             tipo: (v.tipo === 'PRESTADOR' ? 'PRESTADOR' : 'VISITA') as any,
@@ -132,8 +134,9 @@ export default function MoradorDashboardPage() {
           }
         }
 
-        if (veics.status === 'fulfilled' && Array.isArray(veics.value)) {
-          const mappedVeic: VeiculoMorador[] = veics.value.map((v: any) => ({
+        const rawVeics = veics.status === 'fulfilled' ? (Array.isArray(veics.value) ? veics.value : (Array.isArray(veics.value?.data) ? veics.value.data : [])) : [];
+        if (rawVeics.length > 0) {
+          const mappedVeic: VeiculoMorador[] = rawVeics.map((v: any) => ({
             id: v.id,
             placa: v.placa,
             modelo: `${v.marca || ''} ${v.modelo || ''}`.trim() || 'Veículo',

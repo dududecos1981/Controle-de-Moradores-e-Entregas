@@ -119,8 +119,9 @@ export default function MobileAppPage() {
           mobileApi.getReservas(),
         ]);
 
-        if (encs.status === 'fulfilled' && Array.isArray(encs.value) && encs.value.length > 0) {
-          const mapped: EncomendaMorador[] = encs.value.map((e: any) => ({
+        const rawEncs = encs.status === 'fulfilled' ? (Array.isArray(encs.value) ? encs.value : (Array.isArray(encs.value?.data) ? encs.value.data : [])) : [];
+        if (rawEncs.length > 0) {
+          const mapped: EncomendaMorador[] = rawEncs.map((e: any) => ({
             id: e.id,
             codigo_barras_qrcode: e.codigo_barras_qrcode || e.codigo_rastreio || `PKG-${e.id.slice(0, 6)}`,
             codigo_rastreio: e.codigo_rastreio,
@@ -131,15 +132,16 @@ export default function MobileAppPage() {
             data_retirada: e.data_retirada,
             retirado_por_nome: e.retirado_por_nome,
             porteiro_recebedor_nome: e.porteiro_recebedor_nome || 'Portaria',
-            foto_pacote_url: e.foto_pacote_url,
+            foto_comprovante_url: e.foto_comprovante_url || e.foto_pacote_url,
             observacoes: e.observacoes,
           }));
           setEncomendas(mapped);
           localStorage.setItem('morador_encomendas', JSON.stringify(mapped));
         }
 
-        if (vsts.status === 'fulfilled' && Array.isArray(vsts.value) && vsts.value.length > 0) {
-          const mapped: ConviteVisitante[] = vsts.value.map((v: any) => ({
+        const rawVsts = vsts.status === 'fulfilled' ? (Array.isArray(vsts.value) ? vsts.value : (Array.isArray(vsts.value?.data) ? vsts.value.data : [])) : [];
+        if (rawVsts.length > 0) {
+          const mapped: ConviteVisitante[] = rawVsts.map((v: any) => ({
             id: v.id,
             nome_convidado: v.nome_completo || v.nome,
             documento: v.cpf || v.documento,
@@ -156,8 +158,9 @@ export default function MobileAppPage() {
           localStorage.setItem('morador_convites', JSON.stringify(mapped));
         }
 
-        if (ocs.status === 'fulfilled' && Array.isArray(ocs.value) && ocs.value.length > 0) {
-          const mapped: OcorrenciaMorador[] = ocs.value.map((o: any) => ({
+        const rawOcs = ocs.status === 'fulfilled' ? (Array.isArray(ocs.value) ? ocs.value : (Array.isArray(ocs.value?.data) ? ocs.value.data : [])) : [];
+        if (rawOcs.length > 0) {
+          const mapped: OcorrenciaMorador[] = rawOcs.map((o: any) => ({
             id: o.id,
             titulo: o.titulo,
             descricao: o.descricao,
@@ -171,8 +174,9 @@ export default function MobileAppPage() {
           localStorage.setItem('morador_ocorrencias', JSON.stringify(mapped));
         }
 
-        if (rsvs.status === 'fulfilled' && Array.isArray(rsvs.value) && rsvs.value.length > 0) {
-          const mapped: ReservaMorador[] = rsvs.value.map((r: any) => ({
+        const rawRsvs = rsvs.status === 'fulfilled' ? (Array.isArray(rsvs.value) ? rsvs.value : (Array.isArray(rsvs.value?.data) ? rsvs.value.data : [])) : [];
+        if (rawRsvs.length > 0) {
+          const mapped: ReservaMorador[] = rawRsvs.map((r: any) => ({
             id: r.id,
             area_id: r.area_comum_id || r.area_id,
             area_nome: r.area_comum_nome || r.area_nome || 'Área Comum',

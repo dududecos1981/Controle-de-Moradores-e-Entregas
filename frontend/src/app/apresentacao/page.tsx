@@ -64,12 +64,13 @@ export default function ApresentacaoPage() {
       {/* Top Header */}
       <header className="h-16 border-b border-slate-800/80 bg-[#0F172A]/80 backdrop-blur-md px-4 sm:px-8 flex items-center justify-between sticky top-0 z-50">
         <div className="flex items-center gap-3">
-          <Link href="/" className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white font-black text-base shadow-lg shadow-cyan-500/20 hover:scale-105 transition-transform">
-            <Building className="w-5 h-5 text-white" />
+          <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-ecb.png" alt="ECB Soluções Avançadas" className="h-10 w-auto object-contain rounded-lg shadow-md" />
           </Link>
           <div>
-            <h1 className="text-sm font-black text-white tracking-wide">Portaria & Moradores Pro</h1>
-            <p className="text-[10px] text-slate-400">Apresentação Executiva do Projeto</p>
+            <h1 className="text-sm font-black text-white tracking-wide">ECB Soluções Avançadas</h1>
+            <p className="text-[10px] text-cyan-400 font-medium">Sistemas Inteligentes • Apresentação Executiva</p>
           </div>
         </div>
 
@@ -377,13 +378,6 @@ export default function ApresentacaoPage() {
                 <p className="text-sm font-bold text-white mt-1">Swagger Docs</p>
                 <p className="text-[11px] font-mono text-slate-400 mt-2">localhost:3001/api/docs</p>
               </a>
-            </div>
-
-            <div className="p-4 bg-slate-900/90 border border-slate-800 rounded-2xl text-xs text-slate-300 w-full font-mono text-left">
-              <p className="font-bold text-white mb-1">🔑 Contas de Demonstração (Senha padrão: Nome@123456):</p>
-              <p>• Morador: <span className="text-cyan-300">morador@portaria.com</span></p>
-              <p>• Porteiro: <span className="text-emerald-300">porteiro@portaria.com</span></p>
-              <p>• Síndico: <span className="text-amber-300">sindico@portaria.com</span></p>
             </div>
           </div>
         )}

@@ -93,8 +93,9 @@ export default function PrestadoresPage() {
     async function loadData() {
       try {
         const remote = await api.getVisitantes();
-        if (Array.isArray(remote)) {
-          const prestadoresRemote = remote.filter((v: any) => v.tipo === 'PRESTADOR_SERVICO' || v.tipo === 'PRESTADOR');
+        const remoteList = Array.isArray(remote) ? remote : (Array.isArray(remote?.data) ? remote.data : []);
+        if (remoteList.length > 0) {
+          const prestadoresRemote = remoteList.filter((v: any) => v.tipo === 'PRESTADOR_SERVICO' || v.tipo === 'PRESTADOR');
           if (prestadoresRemote.length > 0) {
             const mapped: PrestadorServico[] = prestadoresRemote.map((p: any) => ({
               id: p.id,

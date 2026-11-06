@@ -40,8 +40,9 @@ export default function VeiculosMoradorScreen({ viewMode = 'amplo' }: Props) {
     async function loadVeiculos() {
       try {
         const data = await mobileApi.getVeiculos();
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped: VeiculoMorador[] = data.map((v: any) => ({
+        const rawList = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+        if (rawList.length > 0) {
+          const mapped: VeiculoMorador[] = rawList.map((v: any) => ({
             id: v.id,
             placa: v.placa,
             marca_modelo: `${v.marca || ''} ${v.modelo || ''}`.trim() || v.marca_modelo || 'Veículo',

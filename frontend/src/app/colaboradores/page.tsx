@@ -72,8 +72,9 @@ export default function ColaboradoresPage() {
     async function loadColaboradores() {
       try {
         const users = await api.getMoradores();
-        if (Array.isArray(users)) {
-          const staffUsers = users.filter((u: any) =>
+        const usersList = Array.isArray(users) ? users : (Array.isArray(users?.data) ? users.data : []);
+        if (usersList.length > 0) {
+          const staffUsers = usersList.filter((u: any) =>
             ['PORTEIRO', 'SINDICO', 'ADMINISTRADOR', 'ZELADOR', 'GERENTE'].includes(u.perfil?.toUpperCase()),
           );
           if (staffUsers.length > 0) {
