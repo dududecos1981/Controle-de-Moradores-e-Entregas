@@ -193,6 +193,37 @@ export default function EncomendasPage() {
         encomenda: novaEncomenda,
         messageText: res.messageText,
       });
+    } else {
+      // Mesmo se autoSendNotification for desativado manualmente para WhatsApp,
+      // sincroniza com o App do Morador via BroadcastChannel e localStorage
+      if (typeof window !== 'undefined') {
+        try {
+          const savedMoradorEnc = localStorage.getItem('morador_encomendas');
+          const moradorEncList = savedMoradorEnc ? JSON.parse(savedMoradorEnc) : [];
+          moradorEncList.unshift({
+            id: novaEncomenda.id,
+            codigo_rastreio: novaEncomenda.codigo_barras_qrcode,
+            transportadora: novaEncomenda.transportadora,
+            descricao: novaEncomenda.descricao_pacote,
+            status: 'AGUARDANDO_RETIRADA',
+            data_chegada: novaEncomenda.data_recebimento,
+            unidade_bloco: bloco,
+            unidade_numero: apartamento,
+            morador_nome: moradorNome,
+          });
+          localStorage.setItem('morador_encomendas', JSON.stringify(moradorEncList));
+
+          if ('BroadcastChannel' in window) {
+            const channel = new BroadcastChannel('condominio_realtime');
+            channel.postMessage({
+              type: 'NOVA_ENCOMENDA',
+              data: novaEncomenda,
+            });
+          }
+        } catch (syncErr) {
+          console.warn('Erro ao sincronizar com app do morador:', syncErr);
+        }
+      }
     }
 
     setIsSending(false);

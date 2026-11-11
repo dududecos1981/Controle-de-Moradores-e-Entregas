@@ -35,6 +35,7 @@ import {
 } from '@/lib/mobileStore';
 import { mobileSocket } from '@/lib/socket';
 import { mobileApi } from '@/lib/api';
+import { sounds } from '@/lib/SoundEffects';
 
 export default function MobileAppPage() {
   const router = useRouter();
@@ -196,26 +197,67 @@ export default function MobileAppPage() {
     }
     fetchFromBackend();
 
+    // Solicita permissão para notificações nativas do navegador se disponível
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+
+    const showDesktopNotification = (title: string, body: string) => {
+      try {
+        sounds.playSuccessChime();
+      } catch (e) {}
+
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        try {
+          new Notification(title, {
+            body,
+            icon: '/logo-ecb.png',
+            badge: '/logo-ecb.png',
+          });
+        } catch (e) {}
+      }
+    };
+
     // Conexão WebSocket em tempo real para a Unidade
     const userBloco = userObj.bloco || 'A';
     const userApt = userObj.apartamento || '101';
     mobileSocket.connect(userBloco, userApt);
     const unsubPackage = mobileSocket.on('encomenda_chegou', (data) => {
-      setLiveAlert({
-        title: '📦 Nova Encomenda Recebida!',
-        desc: data.mensagem || 'Um pacote seu acaba de ser registrado na portaria.',
-      });
+      const title = '📦 Nova Encomenda Recebida!';
+      const desc = data.mensagem || 'Um pacote seu acaba de ser registrado na portaria.';
+      setLiveAlert({ title, desc });
+      showDesktopNotification(title, desc);
+
       // Atualiza lista
       if (data.encomenda) {
-        setEncomendas((prev) => [data.encomenda, ...prev]);
+        setEncomendas((prev) => {
+          if (prev.some((e) => e.id === data.encomenda.id)) return prev;
+          return [data.encomenda, ...prev];
+        });
       }
     });
 
-    const unsubOc = mobileSocket.on('ocorrencia_respondida', (data) => {
+    const unsubWithdraw = mobileSocket.on('encomenda_retirada', (data) => {
+      const encId = data.encomendaId || data.id;
+      setEncomendas((prev) =>
+        prev.map((e) =>
+          e.id === encId
+            ? { ...e, status: 'RETIRADO' as const, data_retirada: data.timestamp || new Date().toISOString() }
+            : e,
+        ),
+      );
       setLiveAlert({
-        title: '🔔 Resposta da Administração',
-        desc: data.mensagem || 'Sua ocorrência foi respondida pelo síndico.',
+        title: '✅ Encomenda Baixada',
+        desc: `A encomenda foi entregue com sucesso para ${data.retiradoPor || 'Morador'}.`,
       });
+      showDesktopNotification('✅ Encomenda Retirada', 'Sua encomenda foi retirada na portaria.');
+    });
+
+    const unsubOc = mobileSocket.on('ocorrencia_respondida', (data) => {
+      const title = '🔔 Resposta da Administração';
+      const desc = data.mensagem || 'Sua ocorrência foi respondida pelo síndico.';
+      setLiveAlert({ title, desc });
+      showDesktopNotification(title, desc);
     });
 
     // Canal BroadcastChannel em tempo real entre abas / dispositivos
@@ -225,23 +267,46 @@ export default function MobileAppPage() {
       channel.onmessage = (event) => {
         if (event.data?.type === 'NOVA_ENCOMENDA') {
           const item = event.data.data;
-          setLiveAlert({
-            title: '📦 Nova Encomenda Recebida!',
-            desc: `Pacote #${item.codigo_rastreio} (${item.transportadora}) registrado na portaria.`,
+          const title = '📦 Nova Encomenda Recebida!';
+          const desc = `Pacote #${item.codigo_barras_qrcode || item.codigo_rastreio} (${item.transportadora}) registrado na portaria.`;
+          setLiveAlert({ title, desc });
+          showDesktopNotification(title, desc);
+
+          setEncomendas((prev) => {
+            const exists = prev.some((e) => e.id === item.id || (item.codigo_barras_qrcode && e.codigo_barras_qrcode === item.codigo_barras_qrcode));
+            if (exists) return prev;
+            return [
+              {
+                id: item.id || `enc-${Date.now()}`,
+                codigo_barras_qrcode: item.codigo_barras_qrcode || item.codigo_rastreio || `PKG-${Date.now()}`,
+                codigo_rastreio: item.codigo_rastreio,
+                transportadora: item.transportadora || 'Transportadora',
+                descricao_pacote: item.descricao_pacote || item.descricao || '',
+                status: 'AGUARDANDO_RETIRADA',
+                data_recebimento: item.data_recebimento || item.data_chegada || new Date().toISOString(),
+                porteiro_recebedor_nome: item.porteiro_recebedor_nome || 'Portaria',
+              },
+              ...prev,
+            ];
           });
-          setEncomendas((prev) => [
-            {
-              id: item.id || `enc-${Date.now()}`,
-              codigo_barras_qrcode: item.codigo_barras_qrcode || item.codigo_rastreio || `PKG-${Date.now()}`,
-              codigo_rastreio: item.codigo_rastreio,
-              transportadora: item.transportadora || 'Transportadora',
-              descricao_pacote: item.descricao_pacote || item.descricao || '',
-              status: 'AGUARDANDO_RETIRADA',
-              data_recebimento: item.data_recebimento || item.data_chegada || new Date().toISOString(),
-              porteiro_recebedor_nome: item.porteiro_recebedor_nome || 'Portaria',
-            },
-            ...prev,
-          ]);
+        } else if (event.data?.type === 'ENCOMENDA_RETIRADA') {
+          const data = event.data.data;
+          setEncomendas((prev) =>
+            prev.map((e) =>
+              e.id === data.id
+                ? {
+                    ...e,
+                    status: 'RETIRADO' as const,
+                    data_retirada: data.data_retirada || new Date().toISOString(),
+                    retirado_por_nome: data.retirado_por_nome,
+                  }
+                : e,
+            ),
+          );
+          setLiveAlert({
+            title: '✅ Encomenda Baixada',
+            desc: `Pacote retirado por ${data.retirado_por_nome}.`,
+          });
         }
       };
     }
@@ -259,6 +324,7 @@ export default function MobileAppPage() {
     return () => {
       clearInterval(interval);
       unsubPackage();
+      unsubWithdraw();
       unsubOc();
       if (channel) channel.close();
     };

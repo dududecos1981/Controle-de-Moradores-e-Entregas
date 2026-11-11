@@ -72,19 +72,22 @@ export class EventsGateway
   notificarNovaEncomenda(bloco: string, numero: string, dadosEncomenda: any) {
     const room = `unidade_${bloco}_${numero}`;
     this.logger.log(`Emitindo evento 'encomenda_chegou' para a sala [${room}]`);
-    this.server.to(room).emit('encomenda_chegou', {
+    const payload = {
       tipo: 'NOVA_ENCOMENDA',
       titulo: 'Sua encomenda chegou na portaria!',
-      mensagem: `Pacote da ${dadosEncomenda.transportadora || 'Transportadora'} (${dadosEncomenda.codigo_barras_qrcode}) recebido.`,
+      mensagem: `Pacote da ${dadosEncomenda.transportadora || 'Transportadora'} (${dadosEncomenda.codigo_barras_qrcode || dadosEncomenda.codigo_rastreio || 'Sem código'}) recebido.`,
       encomenda: dadosEncomenda,
       timestamp: new Date().toISOString(),
-    });
+    };
 
-    // Também notifica o painel geral da portaria
-    this.server.to('portaria_geral').emit('feed_atualizado', {
-      tipo: 'ENCOMENDA_REGISTRADA',
-      encomendaId: dadosEncomenda.id,
-    });
+    if (this.server) {
+      this.server.to(room).emit('encomenda_chegou', payload);
+      this.server.emit('encomenda_chegou', payload);
+      this.server.to('portaria_geral').emit('feed_atualizado', {
+        tipo: 'ENCOMENDA_REGISTRADA',
+        encomendaId: dadosEncomenda.id,
+      });
+    }
   }
 
   /**
@@ -151,13 +154,25 @@ export class EventsGateway
   /**
    * Emite mudança de status do pacote (ex: RETIRADO)
    */
-  emitPackageStatusChange(id: string, status: string) {
+  emitPackageStatusChange(id: string, status: string, entrega?: any) {
     if (this.server) {
-      this.server.to('portaria_geral').emit('encomenda_status_mudou', {
+      const payload = {
         id,
         status,
+        entrega,
         timestamp: new Date().toISOString(),
-      });
+      };
+      this.server.to('portaria_geral').emit('encomenda_status_mudou', payload);
+      this.server.emit('encomenda_status_mudou', payload);
+
+      if (status === 'RETIRADO') {
+        this.server.to('portaria_geral').emit('encomenda_retirada', payload);
+        this.server.emit('encomenda_retirada', payload);
+        if (entrega?.unidade_bloco && entrega?.unidade_numero) {
+          const room = `unidade_${entrega.unidade_bloco}_${entrega.unidade_numero}`;
+          this.server.to(room).emit('encomenda_retirada', payload);
+        }
+      }
     }
   }
 

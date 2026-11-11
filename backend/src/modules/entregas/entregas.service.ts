@@ -9,6 +9,7 @@ import { CreateEntregaDto } from './dto/create-entrega.dto';
 import { FilterEntregaDto } from './dto/filter-entrega.dto';
 import { RetirarEntregaDto } from './dto/retirar-entrega.dto';
 import { EventsGateway } from '../events/events.gateway';
+import { FcmService } from '../notifications/fcm.service';
 
 @Injectable()
 export class EntregasService {
@@ -17,6 +18,7 @@ export class EntregasService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly eventsGateway: EventsGateway,
+    private readonly fcmService: FcmService,
   ) {}
 
   private async resolveUnidadeId(unidadeId?: string, bloco?: string, numero?: string): Promise<string> {
@@ -313,6 +315,20 @@ export class EntregasService {
       this.logger.warn(`Não foi possível emitir WebSocket de nova entrega: ${e.message}`);
     }
 
+    try {
+      await this.fcmService.enviarNotificacaoParaUnidade(finalUnidadeId, {
+        titulo: '📦 Sua encomenda chegou na portaria!',
+        corpo: `Pacote da ${novaEntrega.transportadora || 'Transportadora'} (${novaEntrega.codigo_barras_qrcode || novaEntrega.codigo_rastreio || ''}) aguarda retirada.`,
+        dados: {
+          tipo: 'NOVA_ENCOMENDA',
+          entregaId: novaEntrega.id,
+          codigo: novaEntrega.codigo_barras_qrcode || '',
+        },
+      });
+    } catch (e) {
+      this.logger.warn(`Erro ao disparar push notification FCM: ${e.message}`);
+    }
+
     return novaEntrega;
   }
 
@@ -360,9 +376,25 @@ export class EntregasService {
     const entregaAtualizada = await this.findOne(id);
 
     try {
-      this.eventsGateway.emitPackageStatusChange(id, 'RETIRADO');
+      this.eventsGateway.emitPackageStatusChange(id, 'RETIRADO', entregaAtualizada);
     } catch (e) {
       this.logger.warn(`Não foi possível emitir WebSocket de entrega retirada: ${e.message}`);
+    }
+
+    try {
+      if (entregaAtualizada.unidade_id) {
+        await this.fcmService.enviarNotificacaoParaUnidade(entregaAtualizada.unidade_id, {
+          titulo: '✅ Encomenda Retirada',
+          corpo: `O pacote (${entregaAtualizada.codigo_barras_qrcode || entregaAtualizada.codigo_rastreio || ''}) foi retirado por ${dto.retirado_por_nome}.`,
+          dados: {
+            tipo: 'ENCOMENDA_RETIRADA',
+            entregaId: id,
+            retiradoPor: dto.retirado_por_nome,
+          },
+        });
+      }
+    } catch (e) {
+      this.logger.warn(`Erro ao disparar push notification FCM de retirada: ${e.message}`);
     }
 
     return entregaAtualizada;

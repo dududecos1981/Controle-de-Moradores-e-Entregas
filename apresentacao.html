@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR" class="dark">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap"
+    rel="stylesheet">
   <style>
     body {
       font-family: 'Plus Jakarta Sans', sans-serif;
@@ -15,32 +18,39 @@
       color: #F1F5F9;
       overflow-x: hidden;
     }
+
     .font-mono {
       font-family: 'JetBrains Mono', monospace;
     }
+
     .slide {
       display: none;
       opacity: 0;
       transform: translateY(12px);
       transition: opacity 0.4s ease, transform 0.4s ease;
     }
+
     .slide.active {
       display: flex;
       opacity: 1;
       transform: translateY(0);
     }
+
     .glow-cyan {
       box-shadow: 0 0 50px -10px rgba(6, 182, 212, 0.25);
     }
+
     .glow-indigo {
       box-shadow: 0 0 50px -10px rgba(99, 102, 241, 0.25);
     }
   </style>
 </head>
+
 <body class="min-h-screen flex flex-col justify-between selection:bg-cyan-500 selection:text-slate-950">
 
   <!-- Top Bar -->
-  <header class="h-16 border-b border-slate-800/80 bg-[#0F172A]/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-50">
+  <header
+    class="h-16 border-b border-slate-800/80 bg-[#0F172A]/80 backdrop-blur-md px-6 flex items-center justify-between sticky top-0 z-50">
     <div class="flex items-center gap-3">
       <img src="./logo-ecb.png" alt="ECB Soluções Avançadas" class="h-10 w-auto object-contain rounded-lg shadow-md" />
       <div>
@@ -51,10 +61,12 @@
 
     <!-- Indicador de Slide & Ações -->
     <div class="flex items-center gap-4">
-      <div class="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-full border border-slate-800 text-xs font-bold font-mono text-cyan-400">
+      <div
+        class="flex items-center gap-1.5 bg-slate-950 px-3 py-1.5 rounded-full border border-slate-800 text-xs font-bold font-mono text-cyan-400">
         <span id="currentSlideNum">1</span> / <span id="totalSlidesNum">8</span>
       </div>
-      <button onclick="toggleFullScreen()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all">
+      <button onclick="toggleFullScreen()"
+        class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 hover:text-white transition-all">
         ⛶ Tela Cheia
       </button>
     </div>
@@ -67,14 +79,18 @@
     <!-- SLIDE 1: CAPA -->
     <!-- ========================================== -->
     <div class="slide active flex-col items-center text-center space-y-6 max-w-3xl" data-slide="1">
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 text-xs font-bold">
+      <div
+        class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 text-xs font-bold">
         ✨ Projeto Full-Stack Moderno
       </div>
       <h2 class="text-4xl sm:text-6xl font-black tracking-tight text-white leading-tight">
-        Sistema Inteligente de <span class="bg-gradient-to-r from-cyan-400 via-indigo-400 to-emerald-400 bg-clip-text text-transparent">Portaria, Encomendas & Moradores</span>
+        Sistema Inteligente de <span
+          class="bg-gradient-to-r from-cyan-400 via-indigo-400 to-emerald-400 bg-clip-text text-transparent">Portaria,
+          Encomendas & Moradores</span>
       </h2>
       <p class="text-base sm:text-lg text-slate-400 max-w-2xl">
-        A plataforma definitiva que digitaliza a rotina condominial: bipagem de pacotes com câmera, controle de acessos via QR Code, Inteligência Artificial e App Mobile com Modo Amplo.
+        A plataforma definitiva que digitaliza a rotina condominial: bipagem de pacotes com câmera, controle de acessos
+        via QR Code, Inteligência Artificial e App Mobile com Modo Amplo.
       </p>
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 w-full pt-4">
         <div class="p-3.5 bg-slate-900/90 border border-slate-800 rounded-2xl">
@@ -112,9 +128,12 @@
             <span class="text-lg">❌</span> O Modelo Tradicional (Caos)
           </div>
           <ul class="space-y-3 text-xs sm:text-sm text-slate-300">
-            <li class="flex items-start gap-2">⚠️ <strong>Extravios de pacotes</strong> e caligrafia ilegível nos cadernos da portaria.</li>
-            <li class="flex items-start gap-2">⚠️ <strong>Filas e demora</strong> para cadastrar visitantes por interfone.</li>
-            <li class="flex items-start gap-2">⚠️ <strong>Sem comprovante digital</strong> de quem realmente retirou a entrega.</li>
+            <li class="flex items-start gap-2">⚠️ <strong>Extravios de pacotes</strong> e caligrafia ilegível nos
+              cadernos da portaria.</li>
+            <li class="flex items-start gap-2">⚠️ <strong>Filas e demora</strong> para cadastrar visitantes por
+              interfone.</li>
+            <li class="flex items-start gap-2">⚠️ <strong>Sem comprovante digital</strong> de quem realmente retirou a
+              entrega.</li>
             <li class="flex items-start gap-2">⚠️ <strong>Risco jurídico</strong> por não conformidade com a LGPD.</li>
           </ul>
         </div>
@@ -125,10 +144,14 @@
             <span class="text-lg">✅</span> A Nossa Solução Inteligente
           </div>
           <ul class="space-y-3 text-xs sm:text-sm text-slate-300">
-            <li class="flex items-start gap-2">🚀 <strong>Bipagem com câmera</strong> e aviso instantâneo no WhatsApp/App do morador.</li>
-            <li class="flex items-start gap-2">🚀 <strong>Convite pré-autorizado com QR Code</strong> para entrada sem filas.</li>
-            <li class="flex items-start gap-2">🚀 <strong>Assinatura digital em tela</strong> e foto do pacote anexada.</li>
-            <li class="flex items-start gap-2">🚀 <strong>100% em conformidade LGPD</strong> com dados criptografados.</li>
+            <li class="flex items-start gap-2">🚀 <strong>Bipagem com câmera</strong> e aviso instantâneo no
+              WhatsApp/App do morador.</li>
+            <li class="flex items-start gap-2">🚀 <strong>Convite pré-autorizado com QR Code</strong> para entrada sem
+              filas.</li>
+            <li class="flex items-start gap-2">🚀 <strong>Assinatura digital em tela</strong> e foto do pacote anexada.
+            </li>
+            <li class="flex items-start gap-2">🚀 <strong>100% em conformidade LGPD</strong> com dados criptografados.
+            </li>
           </ul>
         </div>
       </div>
@@ -145,7 +168,9 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div class="p-5 bg-slate-900 border border-slate-800 rounded-2xl space-y-3">
-          <div class="w-10 h-10 rounded-xl bg-blue-950/80 border border-blue-800 flex items-center justify-center text-blue-400 font-bold">💻</div>
+          <div
+            class="w-10 h-10 rounded-xl bg-blue-950/80 border border-blue-800 flex items-center justify-center text-blue-400 font-bold">
+            💻</div>
           <h3 class="text-sm font-bold text-white">Frontend & Web</h3>
           <ul class="text-xs text-slate-400 space-y-1.5 font-mono">
             <li>• Next.js 14 (App Router)</li>
@@ -157,7 +182,9 @@
         </div>
 
         <div class="p-5 bg-slate-900 border border-slate-800 rounded-2xl space-y-3">
-          <div class="w-10 h-10 rounded-xl bg-indigo-950/80 border border-indigo-800 flex items-center justify-center text-indigo-400 font-bold">⚡</div>
+          <div
+            class="w-10 h-10 rounded-xl bg-indigo-950/80 border border-indigo-800 flex items-center justify-center text-indigo-400 font-bold">
+            ⚡</div>
           <h3 class="text-sm font-bold text-white">Backend & Realtime</h3>
           <ul class="text-xs text-slate-400 space-y-1.5 font-mono">
             <li>• NestJS 10 (Arquitetura Modular)</li>
@@ -169,7 +196,9 @@
         </div>
 
         <div class="p-5 bg-slate-900 border border-slate-800 rounded-2xl space-y-3">
-          <div class="w-10 h-10 rounded-xl bg-emerald-950/80 border border-emerald-800 flex items-center justify-center text-emerald-400 font-bold">🐘</div>
+          <div
+            class="w-10 h-10 rounded-xl bg-emerald-950/80 border border-emerald-800 flex items-center justify-center text-emerald-400 font-bold">
+            🐘</div>
           <h3 class="text-sm font-bold text-white">Banco & Nuvem</h3>
           <ul class="text-xs text-slate-400 space-y-1.5 font-mono">
             <li>• Neon Serverless PostgreSQL</li>
@@ -195,7 +224,8 @@
         <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-center space-y-2">
           <div class="text-2xl">📦</div>
           <p class="text-xs font-bold text-cyan-400">1. Recebimento</p>
-          <p class="text-[11px] text-slate-400">Transportadora entrega. O porteiro bipa o código de barras com a câmera.</p>
+          <p class="text-[11px] text-slate-400">Transportadora entrega. O porteiro bipa o código de barras com a câmera.
+          </p>
         </div>
         <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-center space-y-2">
           <div class="text-2xl">📸</div>
@@ -210,7 +240,8 @@
         <div class="p-4 bg-slate-900 border border-slate-800 rounded-2xl text-center space-y-2">
           <div class="text-2xl">✍️</div>
           <p class="text-xs font-bold text-amber-400">4. Baixa com Assinatura</p>
-          <p class="text-[11px] text-slate-400">Porteiro valida o QR Code e o morador assina na tela do celular/tablet.</p>
+          <p class="text-[11px] text-slate-400">Porteiro valida o QR Code e o morador assina na tela do celular/tablet.
+          </p>
         </div>
       </div>
     </div>
@@ -229,7 +260,8 @@
           <div class="text-2xl">📱</div>
           <h3 class="text-sm font-bold text-white">Campos Amplo-Espaçados</h3>
           <p class="text-xs text-slate-300">
-            Inputs e botões com altura ergonômica de <strong>52px a 56px</strong>, ideais para navegação com o polegar e sem zoom automático no iOS.
+            Inputs e botões com altura ergonômica de <strong>52px a 56px</strong>, ideais para navegação com o polegar e
+            sem zoom automático no iOS.
           </p>
         </div>
 
@@ -237,7 +269,8 @@
           <div class="text-2xl">🔑</div>
           <h3 class="text-sm font-bold text-white">Convites com 1 Toque</h3>
           <p class="text-xs text-slate-300">
-            Geração de passes rápidos para amigos, familiares e prestadores com compartilhamento direto no <strong>WhatsApp</strong>.
+            Geração de passes rápidos para amigos, familiares e prestadores com compartilhamento direto no
+            <strong>WhatsApp</strong>.
           </p>
         </div>
 
@@ -260,14 +293,17 @@
         <h2 class="text-3xl sm:text-4xl font-black text-white">Assistente de IA para a Gestão</h2>
       </div>
 
-      <div class="p-6 bg-gradient-to-br from-purple-950/40 via-slate-900 to-slate-950 border border-purple-500/30 rounded-3xl space-y-4">
+      <div
+        class="p-6 bg-gradient-to-br from-purple-950/40 via-slate-900 to-slate-950 border border-purple-500/30 rounded-3xl space-y-4">
         <div class="flex items-center gap-3">
-          <div class="w-12 h-12 rounded-2xl bg-purple-600/30 border border-purple-500/50 flex items-center justify-center text-purple-300 text-xl font-black">
+          <div
+            class="w-12 h-12 rounded-2xl bg-purple-600/30 border border-purple-500/50 flex items-center justify-center text-purple-300 text-xl font-black">
             🤖
           </div>
           <div>
             <h3 class="text-base font-bold text-white">Gerador Inteligente de Comunicados</h3>
-            <p class="text-xs text-slate-400">Redação automática em segundos com adequação de tom (Jurídico, Formal ou Amigável)</p>
+            <p class="text-xs text-slate-400">Redação automática em segundos com adequação de tom (Jurídico, Formal ou
+              Amigável)</p>
           </div>
         </div>
 
@@ -302,7 +338,9 @@
           <div class="text-2xl">💾</div>
           <h3 class="text-sm font-bold text-white">100% Portátil via Pen Drive</h3>
           <p class="text-xs text-slate-300 leading-relaxed">
-            O projeto pode ser gravado em qualquer Pen Drive e executado com <strong>2 cliques</strong> no arquivo <code class="text-cyan-400">INICIAR_VIA_PENDRIVE.bat</code>. Suporta Node.js portátil sem precisar instalar nada no Windows da portaria.
+            O projeto pode ser gravado em qualquer Pen Drive e executado com <strong>2 cliques</strong> no arquivo <code
+              class="text-cyan-400">INICIAR_VIA_PENDRIVE.bat</code>. Suporta Node.js portátil sem precisar instalar nada
+            no Windows da portaria.
           </p>
         </div>
 
@@ -310,7 +348,8 @@
           <div class="text-2xl">🛡️</div>
           <h3 class="text-sm font-bold text-white">Conformidade LGPD Auditada</h3>
           <p class="text-xs text-slate-300 leading-relaxed">
-            Consentimento explícito registrado digitalmente, criptografia de senhas, Row Level Security e trilha de auditoria para anonimização ou exclusão de dados.
+            Consentimento explícito registrado digitalmente, criptografia de senhas, Row Level Security e trilha de
+            auditoria para anonimização ou exclusão de dados.
           </p>
         </div>
       </div>
@@ -320,7 +359,8 @@
     <!-- SLIDE 8: DEMONSTRAÇÃO AO VIVO -->
     <!-- ========================================== -->
     <div class="slide flex-col items-center text-center space-y-6 max-w-3xl" data-slide="8">
-      <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
+      <div
+        class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-950/80 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
         🚀 Demonstração Prática ao Vivo
       </div>
       <h2 class="text-3xl sm:text-5xl font-black text-white">Ambientes & Credenciais</h2>
@@ -329,19 +369,22 @@
       </p>
 
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
-        <a href="http://localhost:3000" target="_blank" class="p-4 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/50 rounded-2xl text-left transition-all">
+        <a href="http://localhost:3000" target="_blank"
+          class="p-4 bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/50 rounded-2xl text-left transition-all">
           <p class="text-xs font-black text-blue-400 uppercase">Portaria Web</p>
           <p class="text-sm font-bold text-white mt-1">Painel da Guarita</p>
           <p class="text-[11px] font-mono text-slate-400 mt-2">localhost:3000</p>
         </a>
 
-        <a href="http://localhost:3002" target="_blank" class="p-4 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/50 rounded-2xl text-left transition-all">
+        <a href="http://localhost:3002" target="_blank"
+          class="p-4 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/50 rounded-2xl text-left transition-all">
           <p class="text-xs font-black text-emerald-400 uppercase">App Morador</p>
           <p class="text-sm font-bold text-white mt-1">App no Celular</p>
           <p class="text-[11px] font-mono text-slate-400 mt-2">localhost:3002</p>
         </a>
 
-        <a href="http://localhost:3001/api/docs" target="_blank" class="p-4 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/50 rounded-2xl text-left transition-all">
+        <a href="http://localhost:3001/api/docs" target="_blank"
+          class="p-4 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/50 rounded-2xl text-left transition-all">
           <p class="text-xs font-black text-indigo-400 uppercase">API & Backend</p>
           <p class="text-sm font-bold text-white mt-1">Swagger Docs</p>
           <p class="text-[11px] font-mono text-slate-400 mt-2">localhost:3001/api/docs</p>
@@ -352,8 +395,10 @@
   </main>
 
   <!-- Bottom Navigation Controls -->
-  <footer class="h-20 border-t border-slate-800/80 bg-[#0F172A]/90 backdrop-blur-md px-6 flex items-center justify-between">
-    <button id="prevBtn" onclick="prevSlide()" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white transition-all disabled:opacity-30 disabled:pointer-events-none flex items-center gap-2">
+  <footer
+    class="h-20 border-t border-slate-800/80 bg-[#0F172A]/90 backdrop-blur-md px-6 flex items-center justify-between">
+    <button id="prevBtn" onclick="prevSlide()"
+      class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white transition-all disabled:opacity-30 disabled:pointer-events-none flex items-center gap-2">
       <span>← Anterior</span>
     </button>
 
@@ -361,7 +406,8 @@
       <!-- Dots gerados via JS -->
     </div>
 
-    <button id="nextBtn" onclick="nextSlide()" class="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-xs font-bold text-white transition-all shadow-lg shadow-cyan-600/20 flex items-center gap-2">
+    <button id="nextBtn" onclick="nextSlide()"
+      class="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-xs font-bold text-white transition-all shadow-lg shadow-cyan-600/20 flex items-center gap-2">
       <span>Próximo →</span>
     </button>
   </footer>
@@ -434,4 +480,5 @@
     renderSlide();
   </script>
 </body>
+
 </html>

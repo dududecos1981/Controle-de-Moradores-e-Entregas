@@ -183,6 +183,24 @@ export default function DashboardPage() {
     });
     saveEncomendas(updated);
     SoundEffects.playSuccess();
+
+    // Sincroniza via BroadcastChannel instantaneamente com o App do Morador
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        const channel = new BroadcastChannel('condominio_realtime');
+        channel.postMessage({
+          type: 'ENCOMENDA_RETIRADA',
+          data: {
+            id,
+            retirado_por_nome: retiradoPorNome,
+            retirado_por_documento: retiradoPorDoc,
+            data_retirada: new Date().toISOString(),
+          },
+        });
+      } catch (bcErr) {
+        console.warn('BroadcastChannel sync err:', bcErr);
+      }
+    }
   };
 
   // Registrar Acesso Rápido
