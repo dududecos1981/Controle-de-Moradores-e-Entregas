@@ -24,13 +24,13 @@ import { mobileApi } from '@/lib/api';
 const DEFAULT_SYSTEM_USERS = [
   {
     id: '646911a7-5512-4510-9405-a7511ea1e419',
-    nome: 'Eduardo Cunha Balbino',
+    nome: 'Eduardo',
     email: 'dududecos1302@gmail.com',
-    cpf: '000.000.000-00',
+    cpf: '000.000.000-09',
     telefone: '11999999999',
     bloco: 'A',
-    apartamento: '101',
-    perfil: 'ADMINISTRADOR',
+    apartamento: '209',
+    perfil: 'MORADOR',
     senha: 'Edu150920@',
   },
   {

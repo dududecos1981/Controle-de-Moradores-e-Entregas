@@ -60,14 +60,14 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 const DEFAULT_SYSTEM_USERS: (UsuarioAuth & { senha_hash: string })[] = [
   {
     id: '646911a7-5512-4510-9405-a7511ea1e419',
-    nome_completo: 'Eduardo Cunha Balbino',
+    nome_completo: 'Eduardo',
     email: 'dududecos1302@gmail.com',
-    cpf: '000.000.000-00',
+    cpf: '000.000.000-09',
     telefone: '11999999999',
-    perfil: 'ADMINISTRADOR',
+    perfil: 'MORADOR',
     senha_hash: 'Edu150920@',
     unidade_bloco: 'A',
-    unidade_numero: '101',
+    unidade_numero: '209',
     lgpd_termo_aceito: true,
   },
   {
