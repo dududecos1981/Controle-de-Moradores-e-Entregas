@@ -25,7 +25,7 @@ const DEFAULT_SYSTEM_USERS = [
   {
     id: '646911a7-5512-4510-9405-a7511ea1e419',
     nome: 'Eduardo Cunha Balbino',
-    email: 'dududecos1981@gmail.com',
+    email: 'dududecos1302@gmail.com',
     cpf: '000.000.000-00',
     telefone: '11999999999',
     bloco: 'A',
