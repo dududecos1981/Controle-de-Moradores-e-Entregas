@@ -23,6 +23,17 @@ import { mobileApi } from '@/lib/api';
 
 const DEFAULT_SYSTEM_USERS = [
   {
+    id: '646911a7-5512-4510-9405-a7511ea1e419',
+    nome: 'Eduardo Cunha Balbino',
+    email: 'dududecos1981@gmail.com',
+    cpf: '000.000.000-00',
+    telefone: '11999999999',
+    bloco: 'A',
+    apartamento: '101',
+    perfil: 'ADMINISTRADOR',
+    senha: 'Edu150920@',
+  },
+  {
     id: 'b0000000-0000-0000-0000-000000000004',
     nome: 'Carlos Eduardo (Morador)',
     email: 'morador@portaria.com',
@@ -123,12 +134,13 @@ export default function MobileLoginPage() {
     setIsLoading(true);
     setErrorMessage(null);
 
-    const cleanEmail = loginEmail.trim().toLowerCase();
+    const rawInput = loginEmail.trim().toLowerCase();
+    const cleanEmail = rawInput.endsWith('@gmail') ? `${rawInput}.com` : rawInput;
     const cleanDigits = loginEmail.replace(/\D/g, '');
 
     // 1. Tenta login direto via API / Neon DB
     try {
-      const res = await mobileApi.login(loginEmail.trim(), loginPassword);
+      const res = await mobileApi.login(cleanEmail, loginPassword);
       if (res?.user) {
         const user = {
           id: res.user.id,
@@ -151,7 +163,9 @@ export default function MobileLoginPage() {
     // 2. Busca nas contas padrão institucionais
     const defaultUser = DEFAULT_SYSTEM_USERS.find(
       (u) =>
-        (u.email.toLowerCase() === cleanEmail || (u.cpf && u.cpf.replace(/\D/g, '') === cleanDigits)) &&
+        (u.email.toLowerCase() === cleanEmail ||
+         u.email.toLowerCase() === rawInput ||
+         (u.cpf && u.cpf.replace(/\D/g, '') === cleanDigits)) &&
         u.senha === loginPassword,
     );
 

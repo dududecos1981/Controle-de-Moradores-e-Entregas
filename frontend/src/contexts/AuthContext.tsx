@@ -59,6 +59,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Base de usuários padrão institucionais para acesso rápido e fallback
 const DEFAULT_SYSTEM_USERS: (UsuarioAuth & { senha_hash: string })[] = [
   {
+    id: '646911a7-5512-4510-9405-a7511ea1e419',
+    nome_completo: 'Eduardo Cunha Balbino',
+    email: 'dududecos1981@gmail.com',
+    cpf: '000.000.000-00',
+    telefone: '11999999999',
+    perfil: 'ADMINISTRADOR',
+    senha_hash: 'Edu150920@',
+    unidade_bloco: 'A',
+    unidade_numero: '101',
+    lgpd_termo_aceito: true,
+  },
+  {
     id: 'b0000000-0000-0000-0000-000000000001',
     nome_completo: 'Administrador Geral',
     email: 'admin@portaria.com',
